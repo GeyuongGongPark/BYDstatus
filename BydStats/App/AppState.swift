@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import SwiftData
 
 @MainActor
 @Observable
@@ -19,6 +20,15 @@ final class AppState {
     // MARK: - 서비스
 
     private(set) var service: BydVehicleService?
+
+    // MARK: - 폴링
+
+    var currentStatus: VehicleStatus?
+    var isPolling = false
+    var pollError: String?
+
+    private var pollingTask: Task<Void, Never>?
+    private var sessionDetector: SessionDetector?
 
     // MARK: - Keychain 키
 
@@ -111,11 +121,13 @@ final class AppState {
     // MARK: - 로그아웃
 
     func logout() {
+        stopPolling()
         service = nil
         isLoggedIn = false
         vehicles = []
         selectedVin = nil
         loginError = nil
+        currentStatus = nil
 
         KeychainHelper.delete(forKey: Keys.userId)
         KeychainHelper.delete(forKey: Keys.signToken)
@@ -123,6 +135,53 @@ final class AppState {
         KeychainHelper.delete(forKey: Keys.username)
         KeychainHelper.delete(forKey: Keys.password)
         KeychainHelper.delete(forKey: Keys.vin)
+    }
+
+    // MARK: - 폴링
+
+    func startPolling(modelContext: ModelContext, pollingInterval: Int = 5,
+                      electricityRate: Double, batteryCapacityKwh: Double) {
+        guard let svc = service, let vin = selectedVin else { return }
+        guard pollingTask == nil else { return } // 이미 실행 중
+
+        sessionDetector = SessionDetector(modelContext: modelContext,
+                                          electricityRate: electricityRate,
+                                          batteryCapacityKwh: batteryCapacityKwh)
+        pollingTask = Task {
+            // 시작 즉시 1회 폴링
+            await doPoll(service: svc, vin: vin, modelContext: modelContext)
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(pollingInterval * 60))
+                guard !Task.isCancelled else { break }
+                await doPoll(service: svc, vin: vin, modelContext: modelContext)
+            }
+        }
+    }
+
+    func stopPolling() {
+        pollingTask?.cancel()
+        pollingTask = nil
+        sessionDetector = nil
+        isPolling = false
+    }
+
+    func pollNow(modelContext: ModelContext) async {
+        guard let svc = service, let vin = selectedVin else { return }
+        await doPoll(service: svc, vin: vin, modelContext: modelContext)
+    }
+
+    private func doPoll(service: BydVehicleService, vin: String, modelContext: ModelContext) async {
+        isPolling = true
+        do {
+            let status = try await service.fetchVehicleStatus(vin: vin)
+            currentStatus = status
+            sessionDetector?.process(status: status, at: Date())
+            try? modelContext.save()
+            pollError = nil
+        } catch {
+            pollError = error.localizedDescription
+        }
+        isPolling = false
     }
 }
 
