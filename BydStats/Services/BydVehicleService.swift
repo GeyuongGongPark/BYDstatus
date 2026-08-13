@@ -333,10 +333,18 @@ actor BydVehicleService {
 
     // MARK: - Vehicle List
 
-    func fetchVehicleList() async throws -> [[String: Any]] {
+    func fetchVehicleList() async throws -> [VehicleListItem] {
         let result = try await postTokenSecure(endpoint: "/app/account/getAllListByUserId",
                                                innerMap: buildInnerBase(), vin: nil)
-        return result["list"] as? [[String: Any]] ?? []
+        let list = result["list"] as? [[String: Any]] ?? []
+        return list.compactMap { item -> VehicleListItem? in
+            guard let vin = item["vin"] as? String else { return nil }
+            let model = item["modelName"] as? String
+                       ?? item["model"] as? String
+                       ?? item["seriesName"] as? String
+                       ?? "차량"
+            return VehicleListItem(id: vin, vin: vin, modelName: model)
+        }
     }
 
     // MARK: - Vehicle Realtime Status

@@ -19,7 +19,9 @@
 		86C8D3D45A0A0AAF166B2995 /* BydStatsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F06B305251905D6603FA9E63 /* BydStatsApp.swift */; };
 		9136A848A8E4299DFF1C4D4C /* BackgroundTasks.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04788C17EDAEA6AB900D4CD7 /* BackgroundTasks.framework */; };
 		958CF93A2A73107D9886AC39 /* BangcleCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4CB72E0D2309D7CCB57F607 /* BangcleCodec.swift */; };
+		A70C3A8D45BFCADD57F32F84 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75E0E43408803368C57760D7 /* AppState.swift */; };
 		BD55B46A54855E3245764BE2 /* ChargingSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED46F84CE16CB39AC823C2D /* ChargingSession.swift */; };
+		BDB868C6014604F546C61A88 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DCFA75EA19A394902CCE405 /* KeychainHelper.swift */; };
 		E2798155C7FC2BA69B29D96B /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AA38E6C00179069BE9C7228 /* SettingsView.swift */; };
 		EAE905422372203A216641B0 /* BackgroundTaskManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65D3575DF625F74C77F623E3 /* BackgroundTaskManager.swift */; };
 		EDB725EF83E99A0603059D0E /* DrivingSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBBA57DECFE34014901A9499 /* DrivingSession.swift */; };
@@ -38,7 +40,9 @@
 		65D3575DF625F74C77F623E3 /* BackgroundTaskManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundTaskManager.swift; sourceTree = "<group>"; };
 		678DCBC896CF337E6B355C61 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		6AA38E6C00179069BE9C7228 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		75E0E43408803368C57760D7 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		7CBA5591971F2800B9092FCC /* BydVehicleService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BydVehicleService.swift; sourceTree = "<group>"; };
+		7DCFA75EA19A394902CCE405 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		7E28C32611824F87DF2AE410 /* DrivingSessionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrivingSessionsView.swift; sourceTree = "<group>"; };
 		9D5EDF879787470F3D9CC43C /* VehicleStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleStatus.swift; sourceTree = "<group>"; };
 		B4CB72E0D2309D7CCB57F607 /* BangcleCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BangcleCodec.swift; sourceTree = "<group>"; };
@@ -83,6 +87,7 @@
 		6BCE28D3716732F9893702CB /* App */ = {
 			isa = PBXGroup;
 			children = (
+				75E0E43408803368C57760D7 /* AppState.swift */,
 				F06B305251905D6603FA9E63 /* BydStatsApp.swift */,
 			);
 			path = App;
@@ -109,6 +114,7 @@
 				7CBA5591971F2800B9092FCC /* BydVehicleService.swift */,
 				48AE185E2151EDE05B586C51 /* CryptoUtils.swift */,
 				4366994F3C32C4A541A58742 /* DataCollector.swift */,
+				7DCFA75EA19A394902CCE405 /* KeychainHelper.swift */,
 				FCC034E754C027617E4576C9 /* SessionDetector.swift */,
 			);
 			path = Services;
@@ -226,6 +232,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A70C3A8D45BFCADD57F32F84 /* AppState.swift in Sources */,
 				EAE905422372203A216641B0 /* BackgroundTaskManager.swift in Sources */,
 				958CF93A2A73107D9886AC39 /* BangcleCodec.swift in Sources */,
 				F5567F0F0563D363AFBA50C5 /* BatteryHistoryView.swift in Sources */,
@@ -240,6 +247,7 @@
 				451D3F1F7662F6941E2AD22F /* DataPoint.swift in Sources */,
 				EDB725EF83E99A0603059D0E /* DrivingSession.swift in Sources */,
 				F4E2B316D810DD29234622AD /* DrivingSessionsView.swift in Sources */,
+				BDB868C6014604F546C61A88 /* KeychainHelper.swift in Sources */,
 				3616E564342AA6231D532E88 /* SessionDetector.swift in Sources */,
 				E2798155C7FC2BA69B29D96B /* SettingsView.swift in Sources */,
 				3D77981F6B6F7728562F8B86 /* VehicleStatus.swift in Sources */,

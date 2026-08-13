@@ -4,6 +4,7 @@ import SwiftData
 @main
 struct BydStatsApp: App {
     let modelContainer: ModelContainer
+    let appState = AppState()
 
     init() {
         do {
@@ -16,6 +17,7 @@ struct BydStatsApp: App {
     var body: some Scene {
         WindowGroup {
             DashboardView()
+                .environment(appState)
         }
         .modelContainer(modelContainer)
     }

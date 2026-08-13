@@ -48,3 +48,9 @@ struct DailyEnergyConsumption: Identifiable {
     var date: String         // "YYYY-MM-DD"
     var kwhPer100km: Double
 }
+
+struct VehicleListItem: Identifiable, Sendable {
+    let id: String   // vin
+    let vin: String
+    let modelName: String
+}
