@@ -164,9 +164,11 @@ actor BydVehicleService {
             throw BydError.invalidResponse
         }
         let resCode = outerResp["code"] as? String ?? "0"
+        print("[BydAPI] \(endpoint) → code=\(resCode) msg=\(outerResp["message"] ?? "-")")
 
         if resCode != "0" {
             if ["1002", "1005", "1010"].contains(resCode) {
+                print("[BydAPI] 세션 만료 코드 \(resCode), 재로그인 시도")
                 return try await silentReLogin(endpoint: endpoint, innerMap: innerMap, vin: vin)
             }
             throw BydError.serverError(outerResp["message"] as? String ?? "Unknown", resCode)
@@ -359,6 +361,12 @@ actor BydVehicleService {
             innerMap: inner, vin: vin
         )
         let serial = triggerResult["requestSerial"] as? String
+        print("[BydAPI] vehicleRealTimeRequest 응답: serial=\(serial ?? "nil") keys=\(triggerResult.keys.sorted())")
+
+        guard let serial = serial, !serial.isEmpty else {
+            let msg = triggerResult["message"] as? String ?? "차량 tbox 응답 없음"
+            throw BydError.serverError(msg, "1008")
+        }
 
         try await Task.sleep(nanoseconds: 1_500_000_000)
 
@@ -371,14 +379,19 @@ actor BydVehicleService {
             pollInner.append(("energyType", "0"))
             pollInner.append(("tboxVersion", "3"))
             do {
-                result = try await postTokenSecure(
+                let pollResult = try await postTokenSecure(
                     endpoint: "/vehicleInfo/vehicle/vehicleRealTimeResult",
                     innerMap: pollInner, vin: vin
                 )
+                print("[BydAPI] vehicleRealTimeResult (시도 \(attempt)): keys=\(pollResult.keys.sorted()) soc=\(pollResult["soc"] ?? "nil") mileageEV=\(pollResult["mileageEV"] ?? "nil")")
+                result = pollResult
                 break
-            } catch BydError.serverError(_, let code) where code == "3002" {
-                print("[BydAPI] 차량 상태 조회 처리 중 (시도 \(attempt)/5)")
+            } catch BydError.serverError(let msg, let code) where code == "3002" {
+                print("[BydAPI] 차량 상태 조회 처리 중 (시도 \(attempt)/5) code=3002 msg=\(msg)")
                 if attempt == 5 { throw BydError.controlTimeout }
+            } catch {
+                print("[BydAPI] vehicleRealTimeResult 오류 (시도 \(attempt)): \(error)")
+                throw error
             }
         }
         guard let result = result else { throw BydError.invalidResponse }
@@ -501,6 +514,7 @@ enum BydError: LocalizedError {
         case .notLoggedIn:               return "로그인이 필요합니다"
         case .sessionExpired:            return "세션이 만료되었습니다"
         case .invalidResponse:           return "잘못된 응답 형식"
+        case .serverError(_, "1008"):    return "차량이 응답하지 않습니다 (절전 모드일 수 있음)"
         case .serverError(let m, let c): return "서버 오류: \(m) (\(c))"
         case .controlTimeout:            return "요청 시간 초과"
         case .networkError(let e):       return "네트워크 오류: \(e.localizedDescription)"
