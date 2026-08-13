@@ -178,10 +178,32 @@ final class AppState {
             sessionDetector?.process(status: status, at: Date())
             try? modelContext.save()
             pollError = nil
+            saveWidgetSnapshot(status: status, modelContext: modelContext)
         } catch {
             pollError = error.localizedDescription
         }
         isPolling = false
+    }
+
+    private func saveWidgetSnapshot(status: VehicleStatus, modelContext: ModelContext) {
+        // 이번 달 충전 비용 합산
+        let cal = Calendar.current
+        let descriptor = FetchDescriptor<ChargingSession>()
+        let allSessions = (try? modelContext.fetch(descriptor)) ?? []
+        let monthCost = allSessions
+            .filter { cal.isDate($0.startTime, equalTo: Date(), toGranularity: .month) }
+            .reduce(0) { $0 + $1.estimatedCostKrw }
+
+        let snapshot = WidgetSnapshot(
+            batteryPercent:  status.batteryPercentage,
+            isCharging:      status.isCharging,
+            isDriving:       status.isDriving,
+            drivingRangeKm:  status.drivingRange,
+            instantPowerKw:  status.instantPowerKw,
+            monthCostKrw:    monthCost,
+            lastUpdated:     Date()
+        )
+        WidgetDataStore.save(snapshot)
     }
 }
 

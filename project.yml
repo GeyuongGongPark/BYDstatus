@@ -5,6 +5,13 @@ options:
     iOS: "17.0"
   xcodeVersion: "16.0"
 
+schemes:
+  BydStats:
+    build:
+      targets:
+        BydStats: all
+        BydStatsWidget: all
+
 targets:
   BydStats:
     type: application
@@ -35,6 +42,41 @@ targets:
       DEVELOPMENT_TEAM: ""
       TARGETED_DEVICE_FAMILY: "1"
       ENABLE_PREVIEWS: YES
+      ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+      ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: YES
+      ASSETCATALOG_COMPILER_SKIP_APP_STORE_DEPLOYMENT: YES
+    entitlements:
+      path: BydStats/Resources/BydStats.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.ggpark.BydStats
     dependencies:
       - framework: BackgroundTasks.framework
         embed: false
+      - target: BydStatsWidget
+        embed: true
+
+  BydStatsWidget:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: BydStatsWidget
+    info:
+      path: BydStatsWidget/Info.plist
+      properties:
+        CFBundleDisplayName: BYD Stats Widget
+        CFBundleVersion: "1"
+        CFBundleShortVersionString: "0.1.0"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.ggpark.BydStats.widget
+      SWIFT_VERSION: "6.0"
+      DEVELOPMENT_TEAM: ""
+      SKIP_INSTALL: YES
+    entitlements:
+      path: BydStatsWidget/BydStatsWidget.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.ggpark.BydStats
