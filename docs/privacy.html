@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BYD Stats — 개인정보 처리방침</title>
+  <style>
+    :root {
+      --bg: #f5f5f7;
+      --surface: #ffffff;
+      --text: #1d1d1f;
+      --text-secondary: #6e6e73;
+      --accent: #0071e3;
+      --border: #d2d2d7;
+      --nav-bg: rgba(245,245,247,0.85);
+      --badge-bg: #e8f4fd;
+      --badge-text: #0071e3;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #000000;
+        --surface: #1c1c1e;
+        --text: #f5f5f7;
+        --text-secondary: #98989d;
+        --accent: #2997ff;
+        --border: #38383a;
+        --nav-bg: rgba(0,0,0,0.85);
+        --badge-bg: #1a2e40;
+        --badge-text: #2997ff;
+      }
+    }
+    [data-theme="light"] {
+      --bg: #f5f5f7; --surface: #ffffff; --text: #1d1d1f;
+      --text-secondary: #6e6e73; --accent: #0071e3; --border: #d2d2d7;
+      --nav-bg: rgba(245,245,247,0.85); --badge-bg: #e8f4fd; --badge-text: #0071e3;
+    }
+    [data-theme="dark"] {
+      --bg: #000000; --surface: #1c1c1e; --text: #f5f5f7;
+      --text-secondary: #98989d; --accent: #2997ff; --border: #38383a;
+      --nav-bg: rgba(0,0,0,0.85); --badge-bg: #1a2e40; --badge-text: #2997ff;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; line-height: 1.6; }
+
+    /* NAV */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--nav-bg); backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px; height: 52px;
+    }
+    .nav-logo { font-size: 17px; font-weight: 600; color: var(--text); text-decoration: none; }
+    .theme-toggle { display: flex; gap: 4px; }
+    .theme-btn {
+      border: none; background: transparent; color: var(--text-secondary);
+      font-size: 13px; cursor: pointer; padding: 4px 8px; border-radius: 6px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .theme-btn.active { background: var(--accent); color: #fff; }
+    .theme-btn:hover:not(.active) { background: var(--border); }
+
+    /* HEADER */
+    header {
+      text-align: center; padding: 60px 24px 40px;
+      border-bottom: 1px solid var(--border);
+    }
+    header h1 { font-size: 36px; font-weight: 700; letter-spacing: -0.5px; }
+    header p { margin-top: 8px; color: var(--text-secondary); font-size: 15px; }
+
+    /* LANG TABS */
+    .lang-tabs {
+      display: flex; justify-content: center; gap: 8px;
+      padding: 24px 24px 0;
+    }
+    .lang-btn {
+      border: 1px solid var(--border); background: var(--surface);
+      color: var(--text-secondary); font-size: 14px; font-weight: 500;
+      cursor: pointer; padding: 6px 20px; border-radius: 20px;
+      transition: all 0.15s;
+    }
+    .lang-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .lang-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+
+    /* CONTENT */
+    .content { max-width: 760px; margin: 0 auto; padding: 32px 24px 80px; }
+    .lang-content { display: none; }
+    .lang-content.active { display: block; }
+
+    section { margin-bottom: 40px; }
+    section h2 {
+      font-size: 22px; font-weight: 700; margin-bottom: 14px;
+      padding-bottom: 10px; border-bottom: 1px solid var(--border);
+    }
+    section p, section li { font-size: 15px; color: var(--text-secondary); margin-bottom: 8px; }
+    section ul { padding-left: 20px; }
+    section li { margin-bottom: 4px; }
+
+    /* TABLE */
+    .table-wrap { overflow-x: auto; margin-top: 12px; border-radius: 12px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    thead th {
+      background: var(--surface); color: var(--text); font-weight: 600;
+      padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border);
+    }
+    tbody td { padding: 11px 16px; vertical-align: top; color: var(--text-secondary); }
+    tbody tr:not(:last-child) td { border-bottom: 1px solid var(--border); }
+    tbody tr:nth-child(even) td { background: var(--bg); }
+
+    /* BADGE */
+    .badge {
+      display: inline-block; background: var(--badge-bg); color: var(--badge-text);
+      font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 6px;
+      white-space: nowrap;
+    }
+
+    /* CALLOUT */
+    .callout {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px 20px;
+    }
+    .callout.info { border-left: 4px solid var(--accent); }
+    .callout p { color: var(--text-secondary); font-size: 14px; }
+
+    /* FOOTER */
+    footer {
+      text-align: center; padding: 24px;
+      border-top: 1px solid var(--border);
+      color: var(--text-secondary); font-size: 13px;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="#">BYD Stats</a>
+  <div class="theme-toggle">
+    <button class="theme-btn" onclick="setTheme('light')">라이트</button>
+    <button class="theme-btn active" onclick="setTheme('system')">시스템</button>
+    <button class="theme-btn" onclick="setTheme('dark')">다크</button>
+  </div>
+</nav>
+
+<header>
+  <h1>개인정보 처리방침</h1>
+  <p>최종 업데이트: 2026-08-13</p>
+</header>
+
+<div class="lang-tabs">
+  <button class="lang-btn active" onclick="setLang('ko', this)">한국어</button>
+  <button class="lang-btn" onclick="setLang('en', this)">English</button>
+</div>
+
+<div class="content">
+
+  <!-- ===== KOREAN ===== -->
+  <div class="lang-content active" id="lang-ko">
+
+    <section>
+      <h2>1. 수집 정보 및 목적</h2>
+      <p>BYD Stats는 아래 정보를 수집하며, 모든 데이터는 앱 기능 제공 목적으로만 사용됩니다.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>정보 유형</th>
+              <th>수집 항목</th>
+              <th>목적</th>
+              <th>저장 위치</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>계정 정보</td>
+              <td>BYD 계정 이메일, 비밀번호, 세션 토큰</td>
+              <td>BYD 서버 인증 및 차량 데이터 조회</td>
+              <td><span class="badge">기기 내 Keychain</span></td>
+            </tr>
+            <tr>
+              <td>차량 데이터</td>
+              <td>배터리 잔량, 주행가능거리, 충전 상태, 순간 전력, 총 주행거리, 실내 온도</td>
+              <td>대시보드 표시 및 이력 기록</td>
+              <td><span class="badge">기기 내 (SwiftData)</span></td>
+            </tr>
+            <tr>
+              <td>충전 세션</td>
+              <td>충전 시작/종료 시각, SOC 변화, 충전량(kWh), 예상 비용</td>
+              <td>충전 이력 및 비용 분석</td>
+              <td><span class="badge">기기 내 (SwiftData)</span></td>
+            </tr>
+            <tr>
+              <td>주행 세션</td>
+              <td>주행 시작/종료 시각, 이동 거리, 소비 전력</td>
+              <td>주행 이력 및 전비 분석</td>
+              <td><span class="badge">기기 내 (SwiftData)</span></td>
+            </tr>
+            <tr>
+              <td>위치 정보</td>
+              <td>충전·주행 세션 발생 위치 (선택적)</td>
+              <td>세션 위치 기록</td>
+              <td><span class="badge">기기 내 (SwiftData)</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>2. 외부 서버 전송</h2>
+      <p>앱은 차량 데이터 조회를 위해 <strong>BYD 공식 서버(*.byd.auto)</strong>에만 통신합니다. 그 외 어떠한 외부 서버, 분석 서비스, 광고 네트워크와도 통신하지 않습니다.</p>
+      <div class="callout info" style="margin-top:12px;">
+        <p>BYD 서버로의 모든 요청은 BYD 공식 앱과 동일한 암호화 프로토콜(Bangcle, AES-128-CBC)로 보호됩니다.</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>3. 제3자 공유</h2>
+      <p>수집된 어떠한 정보도 제3자와 공유하지 않습니다. 광고, 분석, 마케팅 목적의 SDK는 일절 포함되어 있지 않습니다.</p>
+    </section>
+
+    <section>
+      <h2>4. 데이터 보관 및 삭제</h2>
+      <ul>
+        <li>모든 데이터는 사용자의 기기 내에만 저장됩니다.</li>
+        <li>앱을 삭제하면 SwiftData에 저장된 모든 이력이 자동으로 삭제됩니다.</li>
+        <li>Keychain에 저장된 계정 정보는 앱 설정의 <strong>로그아웃</strong> 기능으로 즉시 삭제할 수 있습니다.</li>
+        <li>위치 권한은 iOS 설정 앱에서 언제든지 철회할 수 있습니다.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>5. 위치 정보 사용</h2>
+      <p>앱은 충전 및 주행 세션의 발생 위치를 기록하기 위해 위치 권한을 요청할 수 있습니다. 위치 권한은 선택 사항이며, 허용하지 않아도 앱의 핵심 기능(배터리 상태 조회, 충전 비용 추산)은 정상 작동합니다.</p>
+    </section>
+
+    <section>
+      <h2>6. 아동 개인정보</h2>
+      <p>본 앱은 만 14세 미만 아동을 대상으로 하지 않으며, 아동의 개인정보를 의도적으로 수집하지 않습니다.</p>
+    </section>
+
+    <section>
+      <h2>7. 비공식 앱 안내</h2>
+      <div class="callout">
+        <p>BYD Stats는 BYD와 무관한 독립 개발자가 만든 비공식 서드파티 앱입니다. BYD의 공식 지원 대상이 아니며, BYD API 변경에 따라 일부 기능이 동작하지 않을 수 있습니다.</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>8. 문의</h2>
+      <p>개인정보 처리방침에 관한 문의는 아래로 연락해 주세요.</p>
+      <p><strong>이메일:</strong> <a href="mailto:geyuong@gmail.com" style="color:var(--accent);">geyuong@gmail.com</a></p>
+    </section>
+
+    <section>
+      <h2>9. 방침 변경</h2>
+      <p>개인정보 처리방침이 변경될 경우, 이 페이지에 최신 내용을 게시하고 앱 업데이트 노트에 안내합니다. 중요한 변경 사항이 있을 경우 더 명확한 방법으로 알릴 수 있습니다.</p>
+    </section>
+
+  </div>
+
+  <!-- ===== ENGLISH ===== -->
+  <div class="lang-content" id="lang-en">
+
+    <section>
+      <h2>1. Information We Collect</h2>
+      <p>BYD Stats collects the following information solely to provide app functionality.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Data</th>
+              <th>Purpose</th>
+              <th>Storage</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Account</td>
+              <td>BYD email, password, session tokens</td>
+              <td>Authentication with BYD server</td>
+              <td><span class="badge">Device Keychain</span></td>
+            </tr>
+            <tr>
+              <td>Vehicle Data</td>
+              <td>Battery %, range, charge status, instant power, total mileage, cabin temp</td>
+              <td>Dashboard display and history logging</td>
+              <td><span class="badge">On-device (SwiftData)</span></td>
+            </tr>
+            <tr>
+              <td>Charging Sessions</td>
+              <td>Start/end time, SOC change, energy (kWh), estimated cost</td>
+              <td>Charging history and cost analysis</td>
+              <td><span class="badge">On-device (SwiftData)</span></td>
+            </tr>
+            <tr>
+              <td>Driving Sessions</td>
+              <td>Start/end time, distance, energy consumed</td>
+              <td>Driving history and efficiency analysis</td>
+              <td><span class="badge">On-device (SwiftData)</span></td>
+            </tr>
+            <tr>
+              <td>Location</td>
+              <td>Location of charging/driving sessions (optional)</td>
+              <td>Session location logging</td>
+              <td><span class="badge">On-device (SwiftData)</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>2. External Communications</h2>
+      <p>The app communicates exclusively with <strong>BYD's official servers (*.byd.auto)</strong> to retrieve vehicle data. No other external servers, analytics services, or advertising networks are used.</p>
+      <div class="callout info" style="margin-top:12px;">
+        <p>All requests to BYD servers are protected using the same encryption protocol as the official BYD app (Bangcle, AES-128-CBC).</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>3. Third-Party Sharing</h2>
+      <p>We do not share any collected information with third parties. No advertising, analytics, or marketing SDKs are included in this app.</p>
+    </section>
+
+    <section>
+      <h2>4. Data Retention &amp; Deletion</h2>
+      <ul>
+        <li>All data is stored locally on your device only.</li>
+        <li>Deleting the app will automatically remove all SwiftData history.</li>
+        <li>Account credentials stored in Keychain can be deleted immediately via the <strong>Logout</strong> option in Settings.</li>
+        <li>Location permissions can be revoked at any time in iOS Settings.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>5. Location Data</h2>
+      <p>The app may request location permission to record where charging and driving sessions occur. This permission is optional — core features (battery status, charging cost estimation) work without it.</p>
+    </section>
+
+    <section>
+      <h2>6. Children's Privacy</h2>
+      <p>This app is not directed at children under the age of 13, and we do not knowingly collect personal information from children.</p>
+    </section>
+
+    <section>
+      <h2>7. Unofficial App Disclaimer</h2>
+      <div class="callout">
+        <p>BYD Stats is an unofficial third-party app created by an independent developer and is not affiliated with or endorsed by BYD. Some features may stop working if BYD changes their API.</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>8. Contact</h2>
+      <p>For questions about this privacy policy, please contact:</p>
+      <p><strong>Email:</strong> <a href="mailto:geyuong@gmail.com" style="color:var(--accent);">geyuong@gmail.com</a></p>
+    </section>
+
+    <section>
+      <h2>9. Policy Updates</h2>
+      <p>If this policy changes, the updated version will be posted on this page, and app release notes will include a notice. For significant changes, a more prominent notification may be provided.</p>
+    </section>
+
+  </div>
+</div>
+
+<footer>
+  <p>&#169; 2026 BYD Stats &middot; <a href="#">홈</a></p>
+</footer>
+
+<script>
+  function setTheme(t) {
+    document.documentElement.removeAttribute('data-theme');
+    if (t !== 'system') document.documentElement.setAttribute('data-theme', t);
+    document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+    const map = { light: 0, system: 1, dark: 2 };
+    document.querySelectorAll('.theme-btn')[map[t]].classList.add('active');
+    localStorage.setItem('theme', t);
+  }
+  function setLang(l, btn) {
+    document.querySelectorAll('.lang-content').forEach(el => el.classList.remove('active'));
+    document.getElementById('lang-' + l).classList.add('active');
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  const saved = localStorage.getItem('theme');
+  if (saved) setTheme(saved);
+</script>
+</body>
+</html>
