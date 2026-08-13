@@ -1,0 +1,21 @@
+import Foundation
+import SwiftData
+
+@Model
+final class DataPoint {
+    var timestamp: Date
+    var batteryPercent: Int
+    var isCharging: Bool
+    var isDriving: Bool
+    var chargingPowerKw: Double?
+    var hvacOn: Bool
+
+    init(timestamp: Date, batteryPercent: Int, isCharging: Bool, isDriving: Bool, chargingPowerKw: Double? = nil, hvacOn: Bool = false) {
+        self.timestamp = timestamp
+        self.batteryPercent = batteryPercent
+        self.isCharging = isCharging
+        self.isDriving = isDriving
+        self.chargingPowerKw = chargingPowerKw
+        self.hvacOn = hvacOn
+    }
+}

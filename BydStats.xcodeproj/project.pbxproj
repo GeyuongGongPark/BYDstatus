@@ -1,0 +1,443 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		10AF18CC59A485D0E89E3AE4 /* BydVehicleService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CBA5591971F2800B9092FCC /* BydVehicleService.swift */; };
+		3616E564342AA6231D532E88 /* SessionDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCC034E754C027617E4576C9 /* SessionDetector.swift */; };
+		3C652F7733AC00389C9337A3 /* CryptoUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48AE185E2151EDE05B586C51 /* CryptoUtils.swift */; };
+		3D77981F6B6F7728562F8B86 /* VehicleStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D5EDF879787470F3D9CC43C /* VehicleStatus.swift */; };
+		451D3F1F7662F6941E2AD22F /* DataPoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20EA78FF1C786628B2798904 /* DataPoint.swift */; };
+		54DD8C8139A691DB4CF3A13D /* DataCollector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4366994F3C32C4A541A58742 /* DataCollector.swift */; };
+		5D87049D8BCD49A0804FBB84 /* BydConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC1E56A6C4032632BC08F3C /* BydConfig.swift */; };
+		640B3541C8B12CC9321186F8 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 678DCBC896CF337E6B355C61 /* DashboardView.swift */; };
+		6614C803145731FD9787DF40 /* ChargingSessionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26054D2FBC8FCC5F9F74267F /* ChargingSessionsView.swift */; };
+		86C8D3D45A0A0AAF166B2995 /* BydStatsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F06B305251905D6603FA9E63 /* BydStatsApp.swift */; };
+		9136A848A8E4299DFF1C4D4C /* BackgroundTasks.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04788C17EDAEA6AB900D4CD7 /* BackgroundTasks.framework */; };
+		958CF93A2A73107D9886AC39 /* BangcleCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4CB72E0D2309D7CCB57F607 /* BangcleCodec.swift */; };
+		BD55B46A54855E3245764BE2 /* ChargingSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED46F84CE16CB39AC823C2D /* ChargingSession.swift */; };
+		E2798155C7FC2BA69B29D96B /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AA38E6C00179069BE9C7228 /* SettingsView.swift */; };
+		EAE905422372203A216641B0 /* BackgroundTaskManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65D3575DF625F74C77F623E3 /* BackgroundTaskManager.swift */; };
+		EDB725EF83E99A0603059D0E /* DrivingSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBBA57DECFE34014901A9499 /* DrivingSession.swift */; };
+		F3BE89AF622ED96C7AD497D6 /* bangcle_tables.bin in Resources */ = {isa = PBXBuildFile; fileRef = DB27E28B744FBC2888F6B621 /* bangcle_tables.bin */; };
+		F4E2B316D810DD29234622AD /* DrivingSessionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E28C32611824F87DF2AE410 /* DrivingSessionsView.swift */; };
+		F5567F0F0563D363AFBA50C5 /* BatteryHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFE26BE12BB53A6F1A5FB5C2 /* BatteryHistoryView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		04788C17EDAEA6AB900D4CD7 /* BackgroundTasks.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = BackgroundTasks.framework; sourceTree = "<group>"; };
+		20EA78FF1C786628B2798904 /* DataPoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataPoint.swift; sourceTree = "<group>"; };
+		26054D2FBC8FCC5F9F74267F /* ChargingSessionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChargingSessionsView.swift; sourceTree = "<group>"; };
+		4366994F3C32C4A541A58742 /* DataCollector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataCollector.swift; sourceTree = "<group>"; };
+		48AE185E2151EDE05B586C51 /* CryptoUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CryptoUtils.swift; sourceTree = "<group>"; };
+		585EE410D55F691D52EE00AD /* BydStats.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = BydStats.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		65D3575DF625F74C77F623E3 /* BackgroundTaskManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundTaskManager.swift; sourceTree = "<group>"; };
+		678DCBC896CF337E6B355C61 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		6AA38E6C00179069BE9C7228 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		7CBA5591971F2800B9092FCC /* BydVehicleService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BydVehicleService.swift; sourceTree = "<group>"; };
+		7E28C32611824F87DF2AE410 /* DrivingSessionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrivingSessionsView.swift; sourceTree = "<group>"; };
+		9D5EDF879787470F3D9CC43C /* VehicleStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleStatus.swift; sourceTree = "<group>"; };
+		B4CB72E0D2309D7CCB57F607 /* BangcleCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BangcleCodec.swift; sourceTree = "<group>"; };
+		BFE26BE12BB53A6F1A5FB5C2 /* BatteryHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryHistoryView.swift; sourceTree = "<group>"; };
+		CBBA57DECFE34014901A9499 /* DrivingSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrivingSession.swift; sourceTree = "<group>"; };
+		CEC1E56A6C4032632BC08F3C /* BydConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BydConfig.swift; sourceTree = "<group>"; };
+		CED46F84CE16CB39AC823C2D /* ChargingSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChargingSession.swift; sourceTree = "<group>"; };
+		DB27E28B744FBC2888F6B621 /* bangcle_tables.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = bangcle_tables.bin; sourceTree = "<group>"; };
+		DD02993CC5C4CAECF6E37313 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		F06B305251905D6603FA9E63 /* BydStatsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BydStatsApp.swift; sourceTree = "<group>"; };
+		FCC034E754C027617E4576C9 /* SessionDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionDetector.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		701F6C500ACF94FDDC479E5B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9136A848A8E4299DFF1C4D4C /* BackgroundTasks.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		155C262B95E62586C3AC36C8 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				04788C17EDAEA6AB900D4CD7 /* BackgroundTasks.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		2EDA505176A16E5A8A0B393D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				585EE410D55F691D52EE00AD /* BydStats.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		6BCE28D3716732F9893702CB /* App */ = {
+			isa = PBXGroup;
+			children = (
+				F06B305251905D6603FA9E63 /* BydStatsApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		6FE3641C324950138D9D27AF /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				BFE26BE12BB53A6F1A5FB5C2 /* BatteryHistoryView.swift */,
+				26054D2FBC8FCC5F9F74267F /* ChargingSessionsView.swift */,
+				678DCBC896CF337E6B355C61 /* DashboardView.swift */,
+				7E28C32611824F87DF2AE410 /* DrivingSessionsView.swift */,
+				6AA38E6C00179069BE9C7228 /* SettingsView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		854A21644A3EC94959FE687E /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				65D3575DF625F74C77F623E3 /* BackgroundTaskManager.swift */,
+				B4CB72E0D2309D7CCB57F607 /* BangcleCodec.swift */,
+				CEC1E56A6C4032632BC08F3C /* BydConfig.swift */,
+				7CBA5591971F2800B9092FCC /* BydVehicleService.swift */,
+				48AE185E2151EDE05B586C51 /* CryptoUtils.swift */,
+				4366994F3C32C4A541A58742 /* DataCollector.swift */,
+				FCC034E754C027617E4576C9 /* SessionDetector.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		B699EEDAF36D9C1F443BCB6B /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				CED46F84CE16CB39AC823C2D /* ChargingSession.swift */,
+				20EA78FF1C786628B2798904 /* DataPoint.swift */,
+				CBBA57DECFE34014901A9499 /* DrivingSession.swift */,
+				9D5EDF879787470F3D9CC43C /* VehicleStatus.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		E513BDE14AB155EF487C8BC4 /* BydStats */ = {
+			isa = PBXGroup;
+			children = (
+				6BCE28D3716732F9893702CB /* App */,
+				B699EEDAF36D9C1F443BCB6B /* Models */,
+				F2A4F385A131D8C061D6818D /* Resources */,
+				854A21644A3EC94959FE687E /* Services */,
+				6FE3641C324950138D9D27AF /* Views */,
+			);
+			path = BydStats;
+			sourceTree = "<group>";
+		};
+		EAAAF0BE9AB7AFDBD9D37E9B = {
+			isa = PBXGroup;
+			children = (
+				E513BDE14AB155EF487C8BC4 /* BydStats */,
+				155C262B95E62586C3AC36C8 /* Frameworks */,
+				2EDA505176A16E5A8A0B393D /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		F2A4F385A131D8C061D6818D /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				DB27E28B744FBC2888F6B621 /* bangcle_tables.bin */,
+				DD02993CC5C4CAECF6E37313 /* Info.plist */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		5FCB231BE0E4688D10F7EC56 /* BydStats */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3331B39814B27B887ED4F70E /* Build configuration list for PBXNativeTarget "BydStats" */;
+			buildPhases = (
+				EBB6273E3C251977939906F3 /* Sources */,
+				F068B644CAEA687CAC123FEB /* Resources */,
+				701F6C500ACF94FDDC479E5B /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BydStats;
+			packageProductDependencies = (
+			);
+			productName = BydStats;
+			productReference = 585EE410D55F691D52EE00AD /* BydStats.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A4E9441F5F76E3B0B72FF45D /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					5FCB231BE0E4688D10F7EC56 = {
+						DevelopmentTeam = "";
+					};
+				};
+			};
+			buildConfigurationList = 4A0D5965CAB5675D5E21DAB4 /* Build configuration list for PBXProject "BydStats" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = EAAAF0BE9AB7AFDBD9D37E9B;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 2EDA505176A16E5A8A0B393D /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				5FCB231BE0E4688D10F7EC56 /* BydStats */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		F068B644CAEA687CAC123FEB /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F3BE89AF622ED96C7AD497D6 /* bangcle_tables.bin in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		EBB6273E3C251977939906F3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EAE905422372203A216641B0 /* BackgroundTaskManager.swift in Sources */,
+				958CF93A2A73107D9886AC39 /* BangcleCodec.swift in Sources */,
+				F5567F0F0563D363AFBA50C5 /* BatteryHistoryView.swift in Sources */,
+				5D87049D8BCD49A0804FBB84 /* BydConfig.swift in Sources */,
+				86C8D3D45A0A0AAF166B2995 /* BydStatsApp.swift in Sources */,
+				10AF18CC59A485D0E89E3AE4 /* BydVehicleService.swift in Sources */,
+				BD55B46A54855E3245764BE2 /* ChargingSession.swift in Sources */,
+				6614C803145731FD9787DF40 /* ChargingSessionsView.swift in Sources */,
+				3C652F7733AC00389C9337A3 /* CryptoUtils.swift in Sources */,
+				640B3541C8B12CC9321186F8 /* DashboardView.swift in Sources */,
+				54DD8C8139A691DB4CF3A13D /* DataCollector.swift in Sources */,
+				451D3F1F7662F6941E2AD22F /* DataPoint.swift in Sources */,
+				EDB725EF83E99A0603059D0E /* DrivingSession.swift in Sources */,
+				F4E2B316D810DD29234622AD /* DrivingSessionsView.swift in Sources */,
+				3616E564342AA6231D532E88 /* SessionDetector.swift in Sources */,
+				E2798155C7FC2BA69B29D96B /* SettingsView.swift in Sources */,
+				3D77981F6B6F7728562F8B86 /* VehicleStatus.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		1AAE9E5262CE1D2792631170 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\".\"",
+				);
+				INFOPLIST_FILE = BydStats/Resources/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ggpark.BydStats;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		3D13AA2D018C155D7F24C886 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		ED94298588E009C26C906C97 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\".\"",
+				);
+				INFOPLIST_FILE = BydStats/Resources/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ggpark.BydStats;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		EFDC5924106996B1D729D48A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		3331B39814B27B887ED4F70E /* Build configuration list for PBXNativeTarget "BydStats" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1AAE9E5262CE1D2792631170 /* Debug */,
+				ED94298588E009C26C906C97 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		4A0D5965CAB5675D5E21DAB4 /* Build configuration list for PBXProject "BydStats" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				EFDC5924106996B1D729D48A /* Debug */,
+				3D13AA2D018C155D7F24C886 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A4E9441F5F76E3B0B72FF45D /* Project object */;
+}

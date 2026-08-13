@@ -1,0 +1,40 @@
+name: BydStats
+options:
+  bundleIdPrefix: com.ggpark
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "16.0"
+
+targets:
+  BydStats:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: BydStats
+    info:
+      path: BydStats/Resources/Info.plist
+      properties:
+        CFBundleDisplayName: BYD Stats
+        CFBundleVersion: "1"
+        CFBundleShortVersionString: "0.1.0"
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UILaunchScreen:
+          UIColorName: ""
+        NSLocationWhenInUseUsageDescription: "충전 세션 위치 기록 및 주행 거리 측정에 사용됩니다."
+        NSLocationAlwaysAndWhenInUseUsageDescription: "백그라운드에서 충전/주행 위치를 기록합니다."
+        UIBackgroundModes:
+          - fetch
+          - processing
+        BGTaskSchedulerPermittedIdentifiers:
+          - com.ggpark.BydStats.refresh
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.ggpark.BydStats
+      SWIFT_VERSION: "6.0"
+      DEVELOPMENT_TEAM: ""
+      TARGETED_DEVICE_FAMILY: "1"
+      ENABLE_PREVIEWS: YES
+    dependencies:
+      - framework: BackgroundTasks.framework
+        embed: false
