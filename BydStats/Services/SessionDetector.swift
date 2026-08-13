@@ -4,7 +4,6 @@ import SwiftData
 final class SessionDetector {
     private var activeChargingSession: ChargingSession?
     private var activeDrivingSession: DrivingSession?
-    private var lastMileage: Double?
 
     private let modelContext: ModelContext
     private let electricityRate: Double
@@ -30,8 +29,6 @@ final class SessionDetector {
 
         handleChargingSession(status: status, timestamp: timestamp)
         handleDrivingSession(status: status, timestamp: timestamp)
-
-        lastMileage = status.totalMileage
     }
 
     private func handleChargingSession(status: VehicleStatus, timestamp: Date) {
@@ -56,6 +53,9 @@ final class SessionDetector {
         if status.isDriving {
             if activeDrivingSession == nil {
                 let session = DrivingSession(startTime: timestamp, startSoc: status.batteryPercentage)
+                if status.totalMileage > 0 {
+                    session.startOdometer = status.totalMileage
+                }
                 modelContext.insert(session)
                 activeDrivingSession = session
             }
@@ -64,11 +64,18 @@ final class SessionDetector {
             session.endTime = timestamp
             let socDelta = Double(max(0, session.startSoc - session.endSoc))
             session.energyKwh = socDelta * batteryCapacityKwh / 100.0
-            if let last = lastMileage, status.totalMileage > last {
-                let delta = status.totalMileage - last
-                session.distanceKm = delta
+
+            // 종료 ODO - 시작 ODO 로 주행 거리 계산
+            if status.totalMileage > 0 {
+                session.endOdometer = status.totalMileage
+            }
+            if let startOdo = session.startOdometer,
+               let endOdo = session.endOdometer,
+               endOdo > startOdo {
+                let dist = endOdo - startOdo
+                session.distanceKm = dist
                 if session.energyKwh > 0 {
-                    session.efficiencyKmPerKwh = delta / session.energyKwh
+                    session.efficiencyKmPerKwh = dist / session.energyKwh
                 }
             }
             activeDrivingSession = nil
