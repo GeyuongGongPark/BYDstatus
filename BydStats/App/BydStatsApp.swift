@@ -16,8 +16,23 @@ struct BydStatsApp: App {
 
     var body: some Scene {
         WindowGroup {
-            DashboardView()
-                .environment(appState)
+            TabView {
+                DashboardView()
+                    .tabItem { Label("대시보드", systemImage: "gauge.with.dots.needle.bottom.50percent") }
+
+                BatteryHistoryView()
+                    .tabItem { Label("배터리", systemImage: "bolt.fill") }
+
+                ChargingSessionsView()
+                    .tabItem { Label("충전", systemImage: "ev.plug.dc.ccs1") }
+
+                DrivingSessionsView()
+                    .tabItem { Label("주행", systemImage: "car.fill") }
+
+                SettingsView()
+                    .tabItem { Label("설정", systemImage: "gearshape.fill") }
+            }
+            .environment(appState)
         }
         .modelContainer(modelContainer)
     }
