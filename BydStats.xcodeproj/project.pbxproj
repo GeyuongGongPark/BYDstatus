@@ -8,14 +8,15 @@
 
 /* Begin PBXBuildFile section */
 		10AF18CC59A485D0E89E3AE4 /* BydVehicleService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CBA5591971F2800B9092FCC /* BydVehicleService.swift */; };
+		16447B36012F710AB286B64E /* LogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B6DC82184B73DB89850581 /* LogView.swift */; };
 		208F4E2D120B873C14543110 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1990F1E772C2BBD6CF01F33C /* Assets.xcassets */; };
 		3616E564342AA6231D532E88 /* SessionDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCC034E754C027617E4576C9 /* SessionDetector.swift */; };
 		3C652F7733AC00389C9337A3 /* CryptoUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48AE185E2151EDE05B586C51 /* CryptoUtils.swift */; };
 		3D77981F6B6F7728562F8B86 /* VehicleStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D5EDF879787470F3D9CC43C /* VehicleStatus.swift */; };
 		451D3F1F7662F6941E2AD22F /* DataPoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20EA78FF1C786628B2798904 /* DataPoint.swift */; };
-		54DD8C8139A691DB4CF3A13D /* DataCollector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4366994F3C32C4A541A58742 /* DataCollector.swift */; };
 		5D87049D8BCD49A0804FBB84 /* BydConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC1E56A6C4032632BC08F3C /* BydConfig.swift */; };
 		640B3541C8B12CC9321186F8 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 678DCBC896CF337E6B355C61 /* DashboardView.swift */; };
+		660E602DDCDBA34697C0F31D /* LogManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F35B4C9FE85831AFCEFF81A /* LogManager.swift */; };
 		6614C803145731FD9787DF40 /* ChargingSessionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26054D2FBC8FCC5F9F74267F /* ChargingSessionsView.swift */; };
 		86C8D3D45A0A0AAF166B2995 /* BydStatsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F06B305251905D6603FA9E63 /* BydStatsApp.swift */; };
 		9136A848A8E4299DFF1C4D4C /* BackgroundTasks.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04788C17EDAEA6AB900D4CD7 /* BackgroundTasks.framework */; };
@@ -65,10 +66,10 @@
 		20EA78FF1C786628B2798904 /* DataPoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataPoint.swift; sourceTree = "<group>"; };
 		26054D2FBC8FCC5F9F74267F /* ChargingSessionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChargingSessionsView.swift; sourceTree = "<group>"; };
 		36251AF800585C0A27374429 /* WidgetDataStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetDataStore.swift; sourceTree = "<group>"; };
-		4366994F3C32C4A541A58742 /* DataCollector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataCollector.swift; sourceTree = "<group>"; };
+		3F35B4C9FE85831AFCEFF81A /* LogManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogManager.swift; sourceTree = "<group>"; };
 		48AE185E2151EDE05B586C51 /* CryptoUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CryptoUtils.swift; sourceTree = "<group>"; };
-		5230D93792F5A73C41BE5132 /* BydStatsWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BydStatsWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		585EE410D55F691D52EE00AD /* BydStats.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BydStats.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5230D93792F5A73C41BE5132 /* BydStatsWidget.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = BydStatsWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		585EE410D55F691D52EE00AD /* BydStats.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = BydStats.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		65D3575DF625F74C77F623E3 /* BackgroundTaskManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundTaskManager.swift; sourceTree = "<group>"; };
 		678DCBC896CF337E6B355C61 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		6AA38E6C00179069BE9C7228 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -78,6 +79,7 @@
 		7DCFA75EA19A394902CCE405 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		7DF0B4BEFFDCA128387D1638 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		7E28C32611824F87DF2AE410 /* DrivingSessionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrivingSessionsView.swift; sourceTree = "<group>"; };
+		93B6DC82184B73DB89850581 /* LogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogView.swift; sourceTree = "<group>"; };
 		9D5EDF879787470F3D9CC43C /* VehicleStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VehicleStatus.swift; sourceTree = "<group>"; };
 		B4CB72E0D2309D7CCB57F607 /* BangcleCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BangcleCodec.swift; sourceTree = "<group>"; };
 		BC8FC3E4D9E4E384509E5239 /* BydStatsWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BydStatsWidget.entitlements; sourceTree = "<group>"; };
@@ -136,6 +138,7 @@
 				26054D2FBC8FCC5F9F74267F /* ChargingSessionsView.swift */,
 				678DCBC896CF337E6B355C61 /* DashboardView.swift */,
 				7E28C32611824F87DF2AE410 /* DrivingSessionsView.swift */,
+				93B6DC82184B73DB89850581 /* LogView.swift */,
 				6AA38E6C00179069BE9C7228 /* SettingsView.swift */,
 			);
 			path = Views;
@@ -149,8 +152,8 @@
 				CEC1E56A6C4032632BC08F3C /* BydConfig.swift */,
 				7CBA5591971F2800B9092FCC /* BydVehicleService.swift */,
 				48AE185E2151EDE05B586C51 /* CryptoUtils.swift */,
-				4366994F3C32C4A541A58742 /* DataCollector.swift */,
 				7DCFA75EA19A394902CCE405 /* KeychainHelper.swift */,
+				3F35B4C9FE85831AFCEFF81A /* LogManager.swift */,
 				FCC034E754C027617E4576C9 /* SessionDetector.swift */,
 				36251AF800585C0A27374429 /* WidgetDataStore.swift */,
 			);
@@ -260,6 +263,14 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					5FCB231BE0E4688D10F7EC56 = {
+						DevelopmentTeam = "";
+					};
+					6AB67B9B67D76E945F21D96B = {
+						DevelopmentTeam = "";
+					};
+				};
 			};
 			buildConfigurationList = 4A0D5965CAB5675D5E21DAB4 /* Build configuration list for PBXProject "BydStats" */;
 			developmentRegion = en;
@@ -317,11 +328,12 @@
 				6614C803145731FD9787DF40 /* ChargingSessionsView.swift in Sources */,
 				3C652F7733AC00389C9337A3 /* CryptoUtils.swift in Sources */,
 				640B3541C8B12CC9321186F8 /* DashboardView.swift in Sources */,
-				54DD8C8139A691DB4CF3A13D /* DataCollector.swift in Sources */,
 				451D3F1F7662F6941E2AD22F /* DataPoint.swift in Sources */,
 				EDB725EF83E99A0603059D0E /* DrivingSession.swift in Sources */,
 				F4E2B316D810DD29234622AD /* DrivingSessionsView.swift in Sources */,
 				BDB868C6014604F546C61A88 /* KeychainHelper.swift in Sources */,
+				660E602DDCDBA34697C0F31D /* LogManager.swift in Sources */,
+				16447B36012F710AB286B64E /* LogView.swift in Sources */,
 				3616E564342AA6231D532E88 /* SessionDetector.swift in Sources */,
 				E2798155C7FC2BA69B29D96B /* SettingsView.swift in Sources */,
 				3D77981F6B6F7728562F8B86 /* VehicleStatus.swift in Sources */,
@@ -348,7 +360,7 @@
 				ASSETCATALOG_COMPILER_SKIP_APP_STORE_DEPLOYMENT = YES;
 				CODE_SIGN_ENTITLEMENTS = BydStats/Resources/BydStats.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = 8FUMN5NL47;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -371,7 +383,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = BydStatsWidget/BydStatsWidget.entitlements;
-				DEVELOPMENT_TEAM = 8FUMN5NL47;
+				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = BydStatsWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -447,7 +459,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = BydStatsWidget/BydStatsWidget.entitlements;
-				DEVELOPMENT_TEAM = 8FUMN5NL47;
+				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = BydStatsWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -471,7 +483,7 @@
 				ASSETCATALOG_COMPILER_SKIP_APP_STORE_DEPLOYMENT = YES;
 				CODE_SIGN_ENTITLEMENTS = BydStats/Resources/BydStats.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = 8FUMN5NL47;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
