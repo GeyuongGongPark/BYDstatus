@@ -1,15 +1,8 @@
 import Foundation
-@preconcurrency import BackgroundTasks
+import BackgroundTasks
 
-final class BackgroundTaskManager {
+enum BackgroundTaskManager {
     static let taskIdentifier = "com.ggpark.BydStats.refresh"
-
-    static func registerTask(service: BydVehicleService, vin: String) {
-        BGTaskScheduler.shared.register(forTaskWithIdentifier: taskIdentifier, using: nil) { task in
-            guard let refreshTask = task as? BGAppRefreshTask else { return }
-            Self.handleRefresh(task: refreshTask, service: service, vin: vin)
-        }
-    }
 
     static func scheduleNextRefresh() {
         let request = BGAppRefreshTaskRequest(identifier: taskIdentifier)
@@ -17,22 +10,33 @@ final class BackgroundTaskManager {
         try? BGTaskScheduler.shared.submit(request)
     }
 
-    private static func handleRefresh(task: BGAppRefreshTask, service: BydVehicleService, vin: String) {
+    /// BydStatsApp의 `.backgroundTask(.appRefresh(...))` modifier에서 호출
+    static func handleRefresh() async {
         scheduleNextRefresh()
 
-        let fetchTask = Task {
-            do {
-                let status = try await service.fetchVehicleStatus(vin: vin)
-                // TODO: 백그라운드 ModelContext 생성 후 DataPoint 저장
-                _ = status
-                task.setTaskCompleted(success: true)
-            } catch {
-                task.setTaskCompleted(success: false)
-            }
-        }
+        guard let region     = KeychainHelper.load(forKey: "byd.region"),
+              let userId     = KeychainHelper.load(forKey: "byd.userId"),
+              let signToken  = KeychainHelper.load(forKey: "byd.signToken"),
+              let encryToken = KeychainHelper.load(forKey: "byd.encryToken"),
+              let vin        = KeychainHelper.load(forKey: "byd.vin"),
+              let username   = KeychainHelper.load(forKey: "byd.username"),
+              let password   = KeychainHelper.load(forKey: "byd.password") else { return }
 
-        task.expirationHandler = {
-            fetchTask.cancel()
-        }
+        guard let svc = try? BydVehicleService(config: BydConfig.fromRegion(region)) else { return }
+        await svc.restoreSession(userId: userId, signToken: signToken, encryToken: encryToken)
+        await svc.setCredentials(username: username, password: password)
+
+        guard let status = try? await svc.fetchVehicleStatus(vin: vin) else { return }
+
+        let snapshot = WidgetSnapshot(
+            batteryPercent: status.batteryPercentage,
+            isCharging:     status.isCharging,
+            isDriving:      status.isDriving,
+            drivingRangeKm: status.drivingRange,
+            instantPowerKw: status.instantPowerKw,
+            monthCostKrw:   0,
+            lastUpdated:    Date()
+        )
+        WidgetDataStore.save(snapshot)
     }
 }

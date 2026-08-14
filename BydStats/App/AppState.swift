@@ -142,7 +142,9 @@ final class AppState {
     func startPolling(modelContext: ModelContext, pollingInterval: Int = 5,
                       electricityRate: Double, batteryCapacityKwh: Double) {
         guard let svc = service, let vin = selectedVin else { return }
-        guard pollingTask == nil else { return } // 이미 실행 중
+        // 기존 폴링이 있으면 취소 후 재시작 (VIN 변경 등)
+        pollingTask?.cancel()
+        pollingTask = nil
 
         sessionDetector = SessionDetector(modelContext: modelContext,
                                           electricityRate: electricityRate,

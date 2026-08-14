@@ -20,11 +20,12 @@ enum TimeRange: String, CaseIterable {
     }
 
     var xAxisFormat: Date.FormatStyle {
+        let ko = Locale(identifier: "ko_KR")
         switch self {
-        case .day:   return .dateTime.hour().minute()
-        case .week:  return .dateTime.month().day().hour()
-        case .month: return .dateTime.month().day()
-        case .all:   return .dateTime.year().month().day()
+        case .day:   return .dateTime.locale(ko).hour().minute()
+        case .week:  return .dateTime.locale(ko).month().day().hour()
+        case .month: return .dateTime.locale(ko).month().day()
+        case .all:   return .dateTime.locale(ko).year().month().day()
         }
     }
 }
@@ -153,7 +154,7 @@ struct BatteryHistoryView: View {
         if let point = selectedPoint {
             HStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(point.timestamp, format: .dateTime.month().day().hour().minute())
+                    Text(point.timestamp, format: .dateTime.locale(Locale(identifier: "ko_KR")).month().day().hour().minute())
                         .font(.caption).foregroundStyle(.secondary)
                     HStack(alignment: .firstTextBaseline, spacing: 2) {
                         Text("\(point.batteryPercent)")

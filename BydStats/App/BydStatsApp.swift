@@ -36,5 +36,8 @@ struct BydStatsApp: App {
             .environment(LogManager.shared)
         }
         .modelContainer(modelContainer)
+        .backgroundTask(.appRefresh(BackgroundTaskManager.taskIdentifier)) {
+            await BackgroundTaskManager.handleRefresh()
+        }
     }
 }
