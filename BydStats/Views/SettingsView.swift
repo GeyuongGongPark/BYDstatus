@@ -2,11 +2,13 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(AppState.self) private var appState
+    @Environment(LogManager.self) private var logManager
 
     // 로그인 폼 입력
     @State private var username = ""
     @State private var password = ""
     @State private var region = "KR"
+    @State private var showLogView = false
 
     // 기타 설정
     @AppStorage("vehicleModel")    private var vehicleModel    = VehicleModel.atto3.rawValue
@@ -26,8 +28,12 @@ struct SettingsView: View {
                 electricitySection
                 pollingSection
                 locationSection
+                debugSection
             }
             .navigationTitle("설정")
+            .sheet(isPresented: $showLogView) {
+                LogView()
+            }
         }
     }
 
@@ -171,6 +177,32 @@ struct SettingsView: View {
     private var locationSection: some View {
         Section("위치") {
             Toggle("GPS 트래킹", isOn: $gpsEnabled)
+        }
+    }
+
+    // MARK: - 디버그 섹션
+
+    @ViewBuilder
+    private var debugSection: some View {
+        @Bindable var logManager = logManager
+        Section("디버그") {
+            Toggle("로그 수집", isOn: $logManager.isEnabled)
+            if logManager.isEnabled {
+                Button {
+                    showLogView = true
+                } label: {
+                    HStack {
+                        Text("로그 보기")
+                        Spacer()
+                        Text("\(logManager.entries.count)줄")
+                            .foregroundStyle(.secondary)
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .foregroundStyle(.primary)
+            }
         }
     }
 }

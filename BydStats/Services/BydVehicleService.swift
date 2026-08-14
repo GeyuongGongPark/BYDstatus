@@ -39,6 +39,11 @@ actor BydVehicleService {
 
     var isLoggedIn: Bool { signToken != nil && !(signToken?.isEmpty ?? true) }
 
+    private func log(_ message: String) {
+        print("[BydAPI] \(message)")
+        Task { @MainActor in LogManager.shared.add(message, tag: "BydAPI") }
+    }
+
     init(config: BydConfig) throws {
         self.config = config
         self.codec = try BangcleCodec()
@@ -164,11 +169,11 @@ actor BydVehicleService {
             throw BydError.invalidResponse
         }
         let resCode = outerResp["code"] as? String ?? "0"
-        print("[BydAPI] \(endpoint) → code=\(resCode) msg=\(outerResp["message"] ?? "-")")
+        log("\(endpoint) → code=\(resCode) msg=\(outerResp["message"] ?? "-")")
 
         if resCode != "0" {
             if ["1002", "1005", "1010"].contains(resCode) {
-                print("[BydAPI] 세션 만료 코드 \(resCode), 재로그인 시도")
+                log("세션 만료 코드 \(resCode), 재로그인 시도")
                 return try await silentReLogin(endpoint: endpoint, innerMap: innerMap, vin: vin)
             }
             throw BydError.serverError(outerResp["message"] as? String ?? "Unknown", resCode)
@@ -181,7 +186,7 @@ actor BydVehicleService {
         do {
             innerText = try CryptoUtils.aesDecryptUTF8(respondData, keyHex: CryptoUtils.md5Hex(encTok))
         } catch {
-            print("[BydAPI] 응답 복호화 실패 — 재로그인 후 재시도")
+            log("응답 복호화 실패 — 재로그인 후 재시도")
             return try await silentReLogin(endpoint: endpoint, innerMap: innerMap, vin: vin)
         }
         guard let innerData = innerText.data(using: .utf8) else { throw BydError.invalidResponse }
@@ -361,7 +366,7 @@ actor BydVehicleService {
             innerMap: inner, vin: vin
         )
         let serial = triggerResult["requestSerial"] as? String
-        print("[BydAPI] vehicleRealTimeRequest 응답: serial=\(serial ?? "nil") keys=\(triggerResult.keys.sorted())")
+        log("vehicleRealTimeRequest 응답: serial=\(serial ?? "nil") keys=\(triggerResult.keys.sorted())")
 
         guard let serial = serial, !serial.isEmpty else {
             let msg = triggerResult["message"] as? String ?? "차량 tbox 응답 없음"
@@ -383,14 +388,14 @@ actor BydVehicleService {
                     endpoint: "/vehicleInfo/vehicle/vehicleRealTimeResult",
                     innerMap: pollInner, vin: vin
                 )
-                print("[BydAPI] vehicleRealTimeResult (시도 \(attempt)): keys=\(pollResult.keys.sorted()) soc=\(pollResult["soc"] ?? "nil") mileageEV=\(pollResult["mileageEV"] ?? "nil")")
+                log("vehicleRealTimeResult (시도 \(attempt)): soc=\(pollResult["soc"] ?? "nil") mileageEV=\(pollResult["mileageEV"] ?? "nil")")
                 result = pollResult
                 break
             } catch BydError.serverError(let msg, let code) where code == "3002" {
-                print("[BydAPI] 차량 상태 조회 처리 중 (시도 \(attempt)/5) code=3002 msg=\(msg)")
+                log("차량 상태 조회 처리 중 (시도 \(attempt)/5) code=3002 msg=\(msg)")
                 if attempt == 5 { throw BydError.controlTimeout }
             } catch {
-                print("[BydAPI] vehicleRealTimeResult 오류 (시도 \(attempt)): \(error)")
+                log("vehicleRealTimeResult 오류 (시도 \(attempt)): \(error)")
                 throw error
             }
         }

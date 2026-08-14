@@ -33,6 +33,7 @@ struct BydStatsApp: App {
                     .tabItem { Label("설정", systemImage: "gearshape.fill") }
             }
             .environment(appState)
+            .environment(LogManager.shared)
         }
         .modelContainer(modelContainer)
     }
