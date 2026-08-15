@@ -86,7 +86,10 @@ private struct ShareSheet: UIViewControllerRepresentable {
     let text: String
 
     func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: [text], applicationActivities: nil)
+        let filename = "bydstats_log_\(Int(Date().timeIntervalSince1970)).txt"
+        let tmpURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
+        try? text.write(to: tmpURL, atomically: true, encoding: .utf8)
+        return UIActivityViewController(activityItems: [tmpURL], applicationActivities: nil)
     }
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
