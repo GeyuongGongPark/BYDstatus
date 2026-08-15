@@ -88,13 +88,15 @@ struct DrivingSessionsView: View {
 private struct DrivingSessionRow: View {
     let session: DrivingSession
 
-    private var duration: Int? {
+    private var durationText: String? {
         guard let end = session.endTime else { return nil }
-        return Int(end.timeIntervalSince(session.startTime) / 60)
+        let min = Int(end.timeIntervalSince(session.startTime) / 60)
+        guard min > 0 else { return nil }
+        return min >= 60 ? "\(min / 60)시간 \(min % 60)분" : "\(min)분"
     }
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(alignment: .top, spacing: 12) {
             // 아이콘
             Image(systemName: "car.fill")
                 .font(.title3)
@@ -102,45 +104,57 @@ private struct DrivingSessionRow: View {
                 .frame(width: 36, height: 36)
                 .background(.blue, in: Circle())
 
-            // 정보
-            VStack(alignment: .leading, spacing: 3) {
-                Text(session.startTime.formatted(.dateTime.locale(Locale(identifier: "ko_KR")).month().day().hour().minute()))
-                    .font(.subheadline)
-
-                HStack(spacing: 4) {
-                    Text("\(session.startSoc)% → \(session.endSoc)%")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-
-                    if let min = duration {
-                        Text("·").foregroundStyle(.secondary)
-                        Text("\(min)분")
+            VStack(alignment: .leading, spacing: 5) {
+                // 날짜 + 주행 시간
+                HStack {
+                    Text(session.startTime.formatted(.dateTime.locale(Locale(identifier: "ko_KR")).month().day().hour().minute()))
+                        .font(.subheadline).bold()
+                    Spacer()
+                    if let dur = durationText {
+                        Text(dur)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
                 }
-            }
 
-            Spacer()
-
-            // 수치
-            VStack(alignment: .trailing, spacing: 3) {
-                if let dist = session.distanceKm, dist > 0 {
-                    Text(String(format: "%.1f km", dist))
-                        .font(.subheadline).bold()
+                // 배터리 SOC
+                HStack(spacing: 4) {
+                    Image(systemName: "bolt.fill").font(.caption2).foregroundStyle(.blue)
+                    Text("\(session.startSoc)% → \(session.endSoc)%")
+                        .font(.caption).foregroundStyle(.secondary)
                 }
-                if let eff = session.efficiencyKmPerKwh, eff > 0 {
-                    Text(String(format: "%.1f km/kWh", eff))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                } else if session.energyKwh > 0 {
-                    Text(String(format: "%.1f kWh", session.energyKwh))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+
+                // ODO (있을 때만)
+                if let startOdo = session.startOdometer, let endOdo = session.endOdometer {
+                    HStack(spacing: 4) {
+                        Image(systemName: "gauge.medium").font(.caption2).foregroundStyle(.blue)
+                        Text(String(format: "%.0f km → %.0f km", startOdo, endOdo))
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+
+                // 주행 거리 / 소비 / 전비
+                HStack(spacing: 16) {
+                    if let dist = session.distanceKm, dist > 0 {
+                        statLabel(value: String(format: "%.1f km", dist), label: "주행거리")
+                    }
+                    if session.energyKwh > 0 {
+                        statLabel(value: String(format: "%.2f kWh", session.energyKwh), label: "소비")
+                    }
+                    if let eff = session.efficiencyKmPerKwh, eff > 0 {
+                        statLabel(value: String(format: "%.1f km/kWh", eff), label: "전비")
+                    }
                 }
             }
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, 4)
+    }
+
+    private func statLabel(value: String, label: String) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(value).font(.caption).bold()
+            Text(label).font(.caption2).foregroundStyle(.secondary)
+        }
     }
 }
 
