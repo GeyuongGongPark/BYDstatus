@@ -22,7 +22,7 @@ struct LogEntry: Identifiable, Sendable {
 final class LogManager {
     static let shared = LogManager()
 
-    static let logFileURL: URL = {
+    nonisolated(unsafe) static let logFileURL: URL = {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir.appendingPathComponent("bydstats.log")
