@@ -96,6 +96,14 @@ final class SessionDetector {
             }
             activeDrivingSession?.endSoc = status.batteryPercentage
         } else if let session = activeDrivingSession {
+            let duration = timestamp.timeIntervalSince(session.startTime)
+            // 2분 미만이면 의미 없는 세션으로 간주하고 삭제
+            guard duration >= 120 else {
+                modelContext.delete(session)
+                activeDrivingSession = nil
+                return
+            }
+
             session.endTime = timestamp
             let socDelta = Double(max(0, session.startSoc - session.endSoc))
             session.energyKwh = socDelta * batteryCapacityKwh / 100.0
