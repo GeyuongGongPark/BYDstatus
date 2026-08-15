@@ -182,27 +182,22 @@ struct SettingsView: View {
 
     // MARK: - 디버그 섹션
 
-    @ViewBuilder
     private var debugSection: some View {
-        @Bindable var logManager = logManager
         Section("디버그") {
-            Toggle("로그 수집", isOn: $logManager.isEnabled)
-            if logManager.isEnabled {
-                Button {
-                    showLogView = true
-                } label: {
-                    HStack {
-                        Text("로그 보기")
-                        Spacer()
-                        Text("\(logManager.entries.count)줄")
-                            .foregroundStyle(.secondary)
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
+            Button {
+                showLogView = true
+            } label: {
+                HStack {
+                    Text("로그 보기")
+                    Spacer()
+                    Text("\(logManager.entries.count)줄")
+                        .foregroundStyle(.secondary)
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
-                .foregroundStyle(.primary)
             }
+            .foregroundStyle(.primary)
         }
 
         Section {

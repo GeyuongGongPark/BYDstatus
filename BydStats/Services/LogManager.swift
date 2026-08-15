@@ -24,10 +24,8 @@ final class LogManager {
     private init() {}
 
     private(set) var entries: [LogEntry] = []
-    var isEnabled: Bool = false
 
     func add(_ message: String, tag: String = "App") {
-        guard isEnabled else { return }
         entries.append(LogEntry(timestamp: Date(), tag: tag, message: message))
         if entries.count > 500 {
             entries.removeFirst(entries.count - 500)
