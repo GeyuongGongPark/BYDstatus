@@ -182,6 +182,7 @@ struct SettingsView: View {
 
     // MARK: - 디버그 섹션
 
+    @ViewBuilder
     private var debugSection: some View {
         Section("디버그") {
             Button {
