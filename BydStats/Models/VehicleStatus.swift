@@ -13,7 +13,7 @@ struct VehicleStatus {
     var totalMileage: Double = 0.0   // 누적 주행거리 (km)
 
     var isDriving: Bool { powerGear == 3 || speed > 0.0 }
-    var isCharging: Bool { instantPowerW > 0 }           // gl 부호 검증 전 임시 기준
+    var isCharging: Bool { instantPowerW > 0 && !isDriving } // 주행 중(회생 제동)은 충전으로 미처리
     var instantPowerKw: Double { instantPowerW / 1000.0 }
 }
 

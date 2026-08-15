@@ -153,11 +153,19 @@ final class AppState {
             // 시작 즉시 1회 폴링
             await doPoll(service: svc, vin: vin, modelContext: modelContext)
             while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(pollingInterval * 60))
+                let interval = adaptiveInterval(defaultMinutes: pollingInterval)
+                try? await Task.sleep(for: .seconds(interval))
                 guard !Task.isCancelled else { break }
                 await doPoll(service: svc, vin: vin, modelContext: modelContext)
             }
         }
+    }
+
+    private func adaptiveInterval(defaultMinutes: Int) -> TimeInterval {
+        guard let status = currentStatus else { return TimeInterval(defaultMinutes * 60) }
+        if status.isDriving  { return 60  }  // 주행 중: 1분
+        if status.isCharging { return 120 }  // 충전 중: 2분
+        return TimeInterval(defaultMinutes * 60)
     }
 
     func stopPolling() {

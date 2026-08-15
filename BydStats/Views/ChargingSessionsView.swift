@@ -2,7 +2,10 @@ import SwiftUI
 import SwiftData
 
 struct ChargingSessionsView: View {
+    @Environment(\.modelContext) private var modelContext
     @Query(sort: \ChargingSession.startTime, order: .reverse) private var sessions: [ChargingSession]
+
+    @State private var editingSession: ChargingSession?
 
     // MARK: - 월별 그룹
 
@@ -49,6 +52,7 @@ struct ChargingSessionsView: View {
                 }
             }
             .navigationTitle("충전 세션")
+            .sheet(item: $editingSession) { ChargingSessionEditSheet(session: $0) }
         }
     }
 
@@ -66,6 +70,19 @@ struct ChargingSessionsView: View {
                 Section {
                     ForEach(group.sessions) { session in
                         ChargingSessionRow(session: session)
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                Button(role: .destructive) {
+                                    modelContext.delete(session)
+                                } label: {
+                                    Label("삭제", systemImage: "trash")
+                                }
+                                Button {
+                                    editingSession = session
+                                } label: {
+                                    Label("수정", systemImage: "pencil")
+                                }
+                                .tint(.blue)
+                            }
                     }
                 } header: {
                     MonthSummaryHeader(
@@ -136,6 +153,57 @@ private struct ChargingSessionRow: View {
             }
         }
         .padding(.vertical, 2)
+    }
+}
+
+// MARK: - 충전 세션 수정 Sheet
+
+private struct ChargingSessionEditSheet: View {
+    @Bindable var session: ChargingSession
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("SOC") {
+                    Stepper("시작  \(session.startSoc)%", value: $session.startSoc, in: 0...100)
+                    Stepper("종료  \(session.endSoc)%",  value: $session.endSoc,   in: 0...100)
+                }
+                Section("충전") {
+                    HStack {
+                        Text("충전량")
+                        Spacer()
+                        TextField("kWh", value: $session.energyKwh, format: .number)
+                            .multilineTextAlignment(.trailing).keyboardType(.decimalPad).frame(width: 80)
+                        Text("kWh").foregroundStyle(.secondary)
+                    }
+                    HStack {
+                        Text("충전 시간")
+                        Spacer()
+                        TextField("분", value: $session.durationMinutes, format: .number)
+                            .multilineTextAlignment(.trailing).keyboardType(.numberPad).frame(width: 60)
+                        Text("분").foregroundStyle(.secondary)
+                    }
+                    HStack {
+                        Text("비용")
+                        Spacer()
+                        TextField("원", value: $session.estimatedCostKrw, format: .number)
+                            .multilineTextAlignment(.trailing).keyboardType(.decimalPad).frame(width: 100)
+                        Text("원").foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .navigationTitle("충전 세션 수정")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("완료") { dismiss() }
+                }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("취소") { dismiss() }
+                }
+            }
+        }
     }
 }
 
