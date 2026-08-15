@@ -154,7 +154,7 @@ struct BatteryHistoryView: View {
         if let point = selectedPoint {
             HStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(point.timestamp, format: .dateTime.locale(Locale(identifier: "ko_KR")).month().day().hour().minute())
+                    Text(point.timestamp.formatted(.dateTime.locale(Locale(identifier: "ko_KR")).month().day().hour().minute()))
                         .font(.caption).foregroundStyle(.secondary)
                     HStack(alignment: .firstTextBaseline, spacing: 2) {
                         Text("\(point.batteryPercent)")

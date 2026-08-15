@@ -104,7 +104,7 @@ private struct DrivingSessionRow: View {
 
             // 정보
             VStack(alignment: .leading, spacing: 3) {
-                Text(session.startTime, format: .dateTime.locale(Locale(identifier: "ko_KR")).month().day().hour().minute())
+                Text(session.startTime.formatted(.dateTime.locale(Locale(identifier: "ko_KR")).month().day().hour().minute()))
                     .font(.subheadline)
 
                 HStack(spacing: 4) {

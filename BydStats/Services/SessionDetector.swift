@@ -13,6 +13,41 @@ final class SessionDetector {
         self.modelContext = modelContext
         self.electricityRate = electricityRate
         self.batteryCapacityKwh = batteryCapacityKwh
+        recoverOrphanSessions()
+    }
+
+    /// 앱 재시작 시 endTime == nil인 미완료 세션을 복원하거나 강제 종료
+    private func recoverOrphanSessions() {
+        let now = Date()
+        let oneHour: TimeInterval = 3600
+
+        // 주행 세션
+        let drivingDesc = FetchDescriptor<DrivingSession>(
+            predicate: #Predicate { $0.endTime == nil }
+        )
+        if let orphans = try? modelContext.fetch(drivingDesc) {
+            for session in orphans {
+                if now.timeIntervalSince(session.startTime) < oneHour {
+                    activeDrivingSession = session   // 최근 세션: 계속 추적
+                } else {
+                    session.endTime = now            // 오래된 세션: 지금 시각으로 강제 종료
+                }
+            }
+        }
+
+        // 충전 세션
+        let chargingDesc = FetchDescriptor<ChargingSession>(
+            predicate: #Predicate { $0.endTime == nil }
+        )
+        if let orphans = try? modelContext.fetch(chargingDesc) {
+            for session in orphans {
+                if now.timeIntervalSince(session.startTime) < oneHour {
+                    activeChargingSession = session
+                } else {
+                    session.endTime = now
+                }
+            }
+        }
     }
 
     func process(status: VehicleStatus, at timestamp: Date) {
