@@ -301,7 +301,7 @@ struct DashboardView: View {
     private func recentChargingRow(_ session: ChargingSession) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text(session.startTime, style: .date)
+                Text(session.startTime, format: .dateTime.locale(Locale(identifier: "ko_KR")).month().day())
                     .font(.subheadline)
                 Text("\(session.startSoc)% → \(session.endSoc)%  •  \(String(format: "%.1f kWh", session.energyKwh))")
                     .font(.caption)

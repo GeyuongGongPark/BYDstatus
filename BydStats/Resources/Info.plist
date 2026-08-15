@@ -23,7 +23,7 @@
 	<key>CFBundleShortVersionString</key>
 	<string>0.2.0</string>
 	<key>CFBundleVersion</key>
-	<string>2</string>
+	<string>3</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>백그라운드에서 충전/주행 위치를 기록합니다.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

@@ -204,6 +204,19 @@ struct SettingsView: View {
                 .foregroundStyle(.primary)
             }
         }
+
+        Section {
+        } footer: {
+            HStack {
+                Spacer()
+                let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "-"
+                let build   = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "-"
+                Text("BYD Stats v\(version) (\(build))")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                Spacer()
+            }
+        }
     }
 }
 
