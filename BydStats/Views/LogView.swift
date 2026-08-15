@@ -44,7 +44,12 @@ struct LogView: View {
         let vc = UIActivityViewController(activityItems: [url], applicationActivities: nil)
         guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
               let root = scene.windows.first?.rootViewController else { return }
-        root.present(vc, animated: true)
+        // sheet 위에서 열리는 경우 최상위 ViewController를 찾아서 present
+        var topVC = root
+        while let presented = topVC.presentedViewController {
+            topVC = presented
+        }
+        topVC.present(vc, animated: true)
     }
 
     private var logList: some View {
