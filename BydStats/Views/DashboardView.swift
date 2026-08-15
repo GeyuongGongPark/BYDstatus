@@ -18,7 +18,7 @@ struct DashboardView: View {
         allChargingSessions.filter { Calendar.current.isDateInToday($0.startTime) }
     }
     private var todayDriving: [DrivingSession] {
-        allDrivingSessions.filter { Calendar.current.isDateInToday($0.startTime) }
+        allDrivingSessions.filter { Calendar.current.isDateInToday($0.startTime) && $0.endTime != nil }
     }
     private var thisMonthCharging: [ChargingSession] {
         allChargingSessions.filter {

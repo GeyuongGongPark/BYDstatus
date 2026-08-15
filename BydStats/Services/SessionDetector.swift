@@ -4,6 +4,7 @@ import SwiftData
 final class SessionDetector {
     private var activeChargingSession: ChargingSession?
     private var activeDrivingSession: DrivingSession?
+    private var lastDrivingPollTime: Date?
 
     private let modelContext: ModelContext
     private let electricityRate: Double
@@ -88,11 +89,20 @@ final class SessionDetector {
         if status.isDriving {
             if activeDrivingSession == nil {
                 let session = DrivingSession(startTime: timestamp, startSoc: status.batteryPercentage)
-                if status.totalMileage > 0 {
-                    session.startOdometer = status.totalMileage
-                }
+                if status.totalMileage > 0 { session.startOdometer = status.totalMileage }
                 modelContext.insert(session)
                 activeDrivingSession = session
+                lastDrivingPollTime = timestamp
+            } else {
+                // 폴링마다 순간 전력 × 시간(h) 적분으로 에너지 누적
+                if let lastTime = lastDrivingPollTime {
+                    let intervalHours = timestamp.timeIntervalSince(lastTime) / 3600.0
+                    let powerKw = abs(status.instantPowerKw)
+                    if powerKw > 0 {
+                        activeDrivingSession?.energyKwh += powerKw * intervalHours
+                    }
+                }
+                lastDrivingPollTime = timestamp
             }
             activeDrivingSession?.endSoc = status.batteryPercentage
         } else if let session = activeDrivingSession {
@@ -101,27 +111,29 @@ final class SessionDetector {
             guard duration >= 120 else {
                 modelContext.delete(session)
                 activeDrivingSession = nil
+                lastDrivingPollTime = nil
                 return
             }
 
             session.endTime = timestamp
-            let socDelta = Double(max(0, session.startSoc - session.endSoc))
-            session.energyKwh = socDelta * batteryCapacityKwh / 100.0
+
+            // 누적 에너지가 없으면 SOC 기반으로 폴백
+            if session.energyKwh == 0 {
+                let socDelta = Double(max(0, session.startSoc - session.endSoc))
+                session.energyKwh = socDelta * batteryCapacityKwh / 100.0
+            }
 
             // 종료 ODO - 시작 ODO 로 주행 거리 계산
-            if status.totalMileage > 0 {
-                session.endOdometer = status.totalMileage
-            }
+            if status.totalMileage > 0 { session.endOdometer = status.totalMileage }
             if let startOdo = session.startOdometer,
                let endOdo = session.endOdometer,
                endOdo > startOdo {
                 let dist = endOdo - startOdo
                 session.distanceKm = dist
-                if session.energyKwh > 0 {
-                    session.efficiencyKmPerKwh = dist / session.energyKwh
-                }
+                if session.energyKwh > 0 { session.efficiencyKmPerKwh = dist / session.energyKwh }
             }
             activeDrivingSession = nil
+            lastDrivingPollTime = nil
         }
     }
 }
