@@ -1,10 +1,9 @@
 import SwiftUI
+import UIKit
 
 struct LogView: View {
     @Environment(LogManager.self) private var logManager
     @Environment(\.dismiss) private var dismiss
-    @State private var showShareSheet = false
-    @State private var exportText = ""
 
     var body: some View {
         NavigationStack {
@@ -26,10 +25,7 @@ struct LogView: View {
                     Button("닫기") { dismiss() }
                 }
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
-                    Button {
-                        exportText = logManager.exportText
-                        showShareSheet = true
-                    } label: {
+                    Button { shareLog() } label: {
                         Image(systemName: "square.and.arrow.up")
                     }
                     Button(role: .destructive) {
@@ -39,10 +35,16 @@ struct LogView: View {
                     }
                 }
             }
-            .sheet(isPresented: $showShareSheet) {
-                ShareSheet(text: exportText)
-            }
         }
+    }
+
+    private func shareLog() {
+        let url = LogManager.logFileURL
+        guard FileManager.default.fileExists(atPath: url.path) else { return }
+        let vc = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let root = scene.windows.first?.rootViewController else { return }
+        root.present(vc, animated: true)
     }
 
     private var logList: some View {
@@ -80,16 +82,3 @@ struct LogView: View {
     }
 }
 
-// MARK: - UIActivityViewController wrapper
-
-private struct ShareSheet: UIViewControllerRepresentable {
-    let text: String
-
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        let filename = "bydstats_log_\(Int(Date().timeIntervalSince1970)).txt"
-        let tmpURL = FileManager.default.temporaryDirectory.appendingPathComponent(filename)
-        try? text.write(to: tmpURL, atomically: true, encoding: .utf8)
-        return UIActivityViewController(activityItems: [tmpURL], applicationActivities: nil)
-    }
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
-}
