@@ -2,7 +2,10 @@ import SwiftUI
 import SwiftData
 
 struct DrivingSessionsView: View {
+    @Environment(\.modelContext) private var modelContext
     @Query(sort: \DrivingSession.startTime, order: .reverse) private var sessions: [DrivingSession]
+
+    @State private var editingSession: DrivingSession?
 
     // MARK: - 월별 그룹
 
@@ -56,6 +59,7 @@ struct DrivingSessionsView: View {
                 }
             }
             .navigationTitle("주행 세션")
+            .sheet(item: $editingSession) { DrivingSessionEditSheet(session: $0) }
         }
     }
 
@@ -73,6 +77,19 @@ struct DrivingSessionsView: View {
                 Section {
                     ForEach(group.sessions) { session in
                         DrivingSessionRow(session: session)
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                Button(role: .destructive) {
+                                    modelContext.delete(session)
+                                } label: {
+                                    Label("삭제", systemImage: "trash")
+                                }
+                                Button {
+                                    editingSession = session
+                                } label: {
+                                    Label("수정", systemImage: "pencil")
+                                }
+                                .tint(.blue)
+                            }
                     }
                 } header: {
                     DrivingMonthHeader(group: group)
@@ -154,6 +171,85 @@ private struct DrivingSessionRow: View {
         VStack(alignment: .leading, spacing: 1) {
             Text(value).font(.caption).bold()
             Text(label).font(.caption2).foregroundStyle(.secondary)
+        }
+    }
+}
+
+// MARK: - 주행 세션 수정 Sheet
+
+private struct DrivingSessionEditSheet: View {
+    @Bindable var session: DrivingSession
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("SOC") {
+                    Stepper("시작  \(session.startSoc)%", value: $session.startSoc, in: 0...100)
+                    Stepper("종료  \(session.endSoc)%",  value: $session.endSoc,   in: 0...100)
+                }
+                Section("주행") {
+                    HStack {
+                        Text("주행 거리")
+                        Spacer()
+                        TextField("km", value: Binding(
+                            get: { session.distanceKm ?? 0 },
+                            set: { session.distanceKm = $0 > 0 ? $0 : nil }
+                        ), format: .number)
+                            .multilineTextAlignment(.trailing).keyboardType(.decimalPad).frame(width: 80)
+                        Text("km").foregroundStyle(.secondary)
+                    }
+                    HStack {
+                        Text("소비")
+                        Spacer()
+                        TextField("kWh", value: $session.energyKwh, format: .number)
+                            .multilineTextAlignment(.trailing).keyboardType(.decimalPad).frame(width: 80)
+                        Text("kWh").foregroundStyle(.secondary)
+                    }
+                    HStack {
+                        Text("전비")
+                        Spacer()
+                        TextField("km/kWh", value: Binding(
+                            get: { session.efficiencyKmPerKwh ?? 0 },
+                            set: { session.efficiencyKmPerKwh = $0 > 0 ? $0 : nil }
+                        ), format: .number)
+                            .multilineTextAlignment(.trailing).keyboardType(.decimalPad).frame(width: 80)
+                        Text("km/kWh").foregroundStyle(.secondary)
+                    }
+                }
+                Section("ODO") {
+                    HStack {
+                        Text("시작")
+                        Spacer()
+                        TextField("km", value: Binding(
+                            get: { session.startOdometer ?? 0 },
+                            set: { session.startOdometer = $0 > 0 ? $0 : nil }
+                        ), format: .number)
+                            .multilineTextAlignment(.trailing).keyboardType(.decimalPad).frame(width: 100)
+                        Text("km").foregroundStyle(.secondary)
+                    }
+                    HStack {
+                        Text("종료")
+                        Spacer()
+                        TextField("km", value: Binding(
+                            get: { session.endOdometer ?? 0 },
+                            set: { session.endOdometer = $0 > 0 ? $0 : nil }
+                        ), format: .number)
+                            .multilineTextAlignment(.trailing).keyboardType(.decimalPad).frame(width: 100)
+                        Text("km").foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .navigationTitle("주행 세션 수정")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("완료") { dismiss() }
+                }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("취소") { dismiss() }
+                }
+            }
         }
     }
 }
