@@ -9,11 +9,13 @@ final class SessionDetector {
     private let modelContext: ModelContext
     private let electricityRate: Double
     private let batteryCapacityKwh: Double
+    private let locationTracker: LocationTracker?
 
-    init(modelContext: ModelContext, electricityRate: Double, batteryCapacityKwh: Double) {
+    init(modelContext: ModelContext, electricityRate: Double, batteryCapacityKwh: Double, gpsEnabled: Bool = true) {
         self.modelContext = modelContext
         self.electricityRate = electricityRate
         self.batteryCapacityKwh = batteryCapacityKwh
+        self.locationTracker = gpsEnabled ? LocationTracker() : nil
         recoverOrphanSessions()
     }
 
@@ -93,6 +95,7 @@ final class SessionDetector {
                 modelContext.insert(session)
                 activeDrivingSession = session
                 lastDrivingPollTime = timestamp
+                locationTracker?.startTracking()
             } else {
                 // 폴링마다 순간 전력 × 시간(h) 적분으로 에너지 누적
                 if let lastTime = lastDrivingPollTime {
@@ -108,6 +111,8 @@ final class SessionDetector {
         } else if let session = activeDrivingSession {
             let duration = timestamp.timeIntervalSince(session.startTime)
             // 2분 미만이면 의미 없는 세션으로 간주하고 삭제
+            let gpsDistanceKm = locationTracker?.stopTracking() ?? 0
+
             guard duration >= 120 else {
                 modelContext.delete(session)
                 activeDrivingSession = nil
@@ -123,7 +128,7 @@ final class SessionDetector {
                 session.energyKwh = socDelta * batteryCapacityKwh / 100.0
             }
 
-            // 종료 ODO - 시작 ODO 로 주행 거리 계산
+            // 1순위: ODO(Energy API) 기반 거리
             if status.totalMileage > 0 { session.endOdometer = status.totalMileage }
             if let startOdo = session.startOdometer,
                let endOdo = session.endOdometer,
@@ -132,6 +137,13 @@ final class SessionDetector {
                 session.distanceKm = dist
                 if session.energyKwh > 0 { session.efficiencyKmPerKwh = dist / session.energyKwh }
             }
+
+            // 2순위: GPS 거리 (ODO 없을 때)
+            if session.distanceKm == nil && gpsDistanceKm > 0.1 {
+                session.distanceKm = gpsDistanceKm
+                if session.energyKwh > 0 { session.efficiencyKmPerKwh = gpsDistanceKm / session.energyKwh }
+            }
+
             activeDrivingSession = nil
             lastDrivingPollTime = nil
         }

@@ -11,6 +11,7 @@ struct DashboardView: View {
     @AppStorage("vehicleModel")    private var vehicleModelRaw = VehicleModel.atto3.rawValue
     @AppStorage("electricityRate") private var electricityRate = 180.0
     @AppStorage("pollingInterval") private var pollingInterval = 5
+    @AppStorage("gpsEnabled")      private var gpsEnabled      = true
 
     private var vehicleModel: VehicleModel { VehicleModel(rawValue: vehicleModelRaw) ?? .atto3 }
 
@@ -64,7 +65,8 @@ struct DashboardView: View {
                 modelContext: modelContext,
                 pollingInterval: pollingInterval,
                 electricityRate: electricityRate,
-                batteryCapacityKwh: vehicleModel.batteryCapacityKwh
+                batteryCapacityKwh: vehicleModel.batteryCapacityKwh,
+                gpsEnabled: gpsEnabled
             )
         }
     }

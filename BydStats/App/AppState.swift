@@ -140,7 +140,7 @@ final class AppState {
     // MARK: - 폴링
 
     func startPolling(modelContext: ModelContext, pollingInterval: Int = 5,
-                      electricityRate: Double, batteryCapacityKwh: Double) {
+                      electricityRate: Double, batteryCapacityKwh: Double, gpsEnabled: Bool = true) {
         guard let svc = service, let vin = selectedVin else { return }
         // 기존 폴링이 있으면 취소 후 재시작 (VIN 변경 등)
         pollingTask?.cancel()
@@ -148,7 +148,8 @@ final class AppState {
 
         sessionDetector = SessionDetector(modelContext: modelContext,
                                           electricityRate: electricityRate,
-                                          batteryCapacityKwh: batteryCapacityKwh)
+                                          batteryCapacityKwh: batteryCapacityKwh,
+                                          gpsEnabled: gpsEnabled)
         pollingTask = Task {
             // 시작 즉시 1회 폴링
             await doPoll(service: svc, vin: vin, modelContext: modelContext)
@@ -183,7 +184,16 @@ final class AppState {
     private func doPoll(service: BydVehicleService, vin: String, modelContext: ModelContext) async {
         isPolling = true
         do {
-            let status = try await service.fetchVehicleStatus(vin: vin)
+            var status = try await service.fetchVehicleStatus(vin: vin)
+            // 주행 중이거나 직전 폴링에서 주행 중이었을 때 totalMileage == 0이면
+            // Energy API의 lifetimeMileageKm으로 ODO 보완
+            let wasOrIsDriving = (currentStatus?.isDriving ?? false) || status.isDriving
+            if wasOrIsDriving && status.totalMileage == 0 {
+                if let energy = try? await service.fetchEnergyConsumption(vin: vin),
+                   energy.lifetimeMileageKm > 0 {
+                    status.totalMileage = energy.lifetimeMileageKm
+                }
+            }
             currentStatus = status
             pollError = nil
             // 배터리 값이 0이면 API 파싱 실패로 간주 — 그래프/세션에 기록하지 않음
