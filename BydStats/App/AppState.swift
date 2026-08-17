@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import SwiftData
+@preconcurrency import ActivityKit
 
 @MainActor
 @Observable
@@ -29,6 +30,7 @@ final class AppState {
 
     private var pollingTask: Task<Void, Never>?
     private var sessionDetector: SessionDetector?
+    private var liveActivity: Activity<BydLiveActivityAttributes>?
 
     // MARK: - Keychain 키
 
@@ -194,6 +196,10 @@ final class AppState {
                     status.totalMileage = energy.lifetimeMileageKm
                 }
             }
+
+            // Live Activity 상태 관리
+            await updateLiveActivity(prev: currentStatus, next: status)
+
             currentStatus = status
             pollError = nil
             // 배터리 값이 0이면 API 파싱 실패로 간주 — 그래프/세션에 기록하지 않음
@@ -206,6 +212,66 @@ final class AppState {
             pollError = error.localizedDescription
         }
         isPolling = false
+    }
+
+    // MARK: - Live Activity
+
+    private func liveActivityState(from status: VehicleStatus) -> BydLiveActivityAttributes.ContentState {
+        BydLiveActivityAttributes.ContentState(
+            batteryPercent: status.batteryPercentage,
+            instantPowerKw: abs(status.instantPowerKw),
+            drivingRangeKm: status.drivingRange
+        )
+    }
+
+    private func updateLiveActivity(prev: VehicleStatus?, next: VehicleStatus) async {
+        let wasCharging = prev?.isCharging ?? false
+        let wasDriving  = prev?.isDriving  ?? false
+        let nowCharging = next.isCharging
+        let nowDriving  = next.isDriving
+        let state = liveActivityState(from: next)
+
+        // 주행 시작
+        if !wasDriving && nowDriving {
+            await endLiveActivity()
+            startLiveActivity(type: .driving, startSoc: next.batteryPercentage, state: state)
+        }
+        // 충전 시작
+        else if !wasCharging && nowCharging {
+            await endLiveActivity()
+            startLiveActivity(type: .charging, startSoc: next.batteryPercentage, state: state)
+        }
+        // 세션 진행 중 — 업데이트
+        else if (nowDriving || nowCharging) && liveActivity != nil {
+            await liveActivity?.update(.init(state: state, staleDate: nil))
+        }
+        // 주행/충전 종료
+        else if (!nowDriving && !nowCharging) && (wasDriving || wasCharging) {
+            await endLiveActivity()
+        }
+    }
+
+    private func startLiveActivity(type: BydLiveActivityAttributes.SessionType,
+                                   startSoc: Int,
+                                   state: BydLiveActivityAttributes.ContentState) {
+        guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
+        let attrs = BydLiveActivityAttributes(
+            sessionType: type,
+            startSoc: startSoc,
+            sessionStartDate: Date()
+        )
+        liveActivity = try? Activity.request(
+            attributes: attrs,
+            content: .init(state: state, staleDate: nil),
+            pushType: nil
+        )
+    }
+
+    private func endLiveActivity() async {
+        guard let activity = liveActivity else { return }
+        await activity.end(.init(state: activity.content.state, staleDate: nil),
+                           dismissalPolicy: .default)
+        liveActivity = nil
     }
 
     private func saveWidgetSnapshot(status: VehicleStatus, modelContext: ModelContext) {

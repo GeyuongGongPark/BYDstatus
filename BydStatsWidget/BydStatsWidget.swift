@@ -53,7 +53,6 @@ struct BydStatsProvider: TimelineProvider {
 
 // MARK: - Widget Definition
 
-@main
 struct BydStatsWidget: Widget {
     let kind = "BydStatsWidget"
 
@@ -65,6 +64,16 @@ struct BydStatsWidget: Widget {
         .configurationDisplayName("BYD Stats")
         .description("배터리 상태와 이번 달 충전 비용을 확인합니다.")
         .supportedFamilies([.systemSmall, .systemMedium])
+    }
+}
+
+// MARK: - Widget Bundle
+
+@main
+struct BydStatsWidgetBundle: WidgetBundle {
+    var body: some Widget {
+        BydStatsWidget()
+        BydLiveActivityWidget()
     }
 }
 
