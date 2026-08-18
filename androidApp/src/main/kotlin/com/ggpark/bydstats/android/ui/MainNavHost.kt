@@ -15,6 +15,7 @@ import com.ggpark.bydstats.android.ui.battery.BatteryHistoryScreen
 import com.ggpark.bydstats.android.ui.charging.ChargingSessionsScreen
 import com.ggpark.bydstats.android.ui.dashboard.DashboardScreen
 import com.ggpark.bydstats.android.ui.driving.DrivingSessionsScreen
+import com.ggpark.bydstats.android.ui.log.LogScreen
 import com.ggpark.bydstats.android.ui.settings.SettingsScreen
 import com.ggpark.bydstats.android.viewmodel.AppViewModel
 
@@ -77,7 +78,8 @@ fun MainNavHost(vm: AppViewModel = viewModel()) {
             composable(Tab.Battery.route)   { BatteryHistoryScreen(vm) }
             composable(Tab.Charging.route)  { ChargingSessionsScreen(vm) }
             composable(Tab.Driving.route)   { DrivingSessionsScreen(vm) }
-            composable(Tab.Settings.route)  { SettingsScreen(vm) }
+            composable(Tab.Settings.route)  { SettingsScreen(vm, onNavigateToLog = { navController.navigate("log") }) }
+            composable("log")               { LogScreen(onBack = { navController.popBackStack() }) }
         }
     }
 }

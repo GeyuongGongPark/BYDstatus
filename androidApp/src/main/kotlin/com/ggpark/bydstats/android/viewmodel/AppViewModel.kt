@@ -7,11 +7,16 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import com.ggpark.bydstats.android.data.AppDatabase
 import com.ggpark.bydstats.android.data.entity.ChargingSessionEntity
 import com.ggpark.bydstats.android.data.entity.DataPointEntity
 import com.ggpark.bydstats.android.data.entity.DrivingSessionEntity
 import com.ggpark.bydstats.android.service.DataCollector
+import com.ggpark.bydstats.android.service.LocationTracker
+import com.ggpark.bydstats.android.widget.BydStatsWidget
+import com.ggpark.bydstats.android.widget.WidgetDataStore
+import com.ggpark.bydstats.android.widget.WidgetSnapshot
 import com.ggpark.bydstats.api.BydApiClient
 import com.ggpark.bydstats.api.BydConfig
 import com.ggpark.bydstats.api.BydError
@@ -67,6 +72,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val db = AppDatabase.getInstance(context)
     private var apiClient: BydApiClient? = null
     private var dataCollector: DataCollector? = null
+    private val locationTracker = LocationTracker(context)
 
     private val _settings = MutableStateFlow(AppSettings())
     val settings: StateFlow<AppSettings> = _settings.asStateFlow()
@@ -185,6 +191,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             getElectricityRate     = { _settings.value.electricityRate },
             getBatteryCapacityKwh  = { _settings.value.batteryCapacityKwh },
             getParkingIntervalMs   = { _settings.value.pollingIntervalMin * 60_000L },
+            locationTracker        = locationTracker,
         )
         dataCollector = collector
         collector.start(vin)
@@ -194,6 +201,19 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 status to err
             }.collect { (status, err) ->
                 _uiState.update { it.copy(status = status, pollingError = err) }
+                status?.let { s ->
+                    WidgetDataStore.save(context, WidgetSnapshot(
+                        batteryPercent = s.batteryPercentage,
+                        isCharging     = s.isCharging,
+                        isDriving      = s.isDriving,
+                        drivingRangeKm = s.drivingRange,
+                        instantPowerKw = s.instantPowerKw,
+                        lastUpdated    = System.currentTimeMillis(),
+                    ))
+                    val manager = GlanceAppWidgetManager(context)
+                    val ids = manager.getGlanceIds(BydStatsWidget::class.java)
+                    ids.forEach { BydStatsWidget().update(context, it) }
+                }
             }
         }
     }

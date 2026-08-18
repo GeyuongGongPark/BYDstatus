@@ -31,7 +31,7 @@ private val POLLING_OPTIONS = listOf(5, 10, 15)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(vm: AppViewModel) {
+fun SettingsScreen(vm: AppViewModel, onNavigateToLog: () -> Unit = {}) {
     val uiState  by vm.uiState.collectAsState()
     val settings by vm.settings.collectAsState()
 
@@ -247,6 +247,19 @@ fun SettingsScreen(vm: AppViewModel) {
                 },
                 colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
             )
+            HorizontalDivider()
+
+            // ─── 진단 섹션 ───
+            SectionHeader("진단")
+            Surface(onClick = onNavigateToLog, modifier = Modifier.fillMaxWidth()) {
+                ListItem(
+                    headlineContent = { Text("앱 로그") },
+                    supportingContent = { Text("폴링 / GPS / 세션 이벤트 로그") },
+                    leadingContent = { Icon(Icons.Default.BugReport, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                    trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                    colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
+                )
+            }
             HorizontalDivider()
 
             // ─── 앱 정보 ───

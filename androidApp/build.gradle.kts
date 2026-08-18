@@ -73,4 +73,11 @@ dependencies {
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
+
+    // GPS
+    implementation(libs.play.services.location)
+
+    // Glance (홈 위젯)
+    implementation(libs.glance.appwidget)
+    implementation(libs.glance.material3)
 }

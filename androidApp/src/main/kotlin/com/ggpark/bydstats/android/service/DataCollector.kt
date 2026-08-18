@@ -17,6 +17,7 @@ class DataCollector(
     private val getElectricityRate: () -> Double,
     private val getBatteryCapacityKwh: () -> Double,
     private val getParkingIntervalMs: () -> Long,
+    private val locationTracker: LocationTracker? = null,
 ) {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var pollingJob: Job? = null
@@ -75,9 +76,23 @@ class DataCollector(
                 }
             }
 
+            // GPS 트래킹 제어: 주행 시작/종료 감지
+            val prevDriving = _currentStatus.value?.isDriving == true
+            val nowDriving = status.isDriving
+            val gpsDistanceKm: Double = when {
+                nowDriving && !prevDriving -> {
+                    locationTracker?.startTracking()
+                    0.0
+                }
+                !nowDriving && prevDriving -> {
+                    locationTracker?.stopTracking() ?: 0.0
+                }
+                else -> 0.0
+            }
+
             _currentStatus.value = status
             _error.value = null
-            detector?.process(status, System.currentTimeMillis())
+            detector?.process(status, System.currentTimeMillis(), gpsDistanceKm)
 
         } catch (e: BydError.ServerError) {
             Log.w(TAG, "서버 오류 ${e.code}: ${e.msg}")

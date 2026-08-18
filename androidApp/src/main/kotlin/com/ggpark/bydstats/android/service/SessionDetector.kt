@@ -33,7 +33,7 @@ class SessionDetector(
         }
     }
 
-    suspend fun process(status: VehicleStatus, timestamp: Long) {
+    suspend fun process(status: VehicleStatus, timestamp: Long, gpsDistanceKm: Double = 0.0) {
         db.dataPointDao().insert(
             DataPointEntity(
                 timestamp = timestamp,
@@ -45,7 +45,7 @@ class SessionDetector(
             )
         )
         handleCharging(status, timestamp)
-        handleDriving(status, timestamp, gpsDistanceKm = 0.0)
+        handleDriving(status, timestamp, gpsDistanceKm)
     }
 
     private suspend fun handleCharging(status: VehicleStatus, timestamp: Long) {
