@@ -161,6 +161,7 @@ private struct ChargingSessionRow: View {
 private struct ChargingSessionEditSheet: View {
     @Bindable var session: ChargingSession
     @Environment(\.dismiss) private var dismiss
+    @AppStorage("electricityRate") private var electricityRate = 180.0
 
     var body: some View {
         NavigationStack {
@@ -173,7 +174,15 @@ private struct ChargingSessionEditSheet: View {
                     HStack {
                         Text("충전량")
                         Spacer()
-                        TextField("kWh", value: $session.energyKwh, format: .number)
+                        TextField("kWh", value: Binding(
+                            get: { session.energyKwh },
+                            set: {
+                                session.energyKwh = $0
+                                if $0 > 0 {
+                                    session.estimatedCostKrw = $0 * electricityRate
+                                }
+                            }
+                        ), format: .number)
                             .multilineTextAlignment(.trailing).keyboardType(.decimalPad).frame(width: 80)
                         Text("kWh").foregroundStyle(.secondary)
                     }
@@ -186,11 +195,19 @@ private struct ChargingSessionEditSheet: View {
                     }
                     HStack {
                         Text("비용")
+                            .foregroundStyle(.secondary)
                         Spacer()
-                        TextField("원", value: $session.estimatedCostKrw, format: .number)
-                            .multilineTextAlignment(.trailing).keyboardType(.decimalPad).frame(width: 100)
-                        Text("원").foregroundStyle(.secondary)
+                        if session.estimatedCostKrw > 0 {
+                            Text(String(format: "₩%.0f", session.estimatedCostKrw))
+                        } else {
+                            Text("—").foregroundStyle(.tertiary)
+                        }
                     }
+                }
+                Section {
+                    Text("충전량 입력 시 설정의 전기요금(₩\(Int(electricityRate))/kWh) 기준으로 비용이 자동 계산됩니다.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
             .navigationTitle("충전 세션 수정")
