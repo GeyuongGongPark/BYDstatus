@@ -194,7 +194,12 @@ private struct DrivingSessionEditSheet: View {
                         Spacer()
                         TextField("km", value: Binding(
                             get: { session.distanceKm ?? 0 },
-                            set: { session.distanceKm = $0 > 0 ? $0 : nil }
+                            set: {
+                                session.distanceKm = $0 > 0 ? $0 : nil
+                                if $0 > 0 && session.energyKwh > 0 {
+                                    session.efficiencyKmPerKwh = $0 / session.energyKwh
+                                }
+                            }
                         ), format: .number)
                             .multilineTextAlignment(.trailing).keyboardType(.decimalPad).frame(width: 80)
                         Text("km").foregroundStyle(.secondary)
@@ -202,18 +207,28 @@ private struct DrivingSessionEditSheet: View {
                     HStack {
                         Text("소비")
                         Spacer()
-                        TextField("kWh", value: $session.energyKwh, format: .number)
+                        TextField("kWh", value: Binding(
+                            get: { session.energyKwh },
+                            set: {
+                                session.energyKwh = $0
+                                if let dist = session.distanceKm, dist > 0 && $0 > 0 {
+                                    session.efficiencyKmPerKwh = dist / $0
+                                }
+                            }
+                        ), format: .number)
                             .multilineTextAlignment(.trailing).keyboardType(.decimalPad).frame(width: 80)
                         Text("kWh").foregroundStyle(.secondary)
                     }
                     HStack {
                         Text("전비")
+                            .foregroundStyle(.secondary)
                         Spacer()
-                        TextField("km/kWh", value: Binding(
-                            get: { session.efficiencyKmPerKwh ?? 0 },
-                            set: { session.efficiencyKmPerKwh = $0 > 0 ? $0 : nil }
-                        ), format: .number)
-                            .multilineTextAlignment(.trailing).keyboardType(.decimalPad).frame(width: 80)
+                        if let eff = session.efficiencyKmPerKwh, eff > 0 {
+                            Text(String(format: "%.2f", eff))
+                        } else {
+                            Text("—")
+                                .foregroundStyle(.tertiary)
+                        }
                         Text("km/kWh").foregroundStyle(.secondary)
                     }
                 }
