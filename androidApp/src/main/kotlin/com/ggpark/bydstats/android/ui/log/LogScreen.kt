@@ -1,5 +1,6 @@
 package com.ggpark.bydstats.android.ui.log
 
+import android.content.Intent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -7,10 +8,12 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -21,9 +24,20 @@ import com.ggpark.bydstats.android.service.AppLogger
 fun LogScreen(onBack: () -> Unit) {
     val entries by AppLogger.entries.collectAsState()
     val listState = rememberLazyListState()
+    val context = LocalContext.current
 
     LaunchedEffect(entries.size) {
         if (entries.isNotEmpty()) listState.animateScrollToItem(entries.lastIndex)
+    }
+
+    fun shareLog() {
+        val text = entries.joinToString("\n") { it.formatted }
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_SUBJECT, "BYD Stats 로그")
+            putExtra(Intent.EXTRA_TEXT, text)
+        }
+        context.startActivity(Intent.createChooser(intent, "로그 공유"))
     }
 
     Scaffold(
@@ -36,6 +50,9 @@ fun LogScreen(onBack: () -> Unit) {
                     }
                 },
                 actions = {
+                    IconButton(onClick = ::shareLog, enabled = entries.isNotEmpty()) {
+                        Icon(Icons.Default.Share, "공유")
+                    }
                     IconButton(onClick = { AppLogger.clear() }) {
                         Icon(Icons.Default.DeleteSweep, "지우기")
                     }
