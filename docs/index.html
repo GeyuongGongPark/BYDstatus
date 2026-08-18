@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BYD Stats — BYD 차량 통계 앱</title>
-  <meta name="description" content="BYD 공식 앱에 없는 배터리 이력, 충전 세션, 주행 효율, 비용 분석을 제공하는 iOS 앱" />
+  <meta name="description" content="BYD 공식 앱에 없는 배터리 이력, 충전 세션, 주행 효율, 비용 분석을 제공하는 iOS · Android 앱" />
   <style>
     :root {
       --bg: #0a0a0f;
@@ -123,6 +123,20 @@
       border: 1px solid var(--border); transition: border-color 0.2s, background 0.2s;
     }
     .btn-secondary:hover { border-color: rgba(255,255,255,0.2); background: var(--bg-card-hover); }
+    .btn-android {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #1e8c4e; color: #fff; text-decoration: none;
+      padding: 14px 28px; border-radius: 12px; font-size: 16px; font-weight: 600;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 24px rgba(61,220,132,0.25);
+    }
+    .btn-android:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(61,220,132,0.35); }
+    .platform-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 600;
+    }
+    .platform-badge.ios { background: rgba(61,127,255,0.15); color: #7aaeff; border: 1px solid rgba(61,127,255,0.25); }
+    .platform-badge.android { background: rgba(61,220,132,0.15); color: #3ddc84; border: 1px solid rgba(61,220,132,0.25); }
 
     /* ─── STATS BAR ─── */
     .stats-bar {
@@ -348,6 +362,8 @@
       .showcase.reverse { direction: ltr; }
       .stats-bar { padding: 32px 20px; }
       .section-wrap { padding: 64px 20px; }
+      #how .section-wrap > div:first-of-type,
+      div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }
     }
   </style>
 </head>
@@ -371,7 +387,7 @@
 <section class="hero">
   <div class="hero-badge">
     <span class="dot"></span>
-    iOS 17+ · 오픈 소스 · v0.3.1
+    iOS · Android · 오픈 소스 · v0.3.1
   </div>
   <h1>BYD 차량의 모든 데이터를<br /><span class="gradient">한눈에</span></h1>
   <p class="hero-desc">
@@ -379,11 +395,16 @@
     자동으로 수집하고 분석해드립니다.
   </p>
   <div class="hero-actions">
-    <a href="https://github.com/GeyuongGongPark/BYDstatus" class="btn-primary" target="_blank">
-      GitHub에서 보기 →
+    <a id="android-download" href="https://github.com/GeyuongGongPark/BYDstatus/releases/latest" class="btn-android" target="_blank">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.523 15.341 14.87 10.8A3.003 3.003 0 0 0 12 9.25c-1.117 0-2.093.613-2.613 1.52l-2.714 4.571A8.96 8.96 0 0 1 3 9.25C3 4.7 7.026 1 12 1s9 3.7 9 8.25c0 2.37-.93 4.52-2.477 6.091zM12 23l-4.5-7.795h9L12 23z"/></svg>
+      Android APK 다운로드
+      <span id="android-version" style="opacity:.7;font-size:13px;"></span>
     </a>
-    <a href="#features" class="btn-secondary">기능 살펴보기</a>
+    <a href="https://github.com/GeyuongGongPark/BYDstatus" class="btn-secondary" target="_blank">
+      GitHub →
+    </a>
   </div>
+  <p style="margin-top:16px;font-size:13px;color:var(--muted);">iOS는 Xcode로 직접 빌드 · <a href="#how" style="color:var(--accent);text-decoration:none;">시작하기 ↓</a></p>
 </section>
 
 <!-- STATS BAR -->
@@ -398,8 +419,8 @@
       <div class="stat-item-label">자동 폴링 간격</div>
     </div>
     <div>
-      <div class="stat-item-val">iOS 17</div>
-      <div class="stat-item-label">최소 요구사항</div>
+      <div class="stat-item-val" style="font-size:28px;">iOS·Android</div>
+      <div class="stat-item-label">지원 플랫폼</div>
     </div>
     <div>
       <div class="stat-item-val">무료</div>
@@ -857,29 +878,86 @@
 <!-- HOW IT WORKS -->
 <div id="how" class="section-wrap">
   <div class="section-label">시작하기</div>
-  <h2 class="section-title">3단계로 바로 시작</h2>
-  <p class="section-desc" style="margin-bottom:48px;">GitHub에서 소스를 받아 Xcode로 직접 빌드합니다.</p>
+  <h2 class="section-title">플랫폼을 선택하세요</h2>
+  <p class="section-desc" style="margin-bottom:48px;">iOS와 Android 모두 동일한 기능을 제공합니다.</p>
 
-  <div class="steps">
-    <div class="step">
-      <div class="step-num">1</div>
-      <h3>빌드 및 설치</h3>
-      <p>GitHub에서 소스를 받아 Xcode로 빌드 후 iPhone에 설치합니다. iOS 17 이상 필요.</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:48px;">
+
+    <!-- iOS -->
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:32px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px;">
+        <span style="font-size:28px;"></span>
+        <div>
+          <div style="font-size:18px;font-weight:800;">iOS</div>
+          <span class="platform-badge ios">iOS 17+</span>
+        </div>
+      </div>
+      <div class="steps" style="grid-template-columns:1fr;gap:16px;">
+        <div class="step">
+          <div class="step-num">1</div>
+          <h3>소스 클론</h3>
+          <p>GitHub에서 소스를 받아 Xcode로 빌드 후 iPhone에 설치합니다.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <h3>BYD 계정 로그인</h3>
+          <p>설정 탭에서 BYD 공식 앱 계정(이메일·비밀번호)을 입력합니다.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <h3>자동 수집 시작</h3>
+          <p>차종·요금 설정 후 5분마다 차량 데이터를 자동 수집합니다.</p>
+        </div>
+      </div>
+      <a href="https://github.com/GeyuongGongPark/BYDstatus" class="btn-secondary" target="_blank" style="margin-top:24px;width:100%;justify-content:center;">GitHub에서 소스 받기 →</a>
     </div>
-    <div class="step">
-      <div class="step-num">2</div>
-      <h3>BYD 계정 로그인</h3>
-      <p>설정 탭에서 BYD 공식 앱에 사용하는 계정(이메일·비밀번호)을 입력합니다. 한국 서버 자동 연결.</p>
+
+    <!-- Android -->
+    <div style="background:var(--bg-card);border:1px solid rgba(61,220,132,0.2);border-radius:var(--radius);padding:32px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px;">
+        <span style="font-size:28px;">🤖</span>
+        <div>
+          <div style="font-size:18px;font-weight:800;">Android</div>
+          <span class="platform-badge android">Android 8.0+</span>
+        </div>
+      </div>
+      <div class="steps" style="grid-template-columns:1fr;gap:16px;">
+        <div class="step">
+          <div class="step-num">1</div>
+          <h3>APK 다운로드</h3>
+          <p>아래 버튼으로 최신 APK를 받고, 알 수 없는 앱 설치를 허용한 뒤 실행합니다.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <h3>BYD 계정 로그인</h3>
+          <p>설정 탭에서 BYD 공식 앱 계정(이메일·비밀번호)을 입력합니다.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <h3>자동 수집 시작</h3>
+          <p>차종·요금 설정 후 5분마다 차량 데이터를 자동 수집합니다.</p>
+        </div>
+      </div>
+      <a id="android-download-how" href="https://github.com/GeyuongGongPark/BYDstatus/releases/latest" class="btn-android" target="_blank" style="margin-top:24px;width:100%;justify-content:center;">
+        APK 다운로드
+        <span id="android-version-how" style="opacity:.7;font-size:13px;"></span>
+      </a>
     </div>
-    <div class="step">
-      <div class="step-num">3</div>
-      <h3>차종·요금 설정</h3>
-      <p>보유 차종과 전기요금(원/kWh)을 입력하면 정확한 충전 비용과 전비가 계산됩니다.</p>
-    </div>
-    <div class="step">
-      <div class="step-num">4</div>
-      <h3>자동 수집 시작</h3>
-      <p>앱이 5분마다 차량 데이터를 수집합니다. 충전·주행 세션이 자동 감지되어 이력에 기록됩니다.</p>
+
+  </div>
+
+  <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:28px;">
+    <div class="steps">
+      <div class="step" style="background:transparent;border:none;padding:0;">
+        <div class="step-num">4</div>
+        <h3>차종·요금 설정</h3>
+        <p>보유 차종과 전기요금(원/kWh)을 입력하면 정확한 충전 비용과 전비가 계산됩니다.</p>
+      </div>
+      <div class="step" style="background:transparent;border:none;padding:0;">
+        <div class="step-num">5</div>
+        <h3>충전·주행 자동 기록</h3>
+        <p>충전과 주행 시작·종료를 자동 감지해 세션별로 이력에 기록됩니다.</p>
+      </div>
     </div>
   </div>
 </div>
@@ -891,11 +969,15 @@
   <h2>지금 바로<br /><span class="cta-gradient">시작해보세요</span></h2>
   <p>완전 오픈 소스입니다. 코드를 직접 확인하고 수정해서 사용할 수 있습니다.</p>
   <div class="hero-actions" style="justify-content:center;">
-    <a href="https://github.com/GeyuongGongPark/BYDstatus" class="btn-primary" target="_blank">
-      GitHub에서 보기 →
+    <a id="android-download-cta" href="https://github.com/GeyuongGongPark/BYDstatus/releases/latest" class="btn-android" target="_blank">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.523 15.341 14.87 10.8A3.003 3.003 0 0 0 12 9.25c-1.117 0-2.093.613-2.613 1.52l-2.714 4.571A8.96 8.96 0 0 1 3 9.25C3 4.7 7.026 1 12 1s9 3.7 9 8.25c0 2.37-.93 4.52-2.477 6.091zM12 23l-4.5-7.795h9L12 23z"/></svg>
+      Android APK 다운로드
+    </a>
+    <a href="https://github.com/GeyuongGongPark/BYDstatus" class="btn-secondary" target="_blank">
+      GitHub →
     </a>
   </div>
-  <p class="cta-note">iOS 17 이상 · iPhone 전용 · BYD 한국 계정 필요</p>
+  <p class="cta-note">iOS 17+ · Android 8.0+ · BYD 한국 계정 필요 · 완전 무료</p>
 </div>
 
 <!-- FOOTER -->
@@ -905,8 +987,29 @@
     <a href="https://github.com/GeyuongGongPark/BYDstatus/issues" target="_blank">버그 제보</a>
     <a href="privacy.html">개인정보 처리방침</a>
   </div>
-  <div>BYDstatus · 오픈 소스 프로젝트 · BYD 공식 제품 아님</div>
+  <div>BYDstatus · iOS &amp; Android · 오픈 소스 프로젝트 · BYD 공식 제품 아님</div>
 </footer>
 
+<script>
+  // GitHub 최신 릴리즈에서 APK URL 자동 연결
+  fetch('https://api.github.com/repos/GeyuongGongPark/BYDstatus/releases/latest')
+    .then(r => r.json())
+    .then(data => {
+      if (!data || !data.assets) return;
+      const apk = data.assets.find(a => a.name.endsWith('.apk'));
+      if (!apk) return;
+      const url = apk.browser_download_url;
+      const ver = data.tag_name;
+      ['android-download', 'android-download-how', 'android-download-cta'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.href = url;
+      });
+      ['android-version', 'android-version-how'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = ver;
+      });
+    })
+    .catch(() => {});
+</script>
 </body>
 </html>
