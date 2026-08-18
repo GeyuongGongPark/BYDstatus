@@ -371,7 +371,7 @@
 <section class="hero">
   <div class="hero-badge">
     <span class="dot"></span>
-    iOS 17+ · 오픈 소스 · 개발 중
+    iOS 17+ · 오픈 소스 · v0.3.1
   </div>
   <h1>BYD 차량의 모든 데이터를<br /><span class="gradient">한눈에</span></h1>
   <p class="hero-desc">
@@ -468,8 +468,8 @@
         <ul>
           <li><span class="check">✓</span>배터리 % 및 주행가능거리 실시간 표시</li>
           <li><span class="check">✓</span>충전 중 전력(kW) 즉시 확인</li>
-          <li><span class="check">✓</span>오늘 충전량, 주행거리, 소비 전력 요약</li>
-          <li><span class="check">✓</span>이번 달 누적 충전 비용</li>
+          <li><span class="check">✓</span>오늘 충전량 / 주행거리 / 소비 요약 타일</li>
+          <li><span class="check">✓</span>이번 달 충전 비용 / 충전량 / 주행거리 / 소비 타일</li>
           <li><span class="check">✓</span>최근 충전 세션 목록</li>
         </ul>
       </div>
@@ -548,10 +548,10 @@
         <h3>배터리 변화를<br />그래프로 추적</h3>
         <p>시간대별 배터리 % 변화를 Swift Charts로 시각화합니다. 충전 구간과 주행 구간을 배경색으로 구분해 언제 무슨 일이 있었는지 직관적으로 파악할 수 있습니다.</p>
         <ul>
-          <li><span class="check">✓</span>24시간 / 7일 / 30일 필터</li>
+          <li><span class="check">✓</span>24시간 / 7일 / 30일 / 날짜 직접 선택</li>
           <li><span class="check">✓</span>충전·주행 구간 배경 색상 표시</li>
           <li><span class="check">✓</span>그래프 터치로 특정 시점 수치 확인</li>
-          <li><span class="check">✓</span>최고·최저·평균 배터리 통계</li>
+          <li><span class="check">✓</span>최고·최저·평균 배터리 통계 타일</li>
         </ul>
       </div>
     </div>
@@ -634,8 +634,8 @@
         <ul>
           <li><span class="check">✓</span>충전 시작·종료 자동 감지</li>
           <li><span class="check">✓</span>SOC 변화(시작% → 종료%) 기록</li>
-          <li><span class="check">✓</span>충전량(kWh) 및 추정 전기 비용 계산</li>
-          <li><span class="check">✓</span>월별 합산 통계</li>
+          <li><span class="check">✓</span>충전량(kWh) 및 추정 전기 비용 자동 계산</li>
+          <li><span class="check">✓</span>월간 필터 + 충전 비용·충전량·횟수 요약 카드</li>
           <li><span class="check">✓</span>충전 위치 기록 (위치 권한 허용 시)</li>
         </ul>
       </div>
@@ -714,9 +714,10 @@
         <h3>주행할 때마다<br />전비를 분석</h3>
         <p>주행 시작과 종료를 자동 감지해 세션별 주행거리와 소비 전력을 기록합니다. 실제 전비(km/kWh)를 계산해 연비 효율을 파악할 수 있습니다.</p>
         <ul>
-          <li><span class="check">✓</span>주행 시작·종료 자동 감지</li>
-          <li><span class="check">✓</span>세션별 전비(km/kWh) 계산</li>
-          <li><span class="check">✓</span>이번 달 총 주행거리 및 평균 전비</li>
+          <li><span class="check">✓</span>주행 시작·종료 자동 감지 (2분 미만 자동 삭제)</li>
+          <li><span class="check">✓</span>SOC 기반 소비(kWh) + GPS / ODO 기반 거리</li>
+          <li><span class="check">✓</span>세션별 전비(km/kWh) 자동 계산</li>
+          <li><span class="check">✓</span>월간 필터 + 총 주행거리·평균 전비 요약 카드</li>
           <li><span class="check">✓</span>일별 주행거리 바 차트</li>
         </ul>
       </div>
@@ -793,13 +794,14 @@
         </div>
       </div>
       <div class="showcase-text">
-        <div class="section-label">홈 화면 위젯</div>
-        <h3>앱을 열지 않고도<br />배터리 상태 확인</h3>
-        <p>Small · Medium 두 가지 크기의 위젯을 제공합니다. 홈 화면에서 바로 배터리 잔량, 충전 상태, 주행가능거리를 확인하세요.</p>
+        <div class="section-label">위젯 & 라이브 액티비티</div>
+        <h3>앱을 열지 않고도<br />실시간 상태 확인</h3>
+        <p>홈 화면 위젯과 Dynamic Island 라이브 액티비티로 언제 어디서든 차량 상태를 확인하세요.</p>
         <ul>
-          <li><span class="check">✓</span>Small — 배터리 % · 상태 · 주행가능거리</li>
-          <li><span class="check">✓</span>Medium — 배터리 + 충전 전력 + 이번 달 비용</li>
-          <li><span class="check">✓</span>15분마다 자동 갱신</li>
+          <li><span class="check">✓</span>Small / Medium 위젯 — 배터리 · 충전 전력 · 이번 달 비용</li>
+          <li><span class="check">✓</span>라이브 액티비티 — 주행·충전 중 Dynamic Island 실시간 표시</li>
+          <li><span class="check">✓</span>잠금화면 — 배터리 진행바 · kW · 주행가능거리 · 경과 시간</li>
+          <li><span class="check">✓</span>주행·충전 종료 시 액티비티 자동 종료</li>
           <li><span class="check">✓</span>다크 모드 완벽 지원</li>
         </ul>
       </div>
