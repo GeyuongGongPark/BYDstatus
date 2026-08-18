@@ -26,6 +26,11 @@ struct DashboardView: View {
             Calendar.current.isDate($0.startTime, equalTo: Date(), toGranularity: .month)
         }
     }
+    private var thisMonthDriving: [DrivingSession] {
+        allDrivingSessions.filter {
+            Calendar.current.isDate($0.startTime, equalTo: Date(), toGranularity: .month) && $0.endTime != nil
+        }
+    }
     private var recentCharging: [ChargingSession] {
         Array(allChargingSessions.prefix(3))
     }
@@ -263,21 +268,28 @@ struct DashboardView: View {
 
     private var monthlyCard: some View {
         CardView {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("이번 달 충전 비용")
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text("이번 달")
                         .font(.headline)
-                    let totalCost = thisMonthCharging.reduce(0) { $0 + $1.estimatedCostKrw }
-                    Text(String(format: "₩%.0f", totalCost))
-                        .font(.title2).bold()
-                    Text("\(thisMonthCharging.count)회 충전")
+                    Spacer()
+                    Text(Date().formatted(.dateTime.locale(Locale(identifier: "ko_KR")).year().month()))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                Spacer()
-                Image(systemName: "wonsign.circle.fill")
-                    .font(.system(size: 40))
-                    .foregroundStyle(.green.opacity(0.8))
+                let cost      = thisMonthCharging.reduce(0) { $0 + $1.estimatedCostKrw }
+                let chargeKwh = thisMonthCharging.reduce(0) { $0 + $1.energyKwh }
+                let driveKm   = thisMonthDriving.compactMap(\.distanceKm).reduce(0, +)
+                let driveKwh  = thisMonthDriving.reduce(0) { $0 + $1.energyKwh }
+                HStack(spacing: 0) {
+                    todayStat(value: String(format: "₩%.0f", cost),    unit: "",    label: "충전 비용", icon: "wonsign",    color: .green)
+                    Divider().frame(height: 40)
+                    todayStat(value: String(format: "%.1f", chargeKwh), unit: "kWh", label: "충전량",   icon: "bolt.fill",  color: .green)
+                    Divider().frame(height: 40)
+                    todayStat(value: String(format: "%.0f", driveKm),   unit: "km",  label: "주행거리", icon: "road.lanes", color: .blue)
+                    Divider().frame(height: 40)
+                    todayStat(value: String(format: "%.1f", driveKwh),  unit: "kWh", label: "소비",     icon: "flame.fill", color: .orange)
+                }
             }
         }
     }

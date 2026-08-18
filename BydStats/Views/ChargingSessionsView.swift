@@ -6,38 +6,44 @@ struct ChargingSessionsView: View {
     @Query(sort: \ChargingSession.startTime, order: .reverse) private var sessions: [ChargingSession]
 
     @State private var editingSession: ChargingSession?
+    @State private var selectedMonthKey: String = Self.currentMonthKey()
 
     // MARK: - 월별 그룹
 
     private struct MonthGroup: Identifiable {
-        let id: String          // "2026-08"
-        let label: String       // "2026년 8월"
+        let id: String
+        let label: String
         let sessions: [ChargingSession]
 
-        var totalKwh: Double       { sessions.reduce(0) { $0 + $1.energyKwh } }
-        var totalCostKrw: Double   { sessions.reduce(0) { $0 + $1.estimatedCostKrw } }
-        var count: Int             { sessions.count }
+        var totalKwh: Double     { sessions.reduce(0) { $0 + $1.energyKwh } }
+        var totalCostKrw: Double { sessions.reduce(0) { $0 + $1.estimatedCostKrw } }
+        var count: Int           { sessions.count }
     }
 
     private var monthGroups: [MonthGroup] {
         let cal = Calendar.current
-        let grouped = Dictionary(grouping: sessions) { session -> String in
-            let c = cal.dateComponents([.year, .month], from: session.startTime)
+        let grouped = Dictionary(grouping: sessions) { s -> String in
+            let c = cal.dateComponents([.year, .month], from: s.startTime)
             return String(format: "%04d-%02d", c.year ?? 0, c.month ?? 0)
         }
         return grouped
             .sorted { $0.key > $1.key }
             .map { key, list in
                 let parts = key.split(separator: "-")
-                let label = parts.count == 2
-                    ? "\(parts[0])년 \(Int(parts[1]) ?? 0)월"
-                    : key
-                return MonthGroup(
-                    id: key,
-                    label: label,
-                    sessions: list.sorted { $0.startTime > $1.startTime }
-                )
+                let label = parts.count == 2 ? "\(parts[0])년 \(Int(parts[1]) ?? 0)월" : key
+                return MonthGroup(id: key, label: label,
+                                  sessions: list.sorted { $0.startTime > $1.startTime })
             }
+    }
+
+    private var selectedGroup: MonthGroup? {
+        monthGroups.first { $0.id == selectedMonthKey }
+            ?? monthGroups.first
+    }
+
+    private static func currentMonthKey() -> String {
+        let c = Calendar.current.dateComponents([.year, .month], from: Date())
+        return String(format: "%04d-%02d", c.year ?? 0, c.month ?? 0)
     }
 
     // MARK: - Body
@@ -52,6 +58,26 @@ struct ChargingSessionsView: View {
                 }
             }
             .navigationTitle("충전 세션")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Menu {
+                        ForEach(monthGroups) { group in
+                            Button {
+                                selectedMonthKey = group.id
+                            } label: {
+                                if group.id == selectedMonthKey {
+                                    Label(group.label, systemImage: "checkmark")
+                                } else {
+                                    Text(group.label)
+                                }
+                            }
+                        }
+                    } label: {
+                        Label(selectedGroup?.label ?? "월 선택", systemImage: "calendar")
+                            .font(.subheadline)
+                    }
+                }
+            }
             .sheet(item: $editingSession) { ChargingSessionEditSheet(session: $0) }
         }
     }
@@ -66,7 +92,17 @@ struct ChargingSessionsView: View {
 
     private var sessionList: some View {
         List {
-            ForEach(monthGroups) { group in
+            // 상단 요약 카드
+            if let group = selectedGroup {
+                Section {
+                    summaryCard(group)
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                }
+            }
+
+            // 세션 목록
+            if let group = selectedGroup {
                 Section {
                     ForEach(group.sessions) { session in
                         ChargingSessionRow(session: session)
@@ -85,15 +121,63 @@ struct ChargingSessionsView: View {
                             }
                     }
                 } header: {
-                    MonthSummaryHeader(
-                        label: group.label,
-                        left:  String(format: "%.1f kWh", group.totalKwh),
-                        right: String(format: "₩%.0f · %d회", group.totalCostKrw, group.count)
-                    )
+                    Text("\(group.count)회 충전")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
         }
         .listStyle(.insetGrouped)
+    }
+
+    // MARK: - 요약 카드
+
+    private func summaryCard(_ group: MonthGroup) -> some View {
+        HStack(spacing: 0) {
+            summaryItem(
+                value: String(format: "₩%.0f", group.totalCostKrw),
+                unit: "",
+                label: "충전 비용",
+                icon: "wonsign",
+                color: .green
+            )
+            Divider().frame(height: 40)
+            summaryItem(
+                value: String(format: "%.1f", group.totalKwh),
+                unit: "kWh",
+                label: "충전량",
+                icon: "bolt.fill",
+                color: .green
+            )
+            Divider().frame(height: 40)
+            summaryItem(
+                value: "\(group.count)",
+                unit: "회",
+                label: "충전 횟수",
+                icon: "repeat",
+                color: .blue
+            )
+        }
+        .padding(.vertical, 12)
+        .frame(maxWidth: .infinity)
+        .background(.background, in: RoundedRectangle(cornerRadius: 14))
+        .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 2)
+        .padding(.horizontal, 4)
+        .padding(.vertical, 4)
+    }
+
+    private func summaryItem(value: String, unit: String, label: String, icon: String, color: Color) -> some View {
+        VStack(spacing: 4) {
+            Image(systemName: icon).foregroundStyle(color).font(.caption)
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                Text(value).font(.title3).bold()
+                if !unit.isEmpty {
+                    Text(unit).font(.caption).foregroundStyle(.secondary)
+                }
+            }
+            Text(label).font(.caption2).foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
     }
 }
 
@@ -104,42 +188,35 @@ private struct ChargingSessionRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            // 아이콘
             Image(systemName: "bolt.fill")
                 .font(.title3)
                 .foregroundStyle(.white)
                 .frame(width: 36, height: 36)
                 .background(.green, in: Circle())
 
-            // 정보
             VStack(alignment: .leading, spacing: 3) {
                 Text(session.startTime.formatted(.dateTime.locale(Locale(identifier: "ko_KR")).month().day().hour().minute()))
                     .font(.subheadline)
 
                 HStack(spacing: 4) {
                     Text("\(session.startSoc)% → \(session.endSoc)%")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(.caption).foregroundStyle(.secondary)
 
                     if session.durationMinutes > 0 {
-                        Text("·")
-                            .foregroundStyle(.secondary)
+                        Text("·").foregroundStyle(.secondary)
                         Text("\(session.durationMinutes)분")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .font(.caption).foregroundStyle(.secondary)
                     }
 
                     if session.latitude != nil {
                         Image(systemName: "location.fill")
-                            .font(.caption2)
-                            .foregroundStyle(.blue)
+                            .font(.caption2).foregroundStyle(.blue)
                     }
                 }
             }
 
             Spacer()
 
-            // 수치
             VStack(alignment: .trailing, spacing: 3) {
                 if session.estimatedCostKrw > 0 {
                     Text(String(format: "₩%.0f", session.estimatedCostKrw))
@@ -147,8 +224,7 @@ private struct ChargingSessionRow: View {
                 }
                 if session.energyKwh > 0 {
                     Text(String(format: "%.1f kWh", session.energyKwh))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(.caption).foregroundStyle(.secondary)
                 }
             }
         }
@@ -206,40 +282,15 @@ private struct ChargingSessionEditSheet: View {
                 }
                 Section {
                     Text("충전량 입력 시 설정의 전기요금(₩\(Int(electricityRate))/kWh) 기준으로 비용이 자동 계산됩니다.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(.caption).foregroundStyle(.secondary)
                 }
             }
             .navigationTitle("충전 세션 수정")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("완료") { dismiss() }
-                }
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("취소") { dismiss() }
-                }
+                ToolbarItem(placement: .confirmationAction) { Button("완료") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) { Button("취소") { dismiss() } }
             }
         }
-    }
-}
-
-// MARK: - 월별 헤더
-
-private struct MonthSummaryHeader: View {
-    let label: String
-    let left: String
-    let right: String
-
-    var body: some View {
-        HStack {
-            Text(label).font(.headline).foregroundStyle(.primary)
-            Spacer()
-            VStack(alignment: .trailing, spacing: 1) {
-                Text(left).font(.caption).foregroundStyle(.secondary)
-                Text(right).font(.caption).foregroundStyle(.secondary)
-            }
-        }
-        .padding(.vertical, 4)
     }
 }

@@ -5,27 +5,30 @@ import Charts
 // MARK: - 기간 필터
 
 enum TimeRange: String, CaseIterable {
-    case day   = "24시간"
-    case week  = "7일"
-    case month = "30일"
-    case all   = "전체"
+    case day    = "24시간"
+    case week   = "7일"
+    case month  = "30일"
+    case all    = "전체"
+    case custom = "직접"
 
     var duration: TimeInterval? {
         switch self {
-        case .day:   return 24 * 3600
-        case .week:  return 7 * 24 * 3600
-        case .month: return 30 * 24 * 3600
-        case .all:   return nil
+        case .day:    return 24 * 3600
+        case .week:   return 7 * 24 * 3600
+        case .month:  return 30 * 24 * 3600
+        case .all:    return nil
+        case .custom: return nil
         }
     }
 
     var xAxisFormat: Date.FormatStyle {
         let ko = Locale(identifier: "ko_KR")
         switch self {
-        case .day:   return .dateTime.locale(ko).hour().minute()
-        case .week:  return .dateTime.locale(ko).month().day().hour()
-        case .month: return .dateTime.locale(ko).month().day()
-        case .all:   return .dateTime.locale(ko).year().month().day()
+        case .day:    return .dateTime.locale(ko).hour().minute()
+        case .week:   return .dateTime.locale(ko).month().day().hour()
+        case .month:  return .dateTime.locale(ko).month().day()
+        case .all:    return .dateTime.locale(ko).year().month().day()
+        case .custom: return .dateTime.locale(ko).month().day()
         }
     }
 }
@@ -62,13 +65,21 @@ struct BatteryHistoryView: View {
 
     @State private var selectedRange: TimeRange = .day
     @State private var selectedDate: Date?
+    @State private var customStart: Date = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
+    @State private var customEnd: Date   = Date()
 
     // MARK: Computed
 
     private var filteredPoints: [DataPoint] {
-        guard let duration = selectedRange.duration else { return allPoints }
-        let cutoff = Date().addingTimeInterval(-duration)
-        return allPoints.filter { $0.timestamp >= cutoff }
+        switch selectedRange {
+        case .custom:
+            let end = min(customEnd, Date())
+            return allPoints.filter { $0.timestamp >= customStart && $0.timestamp <= end }
+        default:
+            guard let duration = selectedRange.duration else { return allPoints }
+            let cutoff = Date().addingTimeInterval(-duration)
+            return allPoints.filter { $0.timestamp >= cutoff }
+        }
     }
 
     private var stateRanges: [StateRange] {
@@ -96,6 +107,13 @@ struct BatteryHistoryView: View {
         })
     }
 
+    private var batteryStats: (max: Int, min: Int, avg: Int)? {
+        let percents = filteredPoints.map { $0.batteryPercent }
+        guard !percents.isEmpty else { return nil }
+        let avg = Int((Double(percents.reduce(0, +)) / Double(percents.count)).rounded())
+        return (percents.max()!, percents.min()!, avg)
+    }
+
     private func batteryState(of point: DataPoint) -> BatteryState {
         if point.isCharging { return .charging }
         if point.isDriving  { return .driving }
@@ -106,34 +124,102 @@ struct BatteryHistoryView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // 기간 필터
-                Picker("기간", selection: $selectedRange) {
-                    ForEach(TimeRange.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                }
-                .pickerStyle(.segmented)
-                .padding()
-                .onChange(of: selectedRange) { selectedDate = nil }
+            ScrollView {
+                VStack(spacing: 0) {
+                    // 기간 필터
+                    Picker("기간", selection: $selectedRange) {
+                        ForEach(TimeRange.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    .padding()
+                    .onChange(of: selectedRange) { selectedDate = nil }
 
-                if filteredPoints.isEmpty {
-                    emptyView
-                } else {
-                    // 선택 포인트 정보
-                    selectionInfoView
-                        .padding(.horizontal)
-                        .padding(.bottom, 8)
+                    // 직접 날짜 선택
+                    if selectedRange == .custom {
+                        customDatePicker
+                            .padding(.horizontal)
+                            .padding(.bottom, 8)
+                    }
 
-                    // 차트
-                    batteryChart
-                        .padding(.horizontal)
+                    if filteredPoints.isEmpty {
+                        emptyView
+                    } else {
+                        VStack(spacing: 12) {
+                            // 통계 타일
+                            if let stats = batteryStats {
+                                statsCard(stats)
+                                    .padding(.horizontal)
+                            }
 
-                    // 범례
-                    legendView
-                        .padding()
+                            // 선택 포인트 정보
+                            selectionInfoView
+                                .padding(.horizontal)
+
+                            // 차트
+                            batteryChart
+                                .padding(.horizontal)
+
+                            // 범례
+                            legendView
+                                .padding()
+                        }
+                    }
                 }
             }
             .navigationTitle("배터리 이력")
         }
+    }
+
+    // MARK: - 날짜 직접 선택
+
+    private var customDatePicker: some View {
+        VStack(spacing: 8) {
+            HStack {
+                Text("시작")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .frame(width: 30, alignment: .leading)
+                DatePicker("", selection: $customStart, in: ...customEnd, displayedComponents: [.date, .hourAndMinute])
+                    .labelsHidden()
+                    .onChange(of: customStart) { selectedDate = nil }
+            }
+            HStack {
+                Text("종료")
+                    .font(.caption).foregroundStyle(.secondary)
+                    .frame(width: 30, alignment: .leading)
+                DatePicker("", selection: $customEnd, in: customStart..., displayedComponents: [.date, .hourAndMinute])
+                    .labelsHidden()
+                    .onChange(of: customEnd) { selectedDate = nil }
+            }
+        }
+        .padding(12)
+        .background(.quaternary, in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    // MARK: - 통계 타일
+
+    private func statsCard(_ stats: (max: Int, min: Int, avg: Int)) -> some View {
+        HStack(spacing: 0) {
+            statItem(label: "최고", value: stats.max, color: .green)
+            Divider().frame(height: 36)
+            statItem(label: "최저", value: stats.min, color: .red)
+            Divider().frame(height: 36)
+            statItem(label: "평균", value: stats.avg, color: .blue)
+        }
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity)
+        .background(.background, in: RoundedRectangle(cornerRadius: 14))
+        .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 2)
+    }
+
+    private func statItem(label: String, value: Int, color: Color) -> some View {
+        VStack(spacing: 2) {
+            Text(label).font(.caption2).foregroundStyle(.secondary)
+            HStack(alignment: .firstTextBaseline, spacing: 1) {
+                Text("\(value)").font(.title3).bold().foregroundStyle(color)
+                Text("%").font(.caption).foregroundStyle(.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity)
     }
 
     // MARK: - 빈 상태
@@ -144,7 +230,7 @@ struct BatteryHistoryView: View {
         } description: {
             Text("대시보드에서 새로고침하면 데이터가 쌓입니다.")
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity, minHeight: 300)
     }
 
     // MARK: - 선택 포인트 정보
@@ -197,7 +283,6 @@ struct BatteryHistoryView: View {
 
     private var batteryChart: some View {
         Chart {
-            // 충전/주행 구간 배경
             ForEach(stateRanges.filter { $0.state != .parked }) { range in
                 RectangleMark(
                     xStart: .value("시작", range.start),
@@ -208,7 +293,6 @@ struct BatteryHistoryView: View {
                 .foregroundStyle(range.state.color.opacity(0.12))
             }
 
-            // 면적 그라디언트
             ForEach(filteredPoints) { point in
                 AreaMark(
                     x: .value("시간", point.timestamp),
@@ -219,13 +303,11 @@ struct BatteryHistoryView: View {
                 .foregroundStyle(
                     LinearGradient(
                         colors: [.blue.opacity(0.25), .blue.opacity(0.02)],
-                        startPoint: .top,
-                        endPoint: .bottom
+                        startPoint: .top, endPoint: .bottom
                     )
                 )
             }
 
-            // 선
             ForEach(filteredPoints) { point in
                 LineMark(
                     x: .value("시간", point.timestamp),
@@ -236,22 +318,11 @@ struct BatteryHistoryView: View {
                 .lineStyle(StrokeStyle(lineWidth: 2))
             }
 
-            // 선택 포인트 마커
             if let point = selectedPoint {
-                PointMark(
-                    x: .value("시간", point.timestamp),
-                    y: .value("배터리", point.batteryPercent)
-                )
-                .symbolSize(80)
-                .foregroundStyle(.white)
-
-                PointMark(
-                    x: .value("시간", point.timestamp),
-                    y: .value("배터리", point.batteryPercent)
-                )
-                .symbolSize(40)
-                .foregroundStyle(.blue)
-
+                PointMark(x: .value("시간", point.timestamp), y: .value("배터리", point.batteryPercent))
+                    .symbolSize(80).foregroundStyle(.white)
+                PointMark(x: .value("시간", point.timestamp), y: .value("배터리", point.batteryPercent))
+                    .symbolSize(40).foregroundStyle(.blue)
                 RuleMark(x: .value("선택", point.timestamp))
                     .foregroundStyle(.blue.opacity(0.3))
                     .lineStyle(StrokeStyle(lineWidth: 1, dash: [4]))
@@ -269,8 +340,7 @@ struct BatteryHistoryView: View {
                 AxisGridLine()
                 if let date = value.as(Date.self) {
                     AxisValueLabel {
-                        Text(date, format: selectedRange.xAxisFormat)
-                            .font(.caption2)
+                        Text(date, format: selectedRange.xAxisFormat).font(.caption2)
                     }
                 }
             }
