@@ -43,7 +43,7 @@ fun MainNavHost(vm: AppViewModel = viewModel()) {
         return
     }
 
-    val startDestination = if (uiState.isLoggedIn) Tab.Dashboard.route else Tab.Settings.route
+    val startDestination = Tab.Dashboard.route
     val navController = rememberNavController()
 
     Scaffold(
