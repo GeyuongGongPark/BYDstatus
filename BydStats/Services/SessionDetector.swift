@@ -4,7 +4,6 @@ import SwiftData
 final class SessionDetector {
     private var activeChargingSession: ChargingSession?
     private var activeDrivingSession: DrivingSession?
-    private var lastDrivingPollTime: Date?
 
     private let modelContext: ModelContext
     private let electricityRate: Double
@@ -94,18 +93,7 @@ final class SessionDetector {
                 if status.totalMileage > 0 { session.startOdometer = status.totalMileage }
                 modelContext.insert(session)
                 activeDrivingSession = session
-                lastDrivingPollTime = timestamp
                 locationTracker?.startTracking()
-            } else {
-                // 폴링마다 순간 전력 × 시간(h) 적분으로 에너지 누적
-                if let lastTime = lastDrivingPollTime {
-                    let intervalHours = timestamp.timeIntervalSince(lastTime) / 3600.0
-                    let powerKw = abs(status.instantPowerKw)
-                    if powerKw > 0 {
-                        activeDrivingSession?.energyKwh += powerKw * intervalHours
-                    }
-                }
-                lastDrivingPollTime = timestamp
             }
             activeDrivingSession?.endSoc = status.batteryPercentage
         } else if let session = activeDrivingSession {
@@ -116,17 +104,14 @@ final class SessionDetector {
             guard duration >= 120 else {
                 modelContext.delete(session)
                 activeDrivingSession = nil
-                lastDrivingPollTime = nil
                 return
             }
 
             session.endTime = timestamp
 
-            // 누적 에너지가 없으면 SOC 기반으로 폴백
-            if session.energyKwh == 0 {
-                let socDelta = Double(max(0, session.startSoc - session.endSoc))
-                session.energyKwh = socDelta * batteryCapacityKwh / 100.0
-            }
+            // SOC 기반 소비 계산
+            let socDelta = Double(max(0, session.startSoc - session.endSoc))
+            session.energyKwh = socDelta * batteryCapacityKwh / 100.0
 
             // 1순위: ODO(Energy API) 기반 거리
             if status.totalMileage > 0 { session.endOdometer = status.totalMileage }
@@ -145,7 +130,6 @@ final class SessionDetector {
             }
 
             activeDrivingSession = nil
-            lastDrivingPollTime = nil
         }
     }
 }
