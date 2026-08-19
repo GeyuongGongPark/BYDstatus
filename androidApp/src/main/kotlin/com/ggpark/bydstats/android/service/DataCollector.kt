@@ -90,6 +90,8 @@ class DataCollector(
                 else -> 0.0
             }
 
+            // soc=0은 API 준비 미완료로 간주 — UI 및 세션 기록 건너뜀
+            if (status.batteryPercentage == 0) return
             _currentStatus.value = status
             _error.value = null
             detector?.process(status, System.currentTimeMillis(), gpsDistanceKm)
