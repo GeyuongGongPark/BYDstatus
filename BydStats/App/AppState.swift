@@ -201,13 +201,12 @@ final class AppState {
             // Live Activity 상태 관리
             await updateLiveActivity(prev: currentStatus, next: status)
 
+            // soc=0은 API 미준비로 간주 — UI 반영 및 세션 기록 건너뜀 (이전 값 유지)
+            guard status.batteryPercentage > 0 else { return }
             currentStatus = status
             pollError = nil
-            // 배터리 값이 0이면 API 파싱 실패로 간주 — 그래프/세션에 기록하지 않음
-            if status.batteryPercentage > 0 {
-                sessionDetector?.process(status: status, at: Date())
-                try? modelContext.save()
-            }
+            sessionDetector?.process(status: status, at: Date())
+            try? modelContext.save()
             saveWidgetSnapshot(status: status, modelContext: modelContext)
         } catch {
             pollError = error.localizedDescription
