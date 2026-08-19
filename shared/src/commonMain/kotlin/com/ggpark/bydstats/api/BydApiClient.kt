@@ -11,6 +11,45 @@ import io.ktor.http.*
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.*
 
+// BYD API는 숫자를 JSON number 또는 JSON string으로 혼재해서 반환 — 양쪽 모두 파싱
+internal fun JsonObject.jsonInt(vararg keys: String): Int {
+    for (k in keys) {
+        val prim = this[k]?.jsonPrimitive ?: continue
+        prim.intOrNull?.let { return it }
+        prim.content.toIntOrNull()?.let { return it }
+    }
+    return 0
+}
+
+internal fun JsonObject.jsonDouble(vararg keys: String): Double {
+    for (k in keys) {
+        val prim = this[k]?.jsonPrimitive ?: continue
+        prim.doubleOrNull?.let { return it }
+        prim.content.toDoubleOrNull()?.let { return it }
+    }
+    return 0.0
+}
+
+internal fun parseVehicleStatus(r: JsonObject): VehicleStatus {
+    val lf = r.jsonInt("leftFrontDoorLock")
+    val rf = r.jsonInt("rightFrontDoorLock")
+    val lr = r.jsonInt("leftRearDoorLock")
+    val rr = r.jsonInt("rightRearDoorLock")
+    val hasAny = lf != 0 || rf != 0 || lr != 0 || rr != 0
+    val rawTemp = r.jsonDouble("interiorTemp", "tempInCar")
+    return VehicleStatus(
+        batteryPercentage   = r.jsonInt("soc", "elecPercent"),
+        drivingRange        = r.jsonDouble("mileageEV", "enduranceMileage"),
+        powerGear           = r["powerGear"]?.jsonPrimitive?.let { it.intOrNull ?: it.content.toIntOrNull() } ?: -1,
+        epb                 = r["epb"]?.jsonPrimitive?.let { it.intOrNull ?: it.content.toIntOrNull() } ?: -1,
+        speed               = r.jsonDouble("speed"),
+        instantPowerW       = r.jsonDouble("gl"),
+        totalMileage        = r.jsonDouble("totalMileage"),
+        isLocked            = hasAny && (lf == 2 && rf == 2 && lr == 2 && rr == 2),
+        interiorTemperature = if (rawTemp > -40 && rawTemp < 100) rawTemp else 0.0,
+    )
+}
+
 sealed class BydError : Exception() {
     object NotLoggedIn : BydError()
     object SessionExpired : BydError()
@@ -398,47 +437,7 @@ class BydApiClient(
                 if (attempt == 5) throw e
             }
         }
-        val r = result ?: throw BydError.InvalidResponse
-
-        // BYD API는 숫자를 JSON number 또는 JSON string으로 혼재해서 반환
-        fun JsonObject.int(key: String, vararg fallbacks: String): Int {
-            val keys = listOf(key) + fallbacks.toList()
-            for (k in keys) {
-                val prim = this[k]?.jsonPrimitive ?: continue
-                prim.intOrNull?.let { return it }
-                prim.content.toIntOrNull()?.let { return it }
-            }
-            return 0
-        }
-        fun JsonObject.double(key: String, vararg fallbacks: String): Double {
-            val keys = listOf(key) + fallbacks.toList()
-            for (k in keys) {
-                val prim = this[k]?.jsonPrimitive ?: continue
-                prim.doubleOrNull?.let { return it }
-                prim.content.toDoubleOrNull()?.let { return it }
-            }
-            return 0.0
-        }
-
-        val lf = r.int("leftFrontDoorLock")
-        val rf = r.int("rightFrontDoorLock")
-        val lr = r.int("leftRearDoorLock")
-        val rr = r.int("rightRearDoorLock")
-        val hasAny = lf != 0 || rf != 0 || lr != 0 || rr != 0
-
-        val rawTemp = r.double("interiorTemp", "tempInCar")
-
-        return VehicleStatus(
-            batteryPercentage   = r.int("soc", "elecPercent"),
-            drivingRange        = r.double("mileageEV", "enduranceMileage"),
-            powerGear           = r["powerGear"]?.jsonPrimitive?.let { it.intOrNull ?: it.content.toIntOrNull() } ?: -1,
-            epb                 = r["epb"]?.jsonPrimitive?.let { it.intOrNull ?: it.content.toIntOrNull() } ?: -1,
-            speed               = r.double("speed"),
-            instantPowerW       = r.double("gl"),
-            totalMileage        = r.double("totalMileage"),
-            isLocked            = hasAny && (lf == 2 && rf == 2 && lr == 2 && rr == 2),
-            interiorTemperature = if (rawTemp > -40 && rawTemp < 100) rawTemp else 0.0,
-        )
+        return parseVehicleStatus(result ?: throw BydError.InvalidResponse)
     }
 
     // MARK: - Charging Status

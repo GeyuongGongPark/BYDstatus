@@ -20,6 +20,9 @@ interface DataPointDao {
 
     @Query("SELECT * FROM data_points ORDER BY timestamp ASC")
     fun allFlow(): Flow<List<DataPointEntity>>
+
+    @Query("SELECT * FROM data_points ORDER BY timestamp ASC")
+    suspend fun getAll(): List<DataPointEntity>
 }
 
 @Dao
@@ -41,6 +44,9 @@ interface ChargingSessionDao {
 
     @Query("SELECT * FROM charging_sessions WHERE startTime >= :from AND startTime <= :to ORDER BY startTime DESC")
     suspend fun queryRange(from: Long, to: Long): List<ChargingSessionEntity>
+
+    @Query("SELECT * FROM charging_sessions ORDER BY startTime DESC")
+    suspend fun getAll(): List<ChargingSessionEntity>
 }
 
 @Dao
@@ -62,4 +68,7 @@ interface DrivingSessionDao {
 
     @Query("SELECT * FROM driving_sessions WHERE startTime >= :from AND startTime <= :to ORDER BY startTime DESC")
     suspend fun queryRange(from: Long, to: Long): List<DrivingSessionEntity>
+
+    @Query("SELECT * FROM driving_sessions ORDER BY startTime DESC")
+    suspend fun getAll(): List<DrivingSessionEntity>
 }

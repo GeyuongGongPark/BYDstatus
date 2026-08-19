@@ -30,6 +30,10 @@ kotlin {
             implementation(libs.ktor.serialization.json)
             implementation(libs.ktor.logging)
         }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
+        }
         androidMain.dependencies {
             implementation(libs.kotlinx.coroutines.android)
             implementation(libs.ktor.android)

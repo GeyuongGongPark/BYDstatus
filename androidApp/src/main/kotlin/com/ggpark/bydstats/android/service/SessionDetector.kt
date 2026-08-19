@@ -69,11 +69,13 @@ class SessionDetector(
             }
         } else {
             activeCharging?.let { session ->
-                val socDelta = maxOf(0, session.endSoc - session.startSoc).toDouble()
+                val finalSoc = status.batteryPercentage
+                val socDelta = maxOf(0, finalSoc - session.startSoc).toDouble()
                 val energy = socDelta * batteryCapacityKwh / 100.0
                 val duration = ((timestamp - session.startTime) / 60_000).toInt()
                 val updated = session.copy(
                     endTime = timestamp,
+                    endSoc = finalSoc,
                     energyKwh = energy,
                     durationMinutes = duration,
                     estimatedCostKrw = energy * electricityRate,
@@ -114,7 +116,8 @@ class SessionDetector(
                     return
                 }
 
-                val socDelta = maxOf(0, session.startSoc - session.endSoc).toDouble()
+                val finalSoc = status.batteryPercentage
+                val socDelta = maxOf(0, session.startSoc - finalSoc).toDouble()
                 val energy = socDelta * batteryCapacityKwh / 100.0
 
                 val endOdo = if (status.totalMileage > 0) status.totalMileage else null
@@ -132,6 +135,7 @@ class SessionDetector(
 
                 val updated = session.copy(
                     endTime = timestamp,
+                    endSoc = finalSoc,
                     energyKwh = energy,
                     distanceKm = distKm,
                     efficiencyKmPerKwh = efficiency,
