@@ -24,8 +24,8 @@ targets:
       path: BydStats/Resources/Info.plist
       properties:
         CFBundleDisplayName: BYD Stats
-        CFBundleVersion: "5"
-        CFBundleShortVersionString: "0.3.1"
+        CFBundleVersion: "6"
+        CFBundleShortVersionString: "0.4.0"
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         UILaunchScreen:
@@ -68,8 +68,8 @@ targets:
       path: BydStatsWidget/Info.plist
       properties:
         CFBundleDisplayName: BYD Stats Widget
-        CFBundleVersion: "5"
-        CFBundleShortVersionString: "0.3.1"
+        CFBundleVersion: "6"
+        CFBundleShortVersionString: "0.4.0"
         NSSupportsLiveActivities: YES
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
