@@ -388,12 +388,22 @@ actor BydVehicleService {
                     endpoint: "/vehicleInfo/vehicle/vehicleRealTimeResult",
                     innerMap: pollInner, vin: vin
                 )
-                log("vehicleRealTimeResult (시도 \(attempt)): soc=\(pollResult["soc"] ?? "nil") mileageEV=\(pollResult["mileageEV"] ?? "nil")")
+                let socVal = pollResult["soc"] ?? pollResult["elecPercent"]
+                log("vehicleRealTimeResult (시도 \(attempt)): soc=\(socVal ?? "nil") mileageEV=\(pollResult["mileageEV"] ?? pollResult["enduranceMileage"] ?? "nil")")
+                // 유효한 차량 데이터가 없으면 재시도 (데이터 준비 중)
+                guard socVal != nil else {
+                    log("vehicleRealTimeResult 데이터 미준비 (시도 \(attempt)/5), 재시도...")
+                    if attempt == 5 { throw BydError.controlTimeout }
+                    continue
+                }
                 result = pollResult
                 break
             } catch BydError.serverError(let msg, let code) where code == "3002" {
                 log("차량 상태 조회 처리 중 (시도 \(attempt)/5) code=3002 msg=\(msg)")
                 if attempt == 5 { throw BydError.controlTimeout }
+            } catch let urlError as URLError where urlError.code == .cancelled || urlError.code == .timedOut {
+                log("vehicleRealTimeResult \(urlError.code == .cancelled ? "cancelled" : "timeout") (시도 \(attempt)/5), 재시도...")
+                if attempt == 5 { throw urlError }
             } catch {
                 log("vehicleRealTimeResult 오류 (시도 \(attempt)): \(error)")
                 throw error
@@ -401,14 +411,27 @@ actor BydVehicleService {
         }
         guard let result = result else { throw BydError.invalidResponse }
 
+        // BYD API는 숫자를 Int/Double 또는 String으로 혼재해서 반환하므로 양쪽 모두 시도
+        func parseInt(_ key: String) -> Int? {
+            if let v = result[key] as? Int    { return v }
+            if let v = result[key] as? String { return Int(v) }
+            return nil
+        }
+        func parseDouble(_ key: String) -> Double? {
+            if let v = result[key] as? Double { return v }
+            if let v = result[key] as? Int    { return Double(v) }
+            if let v = result[key] as? String { return Double(v) }
+            return nil
+        }
+
         var status = VehicleStatus()
-        status.batteryPercentage   = (result["soc"] as? Int) ?? (result["elecPercent"] as? Int) ?? 0
-        status.drivingRange        = (result["mileageEV"] as? Double) ?? (result["enduranceMileage"] as? Double) ?? 0.0
-        status.powerGear           = result["powerGear"]    as? Int    ?? -1
-        status.epb                 = result["epb"]          as? Int    ?? -1
-        status.speed               = result["speed"]        as? Double ?? 0.0
-        status.instantPowerW       = result["gl"]           as? Double ?? 0.0
-        status.totalMileage        = result["totalMileage"] as? Double ?? 0.0
+        status.batteryPercentage   = parseInt("soc") ?? parseInt("elecPercent") ?? 0
+        status.drivingRange        = parseDouble("mileageEV") ?? parseDouble("enduranceMileage") ?? 0.0
+        status.powerGear           = parseInt("powerGear")    ?? -1
+        status.epb                 = parseInt("epb")          ?? -1
+        status.speed               = parseDouble("speed")     ?? 0.0
+        status.instantPowerW       = parseDouble("gl")        ?? 0.0
+        status.totalMileage        = parseDouble("totalMileage") ?? 0.0
 
         let lf = result["leftFrontDoorLock"]  as? Int ?? 0
         let rf = result["rightFrontDoorLock"] as? Int ?? 0

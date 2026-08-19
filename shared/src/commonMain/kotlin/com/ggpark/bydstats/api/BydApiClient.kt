@@ -379,44 +379,64 @@ class BydApiClient(
             pollInner.add("energyType" to "0")
             pollInner.add("tboxVersion" to "3")
             try {
-                result = postTokenSecure("/vehicleInfo/vehicle/vehicleRealTimeResult", pollInner, vin)
+                val pollResult = postTokenSecure("/vehicleInfo/vehicle/vehicleRealTimeResult", pollInner, vin)
+                // soc 또는 elecPercent가 없으면 차량 데이터 미준비 → 재시도
+                val hasSoc = pollResult["soc"] != null || pollResult["elecPercent"] != null
+                if (!hasSoc) {
+                    if (attempt == 5) throw BydError.ControlTimeout
+                    continue
+                }
+                result = pollResult
                 break
             } catch (e: BydError.ServerError) {
                 if (e.code == "3002" && attempt == 5) throw BydError.ControlTimeout
                 if (e.code != "3002") throw e
+            } catch (e: BydError.ControlTimeout) {
+                throw e
+            } catch (e: Exception) {
+                // 네트워크 오류(cancelled, timeout 등)는 마지막 시도까지 재시도
+                if (attempt == 5) throw e
             }
         }
         val r = result ?: throw BydError.InvalidResponse
 
+        // BYD API는 숫자를 JSON number 또는 JSON string으로 혼재해서 반환
         fun JsonObject.int(key: String, vararg fallbacks: String): Int {
             val keys = listOf(key) + fallbacks.toList()
-            for (k in keys) this[k]?.jsonPrimitive?.intOrNull?.let { return it }
+            for (k in keys) {
+                val prim = this[k]?.jsonPrimitive ?: continue
+                prim.intOrNull?.let { return it }
+                prim.content.toIntOrNull()?.let { return it }
+            }
             return 0
         }
         fun JsonObject.double(key: String, vararg fallbacks: String): Double {
             val keys = listOf(key) + fallbacks.toList()
-            for (k in keys) this[k]?.jsonPrimitive?.doubleOrNull?.let { return it }
+            for (k in keys) {
+                val prim = this[k]?.jsonPrimitive ?: continue
+                prim.doubleOrNull?.let { return it }
+                prim.content.toDoubleOrNull()?.let { return it }
+            }
             return 0.0
         }
 
-        val lf = r["leftFrontDoorLock"]?.jsonPrimitive?.intOrNull ?: 0
-        val rf = r["rightFrontDoorLock"]?.jsonPrimitive?.intOrNull ?: 0
-        val lr = r["leftRearDoorLock"]?.jsonPrimitive?.intOrNull ?: 0
-        val rr = r["rightRearDoorLock"]?.jsonPrimitive?.intOrNull ?: 0
+        val lf = r.int("leftFrontDoorLock")
+        val rf = r.int("rightFrontDoorLock")
+        val lr = r.int("leftRearDoorLock")
+        val rr = r.int("rightRearDoorLock")
         val hasAny = lf != 0 || rf != 0 || lr != 0 || rr != 0
 
-        val rawTemp = r["interiorTemp"]?.jsonPrimitive?.doubleOrNull
-            ?: r["tempInCar"]?.jsonPrimitive?.doubleOrNull ?: 0.0
+        val rawTemp = r.double("interiorTemp", "tempInCar")
 
         return VehicleStatus(
-            batteryPercentage  = r.int("soc", "elecPercent"),
-            drivingRange       = r.double("mileageEV", "enduranceMileage"),
-            powerGear          = r["powerGear"]?.jsonPrimitive?.intOrNull ?: -1,
-            epb                = r["epb"]?.jsonPrimitive?.intOrNull ?: -1,
-            speed              = r["speed"]?.jsonPrimitive?.doubleOrNull ?: 0.0,
-            instantPowerW      = r["gl"]?.jsonPrimitive?.doubleOrNull ?: 0.0,
-            totalMileage       = r["totalMileage"]?.jsonPrimitive?.doubleOrNull ?: 0.0,
-            isLocked           = hasAny && (lf == 2 && rf == 2 && lr == 2 && rr == 2),
+            batteryPercentage   = r.int("soc", "elecPercent"),
+            drivingRange        = r.double("mileageEV", "enduranceMileage"),
+            powerGear           = r["powerGear"]?.jsonPrimitive?.let { it.intOrNull ?: it.content.toIntOrNull() } ?: -1,
+            epb                 = r["epb"]?.jsonPrimitive?.let { it.intOrNull ?: it.content.toIntOrNull() } ?: -1,
+            speed               = r.double("speed"),
+            instantPowerW       = r.double("gl"),
+            totalMileage        = r.double("totalMileage"),
+            isLocked            = hasAny && (lf == 2 && rf == 2 && lr == 2 && rr == 2),
             interiorTemperature = if (rawTemp > -40 && rawTemp < 100) rawTemp else 0.0,
         )
     }
