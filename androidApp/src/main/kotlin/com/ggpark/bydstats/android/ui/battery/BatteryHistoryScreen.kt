@@ -1,56 +1,119 @@
 package com.ggpark.bydstats.android.ui.battery
 
-import androidx.compose.foundation.Canvas
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ShowChart
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.*
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.drawText
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ggpark.bydstats.android.data.entity.DataPointEntity
 import com.ggpark.bydstats.android.viewmodel.AppViewModel
 import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+
+// MARK: - 기간 필터
 
 private enum class BattRange(val label: String, val durationMs: Long?) {
     DAY("24시간", 24 * 3600 * 1000L),
     WEEK("7일", 7 * 24 * 3600 * 1000L),
     MONTH("30일", 30 * 24 * 3600 * 1000L),
     ALL("전체", null),
+    CUSTOM("직접", null),
 }
+
+// MARK: - 상태 색상
+
+private val chargingColor = Color(0xFF2DB85B)   // 초록
+private val drivingColor  = Color(0xFFF59021)   // 주황
+private val parkedColor   = Color(0xFFAAAAAA)   // 회색
+
+private fun stateColor(pt: DataPointEntity): Color = when {
+    pt.isCharging -> chargingColor
+    pt.isDriving  -> drivingColor
+    else          -> parkedColor
+}
+
+private fun stateLabel(pt: DataPointEntity): String = when {
+    pt.isCharging -> "충전 중"
+    pt.isDriving  -> "주행 중"
+    else          -> "주차 중"
+}
+
+// MARK: - 리샘플링 (기간별 버킷)
+
+private fun resample30min(points: List<DataPointEntity>, bucketMin: Int = 30): List<DataPointEntity> {
+    val bucketMs = bucketMin * 60 * 1000L
+    return points
+        .groupBy { it.timestamp / bucketMs }
+        .toSortedMap()
+        .values
+        .map { it.last() }   // 버킷 내 마지막 포인트가 대표
+}
+
+private fun bucketMin(range: BattRange, customDurationMs: Long? = null): Int = when (range) {
+    BattRange.DAY    -> 30
+    BattRange.WEEK   -> 60
+    BattRange.MONTH  -> 120
+    BattRange.ALL    -> 120
+    BattRange.CUSTOM -> {
+        val dur = customDurationMs ?: (7 * 24 * 3600 * 1000L)
+        when {
+            dur <= 24 * 3600 * 1000L      -> 30
+            dur <= 7 * 24 * 3600 * 1000L  -> 60
+            else                           -> 120
+        }
+    }
+}
+
+// MARK: - Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BatteryHistoryScreen(vm: AppViewModel) {
     val allPoints by vm.dataPoints.collectAsState(emptyList())
     var selectedRange by remember { mutableStateOf(BattRange.DAY) }
-    var selectedIdx by remember { mutableStateOf<Int?>(null) }
+    var customStart by remember {
+        mutableStateOf(LocalDateTime.now().minusDays(7))
+    }
+    var customEnd by remember { mutableStateOf(LocalDateTime.now()) }
 
     val now = remember { System.currentTimeMillis() }
-    val filteredPoints = remember(allPoints, selectedRange, now) {
-        val d = selectedRange.durationMs
-        if (d == null) allPoints else allPoints.filter { it.timestamp >= now - d }
+    val filteredPoints = remember(allPoints, selectedRange, now, customStart, customEnd) {
+        val (raw, customDurMs) = when (selectedRange) {
+            BattRange.CUSTOM -> {
+                val startMs = customStart.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                val endMs   = customEnd.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                allPoints.filter { it.timestamp in startMs..endMs } to (endMs - startMs)
+            }
+            else -> {
+                val d = selectedRange.durationMs
+                val pts = if (d == null) allPoints else allPoints.filter { it.timestamp >= now - d }
+                pts to null
+            }
+        }
+        resample30min(raw, bucketMin(selectedRange, customDurMs))
     }
+
+    val latest = filteredPoints.lastOrNull()
 
     val stats = remember(filteredPoints) {
         filteredPoints.takeIf { it.isNotEmpty() }?.let { pts ->
@@ -69,7 +132,6 @@ fun BatteryHistoryScreen(vm: AppViewModel) {
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
         ) {
             // 기간 필터
             Row(
@@ -81,18 +143,29 @@ fun BatteryHistoryScreen(vm: AppViewModel) {
                 BattRange.entries.forEach { range ->
                     FilterChip(
                         selected = selectedRange == range,
-                        onClick = { selectedRange = range; selectedIdx = null },
+                        onClick = { selectedRange = range },
                         label = { Text(range.label, style = MaterialTheme.typography.labelSmall) },
                         modifier = Modifier.weight(1f),
                     )
                 }
             }
 
-            if (filteredPoints.isEmpty()) {
-                Box(
+            // 직접 날짜 선택
+            if (selectedRange == BattRange.CUSTOM) {
+                CustomDateRangePicker(
+                    start = customStart,
+                    end = customEnd,
+                    onStartChange = { customStart = it },
+                    onEndChange = { customEnd = it },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 64.dp),
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                )
+            }
+
+            if (filteredPoints.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center,
                 ) {
                     Column(
@@ -100,7 +173,7 @@ fun BatteryHistoryScreen(vm: AppViewModel) {
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Icon(
-                            Icons.Default.ShowChart, null,
+                            Icons.Default.BarChart, null,
                             modifier = Modifier.size(56.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -116,146 +189,256 @@ fun BatteryHistoryScreen(vm: AppViewModel) {
                 return@Column
             }
 
-            // 통계 카드
-            stats?.let { (max, min, avg) ->
-                ElevatedCard(modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                    ) {
-                        BattStatItem("최고", max, Color(0xFF4CAF50), Modifier.weight(1f))
-                        VerticalDivider(modifier = Modifier.height(40.dp))
-                        BattStatItem("최저", min, Color(0xFFF44336), Modifier.weight(1f))
-                        VerticalDivider(modifier = Modifier.height(40.dp))
-                        BattStatItem("평균", avg, MaterialTheme.colorScheme.primary, Modifier.weight(1f))
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                // 최신 상태 헤더
+                latest?.let { pt ->
+                    item {
+                        HeaderCard(pt)
+                        Spacer(Modifier.height(6.dp))
                     }
                 }
-            }
 
-            Spacer(Modifier.height(12.dp))
+                // 통계 카드
+                stats?.let { (max, min, avg) ->
+                    item {
+                        StatsCard(max, min, avg)
+                        Spacer(Modifier.height(10.dp))
+                    }
+                }
 
-            // 선택 포인트 정보
-            selectedIdx?.let { idx ->
-                filteredPoints.getOrNull(idx)?.let { pt ->
-                    SelectedPointCard(pt)
+                // 배터리 바 목록 (최신순)
+                items(filteredPoints.reversed()) { pt ->
+                    BatteryBarRow(pt)
+                }
+
+                // 범례
+                item {
                     Spacer(Modifier.height(8.dp))
+                    LegendRow()
+                    Spacer(Modifier.height(16.dp))
                 }
             }
-
-            // 차트
-            val primaryColor = MaterialTheme.colorScheme.primary
-            val outlineColor = MaterialTheme.colorScheme.outlineVariant
-            val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
-            val surfaceColor = MaterialTheme.colorScheme.surface
-            val textMeasurer = rememberTextMeasurer()
-
-            BatteryLineChart(
-                points = filteredPoints,
-                selectedIdx = selectedIdx,
-                onSelectIdx = { selectedIdx = it },
-                primaryColor = primaryColor,
-                outlineColor = outlineColor,
-                labelColor = labelColor,
-                surfaceColor = surfaceColor,
-                textMeasurer = textMeasurer,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(240.dp)
-                    .padding(horizontal = 16.dp),
-            )
-
-            Spacer(Modifier.height(12.dp))
-
-            // 범례
-            Row(
-                modifier = Modifier.padding(horizontal = 20.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                LegendDot(Color(0xFF4CAF50), "충전")
-                LegendDot(Color(0xFF2196F3), "주행")
-                LegendDot(Color(0xFF9E9E9E).copy(alpha = 0.5f), "주차")
-            }
-            Spacer(Modifier.height(24.dp))
         }
     }
 }
 
-@Composable
-private fun BattStatItem(label: String, pct: Int, color: Color, modifier: Modifier) {
-    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(4.dp))
-        Text(
-            "$pct%",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = color,
-        )
-    }
-}
+// MARK: - 최신 상태 헤더
 
 @Composable
-private fun SelectedPointCard(pt: DataPointEntity) {
-    val timeStr = Instant.ofEpochMilli(pt.timestamp)
-        .atZone(ZoneId.systemDefault())
-        .format(DateTimeFormatter.ofPattern("M/d HH:mm"))
-    val (stateLabel, stateColor) = when {
-        pt.isCharging -> "충전 중" to Color(0xFF4CAF50)
-        pt.isDriving  -> "주행 중" to Color(0xFF2196F3)
-        else          -> "주차 중" to Color(0xFF9E9E9E)
-    }
-
-    Card(modifier = Modifier
-        .fillMaxWidth()
-        .padding(horizontal = 16.dp)) {
+private fun HeaderCard(pt: DataPointEntity) {
+    val color = stateColor(pt)
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    timeStr,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Text("최종 상태", style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(
-                        "${pt.batteryPercent}",
-                        style = MaterialTheme.typography.headlineMedium,
+                        "${pt.batteryPercent}%",
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
+                        color = color,
                     )
-                    Text(
-                        "%",
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(bottom = 4.dp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    pt.drivingRangeKm?.takeIf { it > 0 }?.let { range ->
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            "· ${range.toInt()} km 남음",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(bottom = 2.dp),
+                        )
+                    }
                 }
             }
-            Surface(shape = MaterialTheme.shapes.small, color = stateColor.copy(alpha = 0.15f)) {
+            Surface(
+                shape = MaterialTheme.shapes.small,
+                color = color.copy(alpha = 0.13f),
+            ) {
                 Text(
-                    stateLabel,
-                    color = stateColor,
+                    stateLabel(pt),
+                    color = color,
                     style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                )
-            }
-            if (pt.isCharging && (pt.chargingPowerKw ?: 0.0) > 0) {
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    "${"%.1f".format(pt.chargingPowerKw!!)} kW",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = Color(0xFF4CAF50),
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                 )
             }
         }
+    }
+}
+
+// MARK: - 통계 카드
+
+@Composable
+private fun StatsCard(max: Int, min: Int, avg: Int) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp),
+        ) {
+            StatItem("최고", max, Color(0xFF4CAF50), Modifier.weight(1f))
+            VerticalDivider(modifier = Modifier.height(36.dp))
+            StatItem("최저", min, Color(0xFFF44336), Modifier.weight(1f))
+            VerticalDivider(modifier = Modifier.height(36.dp))
+            StatItem("평균", avg, MaterialTheme.colorScheme.primary, Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun StatItem(label: String, pct: Int, color: Color, modifier: Modifier) {
+    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(label, style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(2.dp))
+        Text("$pct%", style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold, color = color)
+    }
+}
+
+// MARK: - 개별 바 행
+
+@Composable
+private fun BatteryBarRow(pt: DataPointEntity) {
+    val timeStr = Instant.ofEpochMilli(pt.timestamp)
+        .atZone(ZoneId.systemDefault())
+        .format(DateTimeFormatter.ofPattern("M/d HH:mm"))
+    val color = stateColor(pt)
+    val pct = pt.batteryPercent.coerceIn(0, 100)
+
+    Row(
+        modifier = Modifier.fillMaxWidth().height(28.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // 시간 라벨
+        Text(
+            timeStr,
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.width(70.dp),
+        )
+
+        Spacer(Modifier.width(6.dp))
+
+        // 배터리 바
+        BoxWithConstraints(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
+                .clip(RoundedCornerShape(4.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+        ) {
+            val filledWidth = maxWidth * pct / 100f
+            Box(
+                modifier = Modifier
+                    .width(filledWidth.coerceAtLeast(4.dp))
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(color.copy(alpha = if (pt.isCharging || pt.isDriving) 0.82f else 0.45f)),
+                contentAlignment = Alignment.CenterStart,
+            ) {
+                Text(
+                    "$pct%",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    ),
+                    color = if (pct > 15) Color.White else color,
+                    modifier = Modifier.padding(start = 5.dp),
+                )
+            }
+        }
+
+        Spacer(Modifier.width(6.dp))
+
+        // 주행가능 km
+        Text(
+            pt.drivingRangeKm?.takeIf { it > 0 }?.let { "${it.toInt()}km" } ?: "",
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.End,
+            modifier = Modifier.width(44.dp),
+        )
+    }
+}
+
+// MARK: - 직접 날짜 범위 선택
+
+private val displayFmt: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm")
+
+@Composable
+private fun CustomDateRangePicker(
+    start: LocalDateTime,
+    end: LocalDateTime,
+    onStartChange: (LocalDateTime) -> Unit,
+    onEndChange: (LocalDateTime) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val ctx = LocalContext.current
+
+    fun pickDateTime(initial: LocalDateTime, maxDateTime: LocalDateTime?, onPick: (LocalDateTime) -> Unit) {
+        DatePickerDialog(ctx, { _, y, m, d ->
+            TimePickerDialog(ctx, { _, h, min ->
+                val picked = LocalDateTime.of(LocalDate.of(y, m + 1, d), LocalTime.of(h, min))
+                onPick(if (maxDateTime != null && picked.isAfter(maxDateTime)) maxDateTime else picked)
+            }, initial.hour, initial.minute, true).show()
+        }, initial.year, initial.monthValue - 1, initial.dayOfMonth).show()
+    }
+
+    Surface(
+        modifier = modifier,
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceVariant,
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("시작", style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.width(28.dp))
+                OutlinedButton(
+                    onClick = { pickDateTime(start, end, onStartChange) },
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                    modifier = Modifier.height(32.dp),
+                ) {
+                    Icon(Icons.Default.CalendarMonth, null, modifier = Modifier.size(14.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text(start.format(displayFmt), style = MaterialTheme.typography.labelMedium)
+                }
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("종료", style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.width(28.dp))
+                OutlinedButton(
+                    onClick = { pickDateTime(end, null, onEndChange) },
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                    modifier = Modifier.height(32.dp),
+                ) {
+                    Icon(Icons.Default.CalendarMonth, null, modifier = Modifier.size(14.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text(end.format(displayFmt), style = MaterialTheme.typography.labelMedium)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - 범례
+
+@Composable
+private fun LegendRow() {
+    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        LegendDot(chargingColor, "충전")
+        LegendDot(drivingColor, "주행")
+        LegendDot(parkedColor, "주차")
     }
 }
 
@@ -267,148 +450,11 @@ private fun LegendDot(color: Color, label: String) {
     ) {
         Box(
             modifier = Modifier
-                .size(10.dp)
-                .clip(CircleShape)
-                .background(color),
+                .size(width = 14.dp, height = 8.dp)
+                .clip(RoundedCornerShape(2.dp))
+                .background(color.copy(alpha = 0.75f)),
         )
-        Text(
-            label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
-
-@Composable
-private fun BatteryLineChart(
-    points: List<DataPointEntity>,
-    selectedIdx: Int?,
-    onSelectIdx: (Int?) -> Unit,
-    primaryColor: Color,
-    outlineColor: Color,
-    labelColor: Color,
-    surfaceColor: Color,
-    textMeasurer: androidx.compose.ui.text.TextMeasurer,
-    modifier: Modifier = Modifier,
-) {
-    if (points.size < 2) return
-
-    val labelStyle = TextStyle(
-        color = labelColor,
-        fontSize = 9.sp,
-    )
-
-    val minT = points.first().timestamp
-    val maxT = points.last().timestamp
-    val tRange = (maxT - minT).toFloat().coerceAtLeast(1f)
-
-    Canvas(
-        modifier = modifier.pointerInput(points) {
-            detectTapGestures { offset ->
-                val frac = (offset.x / size.width.toFloat()).coerceIn(0f, 1f)
-                val targetT = minT + frac * tRange
-                val idx = points.indices.minByOrNull {
-                    kotlin.math.abs(points[it].timestamp - targetT)
-                }
-                onSelectIdx(if (idx == selectedIdx) null else idx)
-            }
-        }
-    ) {
-        val w = size.width
-        val h = size.height
-        val padLeft = 28.dp.toPx()
-        val padBottom = 16.dp.toPx()
-        val chartW = w - padLeft
-        val chartH = h - padBottom
-
-        fun xOf(t: Long) = padLeft + (t - minT).toFloat() / tRange * chartW
-        fun yOf(pct: Int) = chartH * (1f - pct / 100f)
-
-        // 그리드 라인 + Y축 레이블
-        for (pct in listOf(25, 50, 75, 100)) {
-            val y = yOf(pct)
-            drawLine(outlineColor.copy(alpha = 0.3f), Offset(padLeft, y), Offset(w, y), 1.dp.toPx())
-            val measured = textMeasurer.measure("$pct%", labelStyle)
-            drawText(measured, topLeft = Offset(0f, y - measured.size.height / 2f))
-        }
-
-        // 상태 배경 구간
-        var segStart = points[0]
-        for (i in 1 until points.size) {
-            val pt = points[i]
-            val changed = pt.isCharging != segStart.isCharging || pt.isDriving != segStart.isDriving
-            if (changed) {
-                val segColor = when {
-                    segStart.isCharging -> Color(0xFF4CAF50)
-                    segStart.isDriving  -> Color(0xFF2196F3)
-                    else -> null
-                }
-                segColor?.let {
-                    drawRect(
-                        color = it.copy(alpha = 0.1f),
-                        topLeft = Offset(xOf(segStart.timestamp), 0f),
-                        size = Size(xOf(pt.timestamp) - xOf(segStart.timestamp), chartH),
-                    )
-                }
-                segStart = pt
-            }
-        }
-        val lastColor = when {
-            segStart.isCharging -> Color(0xFF4CAF50)
-            segStart.isDriving  -> Color(0xFF2196F3)
-            else -> null
-        }
-        lastColor?.let {
-            drawRect(
-                color = it.copy(alpha = 0.1f),
-                topLeft = Offset(xOf(segStart.timestamp), 0f),
-                size = Size(w - xOf(segStart.timestamp), chartH),
-            )
-        }
-
-        // 에어리어 그라디언트
-        val areaPath = Path().apply {
-            moveTo(xOf(points[0].timestamp), chartH)
-            points.forEach { lineTo(xOf(it.timestamp), yOf(it.batteryPercent)) }
-            lineTo(xOf(points.last().timestamp), chartH)
-            close()
-        }
-        drawPath(
-            path = areaPath,
-            brush = Brush.verticalGradient(
-                listOf(primaryColor.copy(alpha = 0.3f), primaryColor.copy(alpha = 0.02f)),
-                startY = 0f,
-                endY = chartH,
-            ),
-        )
-
-        // 라인
-        val linePath = Path().apply {
-            moveTo(xOf(points[0].timestamp), yOf(points[0].batteryPercent))
-            for (i in 1 until points.size) {
-                lineTo(xOf(points[i].timestamp), yOf(points[i].batteryPercent))
-            }
-        }
-        drawPath(
-            path = linePath,
-            color = primaryColor,
-            style = Stroke(2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
-        )
-
-        // 선택 포인트
-        selectedIdx?.let { idx ->
-            val pt = points.getOrNull(idx) ?: return@let
-            val x = xOf(pt.timestamp)
-            val y = yOf(pt.batteryPercent)
-            drawLine(
-                color = primaryColor.copy(alpha = 0.4f),
-                start = Offset(x, 0f),
-                end = Offset(x, chartH),
-                strokeWidth = 1.5.dp.toPx(),
-                pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 4f)),
-            )
-            drawCircle(surfaceColor, 8.dp.toPx(), Offset(x, y))
-            drawCircle(primaryColor, 5.dp.toPx(), Offset(x, y))
-        }
+        Text(label, style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

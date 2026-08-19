@@ -7,18 +7,12 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.glance.appwidget.GlanceAppWidgetManager
+import com.ggpark.bydstats.android.BydStatsApp
 import com.ggpark.bydstats.android.data.AppDatabase
-import com.ggpark.bydstats.android.data.ChargingRatePlan
-import com.ggpark.bydstats.android.data.ratePlanById
 import com.ggpark.bydstats.android.data.entity.ChargingSessionEntity
 import com.ggpark.bydstats.android.data.entity.DataPointEntity
 import com.ggpark.bydstats.android.data.entity.DrivingSessionEntity
-import com.ggpark.bydstats.android.service.DataCollector
-import com.ggpark.bydstats.android.service.LocationTracker
-import com.ggpark.bydstats.android.widget.BydStatsWidget
-import com.ggpark.bydstats.android.widget.WidgetDataStore
-import com.ggpark.bydstats.android.widget.WidgetSnapshot
+import com.ggpark.bydstats.android.service.PollingService
 import com.ggpark.bydstats.api.BydApiClient
 import com.ggpark.bydstats.api.BydConfig
 import com.ggpark.bydstats.api.BydError
@@ -55,14 +49,13 @@ data class AppSettings(
     val password: String = "",
     val region: String = "KR",
     val vin: String = "",
-    val electricityRate: Double = 180.0,  // "custom" 요금제일 때 사용
+    val electricityRate: Double = 180.0,
     val vehicleModel: String = "아토 3",
     val batteryCapacityKwh: Double = 60.48,
     val pollingIntervalMin: Int = 5,
     val ratePlanId: String = "kepco_low",
 )
 
-// iOS처럼 항상 탭바 앱 표시. 로그인 폼은 설정 탭 안에 포함.
 data class AppUiState(
     val isLoading: Boolean = true,
     val isLoggedIn: Boolean = false,
@@ -78,8 +71,6 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val context = application.applicationContext
     private val db = AppDatabase.getInstance(context)
     private var apiClient: BydApiClient? = null
-    private var dataCollector: DataCollector? = null
-    private val locationTracker = LocationTracker(context)
 
     private val _settings = MutableStateFlow(AppSettings())
     val settings: StateFlow<AppSettings> = _settings.asStateFlow()
@@ -92,7 +83,20 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     val drivingSessions: Flow<List<DrivingSessionEntity>> = db.drivingSessionDao().allFlow()
 
     init {
+        observeServiceStatus()
         viewModelScope.launch { loadSettings() }
+    }
+
+    // MARK: - 서비스 상태 구독
+
+    private fun observeServiceStatus() {
+        val app = getApplication<BydStatsApp>()
+        viewModelScope.launch {
+            combine(app.statusFlow, app.errorFlow) { s, e -> s to e }
+                .collect { (status, err) ->
+                    _uiState.update { it.copy(status = status, pollingError = err) }
+                }
+        }
     }
 
     // MARK: - Settings
@@ -127,7 +131,8 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         _uiState.value = AppUiState(isLoading = false, isLoggedIn = true)
-        startPolling(s.vin)
+
+        if (s.vin.isNotEmpty()) PollingService.start(context)
     }
 
     private fun initApiClient(settings: AppSettings) {
@@ -154,7 +159,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // MARK: - Login (iOS처럼 설정 탭 안에서 처리)
+    // MARK: - Login
 
     fun login(username: String, password: String, region: String) {
         viewModelScope.launch {
@@ -170,8 +175,10 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 val vin = vehicles.firstOrNull()?.vin ?: ""
                 if (vin.isNotEmpty()) saveSetting(PrefKeys.VIN, vin)
                 updateSettings { it.copy(vin = vin) }
-                _uiState.update { it.copy(isLoggingIn = false, isLoggedIn = true, loginError = null, vehicles = vehicles) }
-                startPolling(vin)
+                _uiState.update {
+                    it.copy(isLoggingIn = false, isLoggedIn = true, loginError = null, vehicles = vehicles)
+                }
+                if (vin.isNotEmpty()) PollingService.start(context)
             } catch (e: BydError.ServerError) {
                 _uiState.update { it.copy(isLoggingIn = false, loginError = "로그인 실패: ${e.msg}") }
             } catch (e: Exception) {
@@ -184,50 +191,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             saveSetting(PrefKeys.VIN, vin)
             updateSettings { it.copy(vin = vin) }
-            startPolling(vin)
-        }
-    }
-
-    // MARK: - Polling
-
-    private fun startPolling(vin: String) {
-        if (vin.isEmpty()) return
-        val client = apiClient ?: return
-        dataCollector?.stop()
-
-        val collector = DataCollector(
-            apiClient              = client,
-            db                     = db,
-            getElectricityRateAt   = { ts ->
-                val s = _settings.value
-                ratePlanById(s.ratePlanId, s.electricityRate).rateAt(ts)
-            },
-            getBatteryCapacityKwh  = { _settings.value.batteryCapacityKwh },
-            getParkingIntervalMs   = { _settings.value.pollingIntervalMin * 60_000L },
-            locationTracker        = locationTracker,
-        )
-        dataCollector = collector
-        collector.start(vin)
-
-        viewModelScope.launch {
-            combine(collector.currentStatus, collector.error) { status, err ->
-                status to err
-            }.collect { (status, err) ->
-                _uiState.update { it.copy(status = status, pollingError = err) }
-                status?.let { s ->
-                    WidgetDataStore.save(context, WidgetSnapshot(
-                        batteryPercent = s.batteryPercentage,
-                        isCharging     = s.isCharging,
-                        isDriving      = s.isDriving,
-                        drivingRangeKm = s.drivingRange,
-                        instantPowerKw = s.instantPowerKw,
-                        lastUpdated    = System.currentTimeMillis(),
-                    ))
-                    val manager = GlanceAppWidgetManager(context)
-                    val ids = manager.getGlanceIds(BydStatsWidget::class.java)
-                    ids.forEach { BydStatsWidget().update(context, it) }
-                }
-            }
+            PollingService.restart(context)
         }
     }
 
@@ -237,6 +201,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             saveSetting(PrefKeys.RATE_PLAN_ID, planId)
             updateSettings { it.copy(ratePlanId = planId) }
+            PollingService.restart(context)
         }
     }
 
@@ -244,6 +209,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             saveSetting(PrefKeys.CUSTOM_RATE, rate.toString())
             updateSettings { it.copy(electricityRate = rate) }
+            PollingService.restart(context)
         }
     }
 
@@ -252,6 +218,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             saveSetting(PrefKeys.VEHICLE_MODEL, name)
             saveSetting(PrefKeys.BATTERY_CAPACITY, kwh.toString())
             updateSettings { it.copy(vehicleModel = name, batteryCapacityKwh = kwh) }
+            PollingService.restart(context)
         }
     }
 
@@ -259,12 +226,13 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             saveSetting(PrefKeys.POLLING_INTERVAL, minutes.toString())
             updateSettings { it.copy(pollingIntervalMin = minutes) }
+            PollingService.restart(context)
         }
     }
 
     fun logout() {
         viewModelScope.launch {
-            dataCollector?.stop()
+            PollingService.stop(context)
             context.dataStore.edit { it.clear() }
             _settings.value = AppSettings()
             _uiState.value = AppUiState(isLoading = false, isLoggedIn = false)
@@ -280,7 +248,9 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     // MARK: - Helpers
 
-    private fun updateSettings(transform: (AppSettings) -> AppSettings) { _settings.value = transform(_settings.value) }
+    private fun updateSettings(transform: (AppSettings) -> AppSettings) {
+        _settings.value = transform(_settings.value)
+    }
 
     private suspend fun saveSetting(key: androidx.datastore.preferences.core.Preferences.Key<String>, value: String) {
         context.dataStore.edit { prefs -> prefs[key] = value }
@@ -292,10 +262,5 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             prefs[PrefKeys.PASSWORD] = s.password
             prefs[PrefKeys.REGION]   = s.region
         }
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        dataCollector?.stop()
     }
 }

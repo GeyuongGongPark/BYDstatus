@@ -42,6 +42,7 @@ class SessionDetector(
                 isDriving = status.isDriving,
                 chargingPowerKw = if (status.isCharging) status.instantPowerKw else null,
                 hvacOn = status.isClimateOn,
+                drivingRangeKm = if (status.drivingRange > 0) status.drivingRange else null,
             )
         )
         handleCharging(status, timestamp)

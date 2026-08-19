@@ -37,7 +37,7 @@ struct BydStatsApp: App {
         }
         .modelContainer(modelContainer)
         .backgroundTask(.appRefresh(BackgroundTaskManager.taskIdentifier)) {
-            await BackgroundTaskManager.handleRefresh()
+            await BackgroundTaskManager.handleRefresh(modelContainer: modelContainer)
         }
     }
 }

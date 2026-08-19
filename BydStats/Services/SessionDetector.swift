@@ -60,7 +60,8 @@ final class SessionDetector {
             isCharging: status.isCharging,
             isDriving: status.isDriving,
             chargingPowerKw: status.isCharging ? status.instantPowerKw : nil,
-            hvacOn: status.isClimateOn
+            hvacOn: status.isClimateOn,
+            drivingRangeKm: status.drivingRange > 0 ? status.drivingRange : nil
         )
         modelContext.insert(point)
 

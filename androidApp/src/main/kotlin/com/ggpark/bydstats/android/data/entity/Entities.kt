@@ -12,6 +12,7 @@ data class DataPointEntity(
     val isDriving: Boolean,
     val chargingPowerKw: Double?,
     val hvacOn: Boolean,
+    val drivingRangeKm: Double? = null,
 )
 
 @Entity(tableName = "charging_sessions")
