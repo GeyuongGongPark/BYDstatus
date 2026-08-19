@@ -53,8 +53,7 @@ fun SettingsScreen(vm: AppViewModel, onNavigateToLog: () -> Unit = {}) {
     var regionMenuExpanded  by remember { mutableStateOf(false) }
     var ratePlanExpanded    by remember { mutableStateOf(false) }
 
-    val currentVehicleName = VEHICLE_BATTERY_MAP.entries
-        .firstOrNull { it.value == settings.batteryCapacityKwh }?.key ?: "직접 선택"
+    val currentVehicleName = settings.vehicleModel.ifEmpty { "직접 선택" }
     val currentRegionLabel = REGIONS.firstOrNull { it.first == settings.region }?.second ?: settings.region
 
     // 현재 선택된 요금제
@@ -216,7 +215,7 @@ fun SettingsScreen(vm: AppViewModel, onNavigateToLog: () -> Unit = {}) {
                     VEHICLE_BATTERY_MAP.forEach { (name, kwh) ->
                         DropdownMenuItem(
                             text = { Text("$name ($kwh kWh)") },
-                            onClick = { vm.updateBatteryCapacity(kwh); vehicleMenuExpanded = false }
+                            onClick = { vm.updateVehicle(name, kwh); vehicleMenuExpanded = false }
                         )
                     }
                 }

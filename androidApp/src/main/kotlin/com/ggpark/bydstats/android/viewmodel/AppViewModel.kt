@@ -41,6 +41,7 @@ private object PrefKeys {
     val VIN              = stringPreferencesKey("vin")
     val ELECTRICITY_RATE = stringPreferencesKey("electricity_rate")
     val BATTERY_CAPACITY = stringPreferencesKey("battery_capacity")
+    val VEHICLE_MODEL    = stringPreferencesKey("vehicle_model")
     val POLLING_INTERVAL = stringPreferencesKey("polling_interval")
     val USER_ID          = stringPreferencesKey("user_id")
     val SIGN_TOKEN       = stringPreferencesKey("sign_token")
@@ -55,6 +56,7 @@ data class AppSettings(
     val region: String = "KR",
     val vin: String = "",
     val electricityRate: Double = 180.0,  // "custom" 요금제일 때 사용
+    val vehicleModel: String = "아토 3",
     val batteryCapacityKwh: Double = 60.48,
     val pollingIntervalMin: Int = 5,
     val ratePlanId: String = "kepco_low",
@@ -104,6 +106,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             vin                = prefs[PrefKeys.VIN] ?: "",
             electricityRate    = prefs[PrefKeys.CUSTOM_RATE]?.toDoubleOrNull()
                                     ?: prefs[PrefKeys.ELECTRICITY_RATE]?.toDoubleOrNull() ?: 180.0,
+            vehicleModel       = prefs[PrefKeys.VEHICLE_MODEL] ?: "아토 3",
             batteryCapacityKwh = prefs[PrefKeys.BATTERY_CAPACITY]?.toDoubleOrNull() ?: 60.48,
             pollingIntervalMin = prefs[PrefKeys.POLLING_INTERVAL]?.toIntOrNull() ?: 5,
             ratePlanId         = prefs[PrefKeys.RATE_PLAN_ID] ?: "kepco_low",
@@ -244,10 +247,11 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun updateBatteryCapacity(kwh: Double) {
+    fun updateVehicle(name: String, kwh: Double) {
         viewModelScope.launch {
+            saveSetting(PrefKeys.VEHICLE_MODEL, name)
             saveSetting(PrefKeys.BATTERY_CAPACITY, kwh.toString())
-            updateSettings { it.copy(batteryCapacityKwh = kwh) }
+            updateSettings { it.copy(vehicleModel = name, batteryCapacityKwh = kwh) }
         }
     }
 
