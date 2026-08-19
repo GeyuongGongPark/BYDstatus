@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		10AF18CC59A485D0E89E3AE4 /* BydVehicleService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CBA5591971F2800B9092FCC /* BydVehicleService.swift */; };
+		118BE4695A1D886EECE6C705 /* ChargingRatePlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4C42A319B52D058B5D18275 /* ChargingRatePlan.swift */; };
 		16447B36012F710AB286B64E /* LogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B6DC82184B73DB89850581 /* LogView.swift */; };
 		208F4E2D120B873C14543110 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1990F1E772C2BBD6CF01F33C /* Assets.xcassets */; };
 		3616E564342AA6231D532E88 /* SessionDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCC034E754C027617E4576C9 /* SessionDetector.swift */; };
@@ -95,6 +96,7 @@
 		CED46F84CE16CB39AC823C2D /* ChargingSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChargingSession.swift; sourceTree = "<group>"; };
 		DB27E28B744FBC2888F6B621 /* bangcle_tables.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = bangcle_tables.bin; sourceTree = "<group>"; };
 		DD02993CC5C4CAECF6E37313 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		E4C42A319B52D058B5D18275 /* ChargingRatePlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChargingRatePlan.swift; sourceTree = "<group>"; };
 		E58632732CA0B66A8C2885E4 /* BydLiveActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BydLiveActivityAttributes.swift; sourceTree = "<group>"; };
 		F06B305251905D6603FA9E63 /* BydStatsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BydStatsApp.swift; sourceTree = "<group>"; };
 		FCC034E754C027617E4576C9 /* SessionDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionDetector.swift; sourceTree = "<group>"; };
@@ -171,6 +173,7 @@
 		B699EEDAF36D9C1F443BCB6B /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				E4C42A319B52D058B5D18275 /* ChargingRatePlan.swift */,
 				CED46F84CE16CB39AC823C2D /* ChargingSession.swift */,
 				20EA78FF1C786628B2798904 /* DataPoint.swift */,
 				CBBA57DECFE34014901A9499 /* DrivingSession.swift */,
@@ -337,6 +340,7 @@
 				A8BC02C343B2C38A23D08BF9 /* BydLiveActivityAttributes.swift in Sources */,
 				86C8D3D45A0A0AAF166B2995 /* BydStatsApp.swift in Sources */,
 				10AF18CC59A485D0E89E3AE4 /* BydVehicleService.swift in Sources */,
+				118BE4695A1D886EECE6C705 /* ChargingRatePlan.swift in Sources */,
 				BD55B46A54855E3245764BE2 /* ChargingSession.swift in Sources */,
 				6614C803145731FD9787DF40 /* ChargingSessionsView.swift in Sources */,
 				3C652F7733AC00389C9337A3 /* CryptoUtils.swift in Sources */,

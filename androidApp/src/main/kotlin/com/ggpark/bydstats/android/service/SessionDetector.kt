@@ -6,7 +6,7 @@ import com.ggpark.bydstats.model.VehicleStatus
 
 class SessionDetector(
     private val db: AppDatabase,
-    private val electricityRate: Double,
+    private val getElectricityRateAt: (Long) -> Double,
     private val batteryCapacityKwh: Double,
 ) {
     private var activeCharging: ChargingSessionEntity? = null
@@ -73,12 +73,14 @@ class SessionDetector(
                 val socDelta = maxOf(0, finalSoc - session.startSoc).toDouble()
                 val energy = socDelta * batteryCapacityKwh / 100.0
                 val duration = ((timestamp - session.startTime) / 60_000).toInt()
+                // 충전 시작 시간 기준 시간대 요금 적용
+                val rate = getElectricityRateAt(session.startTime)
                 val updated = session.copy(
                     endTime = timestamp,
                     endSoc = finalSoc,
                     energyKwh = energy,
                     durationMinutes = duration,
-                    estimatedCostKrw = energy * electricityRate,
+                    estimatedCostKrw = energy * rate,
                 )
                 db.chargingSessionDao().update(updated)
                 activeCharging = null
@@ -133,6 +135,7 @@ class SessionDetector(
                     if (energy > 0) efficiency = gpsDistanceKm / energy
                 }
 
+                // 소비 에너지는 기록만, 비용 계산은 충전 세션에서 수행
                 val updated = session.copy(
                     endTime = timestamp,
                     endSoc = finalSoc,

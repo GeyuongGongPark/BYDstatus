@@ -30,7 +30,7 @@ class SessionDetectorTest {
             ApplicationProvider.getApplicationContext(),
             AppDatabase::class.java,
         ).allowMainThreadQueries().build()
-        detector = SessionDetector(db, rate, capacity)
+        detector = SessionDetector(db, { rate }, capacity)
     }
 
     @After
@@ -152,7 +152,7 @@ class SessionDetectorTest {
         val t0 = System.currentTimeMillis()
         val t1 = t0 + 300_000L
 
-        val detectorWithGps = SessionDetector(db, rate, capacity)
+        val detectorWithGps = SessionDetector(db, { rate }, capacity)
         detectorWithGps.process(driving(soc = 90, odo = 0.0), t0)
         detectorWithGps.process(parked(soc = 85, odo = 0.0), t1)
 
@@ -242,7 +242,7 @@ class SessionDetectorTest {
         detector.process(driving(soc = 90), t0)
 
         // 새 SessionDetector 생성 (앱 재시작 시뮬레이션)
-        val detector2 = SessionDetector(db, rate, capacity)
+        val detector2 = SessionDetector(db, { rate }, capacity)
         detector2.recover()
 
         // 30분 전 세션 → 1시간 미만 → 복원됨
@@ -260,7 +260,7 @@ class SessionDetectorTest {
         detector.process(driving(soc = 90), t0)
 
         // 새 SessionDetector 생성
-        val detector2 = SessionDetector(db, rate, capacity)
+        val detector2 = SessionDetector(db, { rate }, capacity)
         detector2.recover()
 
         val sessions = db.drivingSessionDao().getAll()

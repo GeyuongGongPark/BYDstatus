@@ -6,13 +6,13 @@ final class SessionDetector {
     private var activeDrivingSession: DrivingSession?
 
     private let modelContext: ModelContext
-    private let electricityRate: Double
+    private let getRateAt: (Date) -> Double
     private let batteryCapacityKwh: Double
     private let locationTracker: LocationTracker?
 
-    init(modelContext: ModelContext, electricityRate: Double, batteryCapacityKwh: Double, gpsEnabled: Bool = true) {
+    init(modelContext: ModelContext, getRateAt: @escaping (Date) -> Double, batteryCapacityKwh: Double, gpsEnabled: Bool = true) {
         self.modelContext = modelContext
-        self.electricityRate = electricityRate
+        self.getRateAt = getRateAt
         self.batteryCapacityKwh = batteryCapacityKwh
         self.locationTracker = gpsEnabled ? LocationTracker() : nil
         recoverOrphanSessions()
@@ -78,10 +78,12 @@ final class SessionDetector {
             activeChargingSession?.endSoc = status.batteryPercentage
         } else if let session = activeChargingSession {
             session.endTime = timestamp
+            session.endSoc = status.batteryPercentage
             let socDelta = Double(max(0, session.endSoc - session.startSoc))
             session.energyKwh = socDelta * batteryCapacityKwh / 100.0
             session.durationMinutes = Int(timestamp.timeIntervalSince(session.startTime) / 60)
-            session.estimatedCostKrw = session.energyKwh * electricityRate
+            // 충전 시작 시간 기준 시간대 요금 적용
+            session.estimatedCostKrw = session.energyKwh * getRateAt(session.startTime)
             activeChargingSession = nil
         }
     }

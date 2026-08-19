@@ -142,14 +142,15 @@ final class AppState {
     // MARK: - 폴링
 
     func startPolling(modelContext: ModelContext, pollingInterval: Int = 5,
-                      electricityRate: Double, batteryCapacityKwh: Double, gpsEnabled: Bool = true) {
+                      getRateAt: @escaping (Date) -> Double,
+                      batteryCapacityKwh: Double, gpsEnabled: Bool = true) {
         guard let svc = service, let vin = selectedVin else { return }
         // 기존 폴링이 있으면 취소 후 재시작 (VIN 변경 등)
         pollingTask?.cancel()
         pollingTask = nil
 
         sessionDetector = SessionDetector(modelContext: modelContext,
-                                          electricityRate: electricityRate,
+                                          getRateAt: getRateAt,
                                           batteryCapacityKwh: batteryCapacityKwh,
                                           gpsEnabled: gpsEnabled)
         pollingTask = Task {

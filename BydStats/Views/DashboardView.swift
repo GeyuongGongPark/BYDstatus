@@ -8,12 +8,14 @@ struct DashboardView: View {
     @Query(sort: \ChargingSession.startTime, order: .reverse) private var allChargingSessions: [ChargingSession]
     @Query(sort: \DrivingSession.startTime, order: .reverse)  private var allDrivingSessions: [DrivingSession]
 
-    @AppStorage("vehicleModel")    private var vehicleModelRaw = VehicleModel.atto3.rawValue
-    @AppStorage("electricityRate") private var electricityRate = 180.0
-    @AppStorage("pollingInterval") private var pollingInterval = 5
-    @AppStorage("gpsEnabled")      private var gpsEnabled      = true
+    @AppStorage("vehicleModel")    private var vehicleModelRaw  = VehicleModel.atto3.rawValue
+    @AppStorage("electricityRate") private var electricityRate  = 180.0
+    @AppStorage("ratePlanId")      private var ratePlanId       = "kepco_low"
+    @AppStorage("pollingInterval") private var pollingInterval  = 5
+    @AppStorage("gpsEnabled")      private var gpsEnabled       = true
 
     private var vehicleModel: VehicleModel { VehicleModel(rawValue: vehicleModelRaw) ?? .atto3 }
+    private var currentRatePlan: ChargingRatePlan { ratePlan(id: ratePlanId, customRate: electricityRate) }
 
     private var todayCharging: [ChargingSession] {
         allChargingSessions.filter { Calendar.current.isDateInToday($0.startTime) }
@@ -66,10 +68,11 @@ struct DashboardView: View {
         }
         .task(id: appState.selectedVin) {
             guard appState.isLoggedIn, appState.selectedVin != nil else { return }
+            let plan = currentRatePlan
             appState.startPolling(
                 modelContext: modelContext,
                 pollingInterval: pollingInterval,
-                electricityRate: electricityRate,
+                getRateAt: { date in plan.rate(at: date) },
                 batteryCapacityKwh: vehicleModel.batteryCapacityKwh,
                 gpsEnabled: gpsEnabled
             )

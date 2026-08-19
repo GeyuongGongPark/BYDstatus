@@ -14,7 +14,7 @@ private const val TAG = "DataCollector"
 class DataCollector(
     private val apiClient: BydApiClient,
     private val db: AppDatabase,
-    private val getElectricityRate: () -> Double,
+    private val getElectricityRateAt: (Long) -> Double,
     private val getBatteryCapacityKwh: () -> Double,
     private val getParkingIntervalMs: () -> Long,
     private val locationTracker: LocationTracker? = null,
@@ -33,7 +33,7 @@ class DataCollector(
 
     fun start(vin: String) {
         this.vin = vin
-        detector = SessionDetector(db, getElectricityRate(), getBatteryCapacityKwh())
+        detector = SessionDetector(db, getElectricityRateAt, getBatteryCapacityKwh())
         scope.launch { detector?.recover() }
         scheduleNextPoll()
     }

@@ -9,6 +9,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import com.ggpark.bydstats.android.data.AppDatabase
+import com.ggpark.bydstats.android.data.ChargingRatePlan
+import com.ggpark.bydstats.android.data.ratePlanById
 import com.ggpark.bydstats.android.data.entity.ChargingSessionEntity
 import com.ggpark.bydstats.android.data.entity.DataPointEntity
 import com.ggpark.bydstats.android.data.entity.DrivingSessionEntity
@@ -43,6 +45,8 @@ private object PrefKeys {
     val USER_ID          = stringPreferencesKey("user_id")
     val SIGN_TOKEN       = stringPreferencesKey("sign_token")
     val ENCRY_TOKEN      = stringPreferencesKey("encry_token")
+    val RATE_PLAN_ID     = stringPreferencesKey("rate_plan_id")
+    val CUSTOM_RATE      = stringPreferencesKey("custom_rate")
 }
 
 data class AppSettings(
@@ -50,9 +54,10 @@ data class AppSettings(
     val password: String = "",
     val region: String = "KR",
     val vin: String = "",
-    val electricityRate: Double = 180.0,
+    val electricityRate: Double = 180.0,  // "custom" 요금제일 때 사용
     val batteryCapacityKwh: Double = 60.48,
     val pollingIntervalMin: Int = 5,
+    val ratePlanId: String = "kepco_low",
 )
 
 // iOS처럼 항상 탭바 앱 표시. 로그인 폼은 설정 탭 안에 포함.
@@ -97,9 +102,11 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             password           = prefs[PrefKeys.PASSWORD] ?: "",
             region             = prefs[PrefKeys.REGION] ?: "KR",
             vin                = prefs[PrefKeys.VIN] ?: "",
-            electricityRate    = prefs[PrefKeys.ELECTRICITY_RATE]?.toDoubleOrNull() ?: 180.0,
+            electricityRate    = prefs[PrefKeys.CUSTOM_RATE]?.toDoubleOrNull()
+                                    ?: prefs[PrefKeys.ELECTRICITY_RATE]?.toDoubleOrNull() ?: 180.0,
             batteryCapacityKwh = prefs[PrefKeys.BATTERY_CAPACITY]?.toDoubleOrNull() ?: 60.48,
             pollingIntervalMin = prefs[PrefKeys.POLLING_INTERVAL]?.toIntOrNull() ?: 5,
+            ratePlanId         = prefs[PrefKeys.RATE_PLAN_ID] ?: "kepco_low",
         )
         _settings.value = s
 
@@ -188,7 +195,10 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         val collector = DataCollector(
             apiClient              = client,
             db                     = db,
-            getElectricityRate     = { _settings.value.electricityRate },
+            getElectricityRateAt   = { ts ->
+                val s = _settings.value
+                ratePlanById(s.ratePlanId, s.electricityRate).rateAt(ts)
+            },
             getBatteryCapacityKwh  = { _settings.value.batteryCapacityKwh },
             getParkingIntervalMs   = { _settings.value.pollingIntervalMin * 60_000L },
             locationTracker        = locationTracker,
@@ -220,9 +230,16 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     // MARK: - Settings Update
 
+    fun updateRatePlan(planId: String) {
+        viewModelScope.launch {
+            saveSetting(PrefKeys.RATE_PLAN_ID, planId)
+            updateSettings { it.copy(ratePlanId = planId) }
+        }
+    }
+
     fun updateElectricityRate(rate: Double) {
         viewModelScope.launch {
-            saveSetting(PrefKeys.ELECTRICITY_RATE, rate.toString())
+            saveSetting(PrefKeys.CUSTOM_RATE, rate.toString())
             updateSettings { it.copy(electricityRate = rate) }
         }
     }

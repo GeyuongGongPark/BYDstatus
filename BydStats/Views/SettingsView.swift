@@ -13,9 +13,16 @@ struct SettingsView: View {
     // 기타 설정
     @AppStorage("vehicleModel")    private var vehicleModel    = VehicleModel.atto3.rawValue
     @AppStorage("electricityRate") private var electricityRate = 180.0
-    @AppStorage("nightRate")       private var nightRate       = 120.0
+    @AppStorage("ratePlanId")      private var ratePlanId      = "kepco_low"
     @AppStorage("pollingInterval") private var pollingInterval = 5
     @AppStorage("gpsEnabled")      private var gpsEnabled      = true
+
+    private var allPlans: [ChargingRatePlan] {
+        predefinedRatePlans + [.custom(rate: electricityRate)]
+    }
+    private var currentPlan: ChargingRatePlan {
+        ratePlan(id: ratePlanId, customRate: electricityRate)
+    }
 
     var body: some View {
         NavigationStack {
@@ -137,24 +144,39 @@ struct SettingsView: View {
     // MARK: - 전기요금 섹션
 
     private var electricitySection: some View {
-        Section("전기요금") {
-            HStack {
-                Text("일반 단가")
-                Spacer()
-                TextField("원/kWh", value: $electricityRate, format: .number)
-                    .multilineTextAlignment(.trailing)
-                    .keyboardType(.decimalPad)
-                    .frame(width: 60)
-                Text("원/kWh").foregroundStyle(.secondary)
+        Section {
+            // 요금제 선택 Picker
+            Picker("충전기 유형", selection: $ratePlanId) {
+                ForEach(allPlans, id: \.id) { plan in
+                    Text(plan.name).tag(plan.id)
+                }
             }
-            HStack {
-                Text("심야 단가")
-                Spacer()
-                TextField("원/kWh", value: $nightRate, format: .number)
-                    .multilineTextAlignment(.trailing)
-                    .keyboardType(.decimalPad)
-                    .frame(width: 60)
-                Text("원/kWh").foregroundStyle(.secondary)
+
+            // 직접 입력 (custom 선택 시)
+            if ratePlanId == "custom" {
+                HStack {
+                    Text("단가")
+                    Spacer()
+                    TextField("원/kWh", value: $electricityRate, format: .number)
+                        .multilineTextAlignment(.trailing)
+                        .keyboardType(.decimalPad)
+                        .frame(width: 70)
+                    Text("원/kWh").foregroundStyle(.secondary)
+                }
+            }
+
+            // 시간대 요금 테이블 (TOU 요금제)
+            let slots = currentPlan.currentSlots()
+            if slots.count > 1 {
+                RateTimeTableView(slots: slots)
+            }
+
+        } header: {
+            Text("전기요금")
+        } footer: {
+            if currentPlan.id != "custom" {
+                Text("출처: 한국전력 전기자동차 충전전력요금(자가소비용) 2026.4.16 시행\n충전 시작 시간 기준 시간대 요금이 적용됩니다.")
+                    .font(.caption2)
             }
         }
     }
@@ -213,6 +235,52 @@ struct SettingsView: View {
                 Spacer()
             }
         }
+    }
+}
+
+// MARK: - RateTimeTableView
+
+private struct RateTimeTableView: View {
+    let slots: [RateSlot]
+
+    private func color(for label: String) -> Color {
+        switch label {
+        case "경부하":  return .blue
+        case "중간부하": return .orange
+        case "최대부하": return .red
+        default:       return .primary
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // 헤더
+            HStack {
+                Text("시간대").font(.caption2).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading)
+                Text("구분").font(.caption2).foregroundStyle(.secondary).frame(width: 55, alignment: .leading)
+                Text("요금").font(.caption2).foregroundStyle(.secondary).frame(width: 65, alignment: .trailing)
+            }
+            .padding(.bottom, 4)
+            Divider()
+            ForEach(slots) { slot in
+                HStack {
+                    Text(slot.timeString)
+                        .font(.caption)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Text(slot.label)
+                        .font(.caption)
+                        .foregroundStyle(color(for: slot.label))
+                        .frame(width: 55, alignment: .leading)
+                    Text(String(format: "%.1f원", slot.rate))
+                        .font(.caption).bold()
+                        .foregroundStyle(color(for: slot.label))
+                        .frame(width: 65, alignment: .trailing)
+                }
+                .padding(.vertical, 3)
+                Divider()
+            }
+        }
+        .padding(.vertical, 4)
     }
 }
 

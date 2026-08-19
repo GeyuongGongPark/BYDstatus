@@ -1,5 +1,6 @@
 package com.ggpark.bydstats.android.ui.settings
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -14,7 +15,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.ggpark.bydstats.android.data.ChargingRatePlan
+import com.ggpark.bydstats.android.data.PREDEFINED_RATE_PLANS
+import com.ggpark.bydstats.android.data.RateSlot
 import com.ggpark.bydstats.android.viewmodel.AppViewModel
 
 private val VEHICLE_BATTERY_MAP = linkedMapOf(
@@ -42,14 +47,20 @@ fun SettingsScreen(vm: AppViewModel, onNavigateToLog: () -> Unit = {}) {
     var showPwd  by remember { mutableStateOf(false) }
 
     // 기타 설정 상태
-    var electricityRateStr by remember(settings.electricityRate) { mutableStateOf(settings.electricityRate.toInt().toString()) }
-    var showLogoutDialog   by remember { mutableStateOf(false) }
+    var electricityRateStr  by remember(settings.electricityRate) { mutableStateOf(settings.electricityRate.toInt().toString()) }
+    var showLogoutDialog    by remember { mutableStateOf(false) }
     var vehicleMenuExpanded by remember { mutableStateOf(false) }
     var regionMenuExpanded  by remember { mutableStateOf(false) }
+    var ratePlanExpanded    by remember { mutableStateOf(false) }
 
     val currentVehicleName = VEHICLE_BATTERY_MAP.entries
         .firstOrNull { it.value == settings.batteryCapacityKwh }?.key ?: "직접 선택"
     val currentRegionLabel = REGIONS.firstOrNull { it.first == settings.region }?.second ?: settings.region
+
+    // 현재 선택된 요금제
+    val allPlans: List<ChargingRatePlan> = PREDEFINED_RATE_PLANS + listOf(ChargingRatePlan.Custom(settings.electricityRate))
+    val currentPlan: ChargingRatePlan = allPlans.firstOrNull { it.id == settings.ratePlanId }
+        ?: ChargingRatePlan.Custom(settings.electricityRate)
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("설정") }) }
@@ -214,28 +225,85 @@ fun SettingsScreen(vm: AppViewModel, onNavigateToLog: () -> Unit = {}) {
 
             // ─── 전기요금 섹션 ───
             SectionHeader("전기요금")
-            ListItem(
-                headlineContent = { Text("일반 단가") },
-                leadingContent = { Icon(Icons.Default.Bolt, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-                trailingContent = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        OutlinedTextField(
-                            value = electricityRateStr,
-                            onValueChange = { electricityRateStr = it },
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.width(80.dp),
-                            textStyle = MaterialTheme.typography.bodyMedium,
+
+            // 요금제 선택 드롭다운
+            Box {
+                ListItem(
+                    headlineContent = { Text("충전기 유형") },
+                    supportingContent = { Text(currentPlan.provider) },
+                    leadingContent = { Icon(Icons.Default.Bolt, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                    trailingContent = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(currentPlan.name, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodyMedium)
+                            Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    },
+                    colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
+                )
+                Surface(onClick = { ratePlanExpanded = true }, modifier = Modifier.matchParentSize(),
+                    color = androidx.compose.ui.graphics.Color.Transparent) {}
+                DropdownMenu(expanded = ratePlanExpanded, onDismissRequest = { ratePlanExpanded = false }) {
+                    allPlans.forEach { plan ->
+                        DropdownMenuItem(
+                            text = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    if (currentPlan.id == plan.id)
+                                        Icon(Icons.Default.Check, null, modifier = Modifier.size(16.dp),
+                                            tint = MaterialTheme.colorScheme.primary)
+                                    else Spacer(Modifier.size(16.dp))
+                                    Spacer(Modifier.width(8.dp))
+                                    Column {
+                                        Text(plan.name, style = MaterialTheme.typography.bodyMedium)
+                                        Text(plan.provider, style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                }
+                            },
+                            onClick = { vm.updateRatePlan(plan.id); ratePlanExpanded = false },
                         )
-                        Spacer(Modifier.width(4.dp))
-                        Text("원/kWh", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Spacer(Modifier.width(4.dp))
-                        TextButton(onClick = { electricityRateStr.toDoubleOrNull()?.let { vm.updateElectricityRate(it) } }) { Text("저장") }
                     }
-                },
-                colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
-            )
-            HorizontalDivider()
+                }
+            }
+            HorizontalDivider(modifier = Modifier.padding(start = 16.dp))
+
+            // 직접 입력 (custom 선택 시)
+            if (currentPlan.id == "custom") {
+                ListItem(
+                    headlineContent = { Text("단가 직접 입력") },
+                    leadingContent = { Spacer(Modifier.width(24.dp)) },
+                    trailingContent = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            OutlinedTextField(
+                                value = electricityRateStr,
+                                onValueChange = { electricityRateStr = it },
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.width(80.dp),
+                                textStyle = MaterialTheme.typography.bodyMedium,
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text("원/kWh", style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Spacer(Modifier.width(4.dp))
+                            TextButton(onClick = {
+                                electricityRateStr.toDoubleOrNull()?.let { vm.updateElectricityRate(it) }
+                            }) { Text("저장") }
+                        }
+                    },
+                    colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
+                )
+                HorizontalDivider(modifier = Modifier.padding(start = 16.dp))
+            }
+
+            // 시간대 요금 테이블 (TOU 요금제일 때)
+            val slots = currentPlan.currentSlots()
+            if (slots.size > 1) {
+                RateTimeTable(slots)
+                HorizontalDivider()
+            } else {
+                HorizontalDivider()
+            }
 
             // ─── 폴링 간격 섹션 ───
             SectionHeader("폴링 간격")
@@ -316,6 +384,63 @@ private fun PreferenceItem(
     )
     if (onClick != null) {
         // 클릭 오버레이는 Surface로 처리
+    }
+}
+
+@Composable
+private fun RateTimeTable(slots: List<RateSlot>) {
+    // 인접한 동일 label 슬롯 병합 (예: 경부하 00-08 + 22-24 → 별도 표시)
+    val labelColor = mapOf(
+        "경부하" to MaterialTheme.colorScheme.primary,
+        "중간부하" to MaterialTheme.colorScheme.secondary,
+        "최대부하" to MaterialTheme.colorScheme.error,
+        "단일 단가" to MaterialTheme.colorScheme.onSurface,
+    )
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Text(
+            "현재 계절 기준 시간대 요금",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(bottom = 6.dp),
+        )
+        // 헤더
+        Row(modifier = Modifier.fillMaxWidth()) {
+            Text("시간대", modifier = Modifier.weight(1.4f),
+                style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("구분", modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("요금", modifier = Modifier.weight(1f), textAlign = TextAlign.End,
+                style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+        slots.forEach { slot ->
+            val timeStr = "%02d:00~%02d:00".format(slot.startHour, slot.endHour)
+            val color = labelColor[slot.label] ?: MaterialTheme.colorScheme.onSurface
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 3.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(timeStr, modifier = Modifier.weight(1.4f),
+                    style = MaterialTheme.typography.bodySmall)
+                Text(slot.label, modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.bodySmall, color = color)
+                Text("%.1f원".format(slot.rate), modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.End, style = MaterialTheme.typography.bodySmall,
+                    color = color)
+            }
+        }
+        Text(
+            "* 출처: 한국전력 전기자동차 충전전력요금(자가소비용) 2026.4.16 시행",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 6.dp),
+        )
     }
 }
 
