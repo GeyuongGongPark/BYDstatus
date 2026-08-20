@@ -7,7 +7,7 @@ function getProvider() {
   if (!provider) {
     provider = new apn.Provider({
       token: {
-        key:    process.env.APNS_KEY_P8.replace(/\\n/g, '\n'),
+        key:    process.env.APNS_KEY_P8.replace(/\\\\n/g, '\n').replace(/\\n/g, '\n'),
         keyId:  process.env.APNS_KEY_ID,
         teamId: process.env.APNS_TEAM_ID,
       },
