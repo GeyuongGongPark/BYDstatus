@@ -1,4 +1,3 @@
-require('dotenv').config();
 const express = require('express');
 const cron    = require('node-cron');
 const { initDB, registerToken, unregisterToken, getTokensByPlatform, cleanOldTokens } = require('./db');
