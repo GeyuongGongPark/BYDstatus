@@ -14,15 +14,24 @@ function buildKey() {
 }
 
 function makeJwt() {
-  return jwt.sign(
+  const key = buildKey();
+  const firstLine = key.split('\n')[0];
+  const lineCount = key.split('\n').length;
+  console.log(`[apns] key src=${process.env.APNS_KEY_P8_B64 ? 'B64' : 'RAW'} firstLine="${firstLine}" lines=${lineCount}`);
+  console.log(`[apns] teamId=${process.env.APNS_TEAM_ID} keyId=${process.env.APNS_KEY_ID} bundleId=${process.env.APNS_BUNDLE_ID}`);
+
+  const token = jwt.sign(
     { iss: process.env.APNS_TEAM_ID },
-    buildKey(),
+    key,
     {
       algorithm: 'ES256',
       keyid: process.env.APNS_KEY_ID,
       expiresIn: '50m',
     }
   );
+  const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString());
+  console.log(`[apns] JWT payload: iss=${payload.iss} iat=${payload.iat}`);
+  return token;
 }
 
 /**
