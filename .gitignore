@@ -41,3 +41,8 @@ fastlane/test_output
 *.jks
 local.properties
 androidApp/.cxx/
+
+# Push Server
+push-server/node_modules/
+push-server/.env
+push-server/*.p8

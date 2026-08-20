@@ -30,11 +30,13 @@
 		BD55B46A54855E3245764BE2 /* ChargingSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED46F84CE16CB39AC823C2D /* ChargingSession.swift */; };
 		BDB868C6014604F546C61A88 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DCFA75EA19A394902CCE405 /* KeychainHelper.swift */; };
 		CA2FC86C3B52ECC68A0369F6 /* BydStatsWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 5230D93792F5A73C41BE5132 /* BydStatsWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		CCA78E09C92B3B5FC57EC9DC /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 059DFA08AD29A0C22AE31C92 /* AppDelegate.swift */; };
 		DD6418659FE194E439C1BE72 /* WidgetDataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36251AF800585C0A27374429 /* WidgetDataStore.swift */; };
 		E2798155C7FC2BA69B29D96B /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AA38E6C00179069BE9C7228 /* SettingsView.swift */; };
 		EAE905422372203A216641B0 /* BackgroundTaskManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65D3575DF625F74C77F623E3 /* BackgroundTaskManager.swift */; };
 		EC1ACA703ADD5B166EFEBB6A /* LocationTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02413885B19CE905A59512AA /* LocationTracker.swift */; };
 		EDB725EF83E99A0603059D0E /* DrivingSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBBA57DECFE34014901A9499 /* DrivingSession.swift */; };
+		F287901D15F29FF081D65415 /* PushRegistrar.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAA589244C6F3113DCC65B53 /* PushRegistrar.swift */; };
 		F3BE89AF622ED96C7AD497D6 /* bangcle_tables.bin in Resources */ = {isa = PBXBuildFile; fileRef = DB27E28B744FBC2888F6B621 /* bangcle_tables.bin */; };
 		F4E2B316D810DD29234622AD /* DrivingSessionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E28C32611824F87DF2AE410 /* DrivingSessionsView.swift */; };
 		F5567F0F0563D363AFBA50C5 /* BatteryHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFE26BE12BB53A6F1A5FB5C2 /* BatteryHistoryView.swift */; };
@@ -67,6 +69,7 @@
 /* Begin PBXFileReference section */
 		02413885B19CE905A59512AA /* LocationTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationTracker.swift; sourceTree = "<group>"; };
 		04788C17EDAEA6AB900D4CD7 /* BackgroundTasks.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = BackgroundTasks.framework; sourceTree = "<group>"; };
+		059DFA08AD29A0C22AE31C92 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		0F4DE63D18E7644C243C48B7 /* BydStatsWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BydStatsWidget.swift; sourceTree = "<group>"; };
 		1990F1E772C2BBD6CF01F33C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		20EA78FF1C786628B2798904 /* DataPoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataPoint.swift; sourceTree = "<group>"; };
@@ -98,6 +101,7 @@
 		DD02993CC5C4CAECF6E37313 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		E4C42A319B52D058B5D18275 /* ChargingRatePlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChargingRatePlan.swift; sourceTree = "<group>"; };
 		E58632732CA0B66A8C2885E4 /* BydLiveActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BydLiveActivityAttributes.swift; sourceTree = "<group>"; };
+		EAA589244C6F3113DCC65B53 /* PushRegistrar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushRegistrar.swift; sourceTree = "<group>"; };
 		F06B305251905D6603FA9E63 /* BydStatsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BydStatsApp.swift; sourceTree = "<group>"; };
 		FCC034E754C027617E4576C9 /* SessionDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionDetector.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -134,6 +138,7 @@
 		6BCE28D3716732F9893702CB /* App */ = {
 			isa = PBXGroup;
 			children = (
+				059DFA08AD29A0C22AE31C92 /* AppDelegate.swift */,
 				75E0E43408803368C57760D7 /* AppState.swift */,
 				F06B305251905D6603FA9E63 /* BydStatsApp.swift */,
 			);
@@ -164,6 +169,7 @@
 				7DCFA75EA19A394902CCE405 /* KeychainHelper.swift */,
 				02413885B19CE905A59512AA /* LocationTracker.swift */,
 				3F35B4C9FE85831AFCEFF81A /* LogManager.swift */,
+				EAA589244C6F3113DCC65B53 /* PushRegistrar.swift */,
 				FCC034E754C027617E4576C9 /* SessionDetector.swift */,
 				36251AF800585C0A27374429 /* WidgetDataStore.swift */,
 			);
@@ -332,6 +338,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CCA78E09C92B3B5FC57EC9DC /* AppDelegate.swift in Sources */,
 				A70C3A8D45BFCADD57F32F84 /* AppState.swift in Sources */,
 				EAE905422372203A216641B0 /* BackgroundTaskManager.swift in Sources */,
 				958CF93A2A73107D9886AC39 /* BangcleCodec.swift in Sources */,
@@ -352,6 +359,7 @@
 				EC1ACA703ADD5B166EFEBB6A /* LocationTracker.swift in Sources */,
 				660E602DDCDBA34697C0F31D /* LogManager.swift in Sources */,
 				16447B36012F710AB286B64E /* LogView.swift in Sources */,
+				F287901D15F29FF081D65415 /* PushRegistrar.swift in Sources */,
 				3616E564342AA6231D532E88 /* SessionDetector.swift in Sources */,
 				E2798155C7FC2BA69B29D96B /* SettingsView.swift in Sources */,
 				3D77981F6B6F7728562F8B86 /* VehicleStatus.swift in Sources */,

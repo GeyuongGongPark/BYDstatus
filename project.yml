@@ -35,6 +35,7 @@ targets:
         UIBackgroundModes:
           - fetch
           - processing
+          - remote-notification
         BGTaskSchedulerPermittedIdentifiers:
           - com.ggpark.BydStats.refresh
         NSSupportsLiveActivities: YES

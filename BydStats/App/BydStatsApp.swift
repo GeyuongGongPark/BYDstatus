@@ -3,6 +3,8 @@ import SwiftData
 
 @main
 struct BydStatsApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+
     let modelContainer: ModelContainer
     let appState = AppState()
 
@@ -12,6 +14,9 @@ struct BydStatsApp: App {
         } catch {
             fatalError("SwiftData ModelContainer 초기화 실패: \(error)")
         }
+        // AppDelegate에 공유
+        appDelegate.modelContainer = modelContainer
+        appDelegate.appState       = appState
     }
 
     var body: some Scene {
