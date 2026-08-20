@@ -5,6 +5,9 @@ const { unregisterToken } = require('./db');
 const APNS_HOST = 'https://api.push.apple.com';
 
 function buildKey() {
+  if (process.env.APNS_KEY_P8_B64) {
+    return Buffer.from(process.env.APNS_KEY_P8_B64, 'base64').toString('utf8');
+  }
   return process.env.APNS_KEY_P8
     .replace(/\\\\n/g, '\n')
     .replace(/\\n/g, '\n');
