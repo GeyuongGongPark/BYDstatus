@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "382559620693",
+    "project_id": "byd-stats-aos",
+    "storage_bucket": "byd-stats-aos.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:382559620693:android:34956befd87ae3c0f3cedc",
+        "android_client_info": {
+          "package_name": "com.ggpark.bydstats"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAHZoSxRp4FB76MiokIHPgOgh14pf90KFY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:382559620693:android:4001f1d7e60c1af9f3cedc",
+        "android_client_info": {
+          "package_name": "com.ggpark.bydstats.debug"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAHZoSxRp4FB76MiokIHPgOgh14pf90KFY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
