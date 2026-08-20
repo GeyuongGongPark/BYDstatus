@@ -1,9 +1,16 @@
+import java.util.Properties
+
+val localProps = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+}
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -16,6 +23,9 @@ android {
         targetSdk = 35
         versionCode = 2
         versionName = "0.4.0"
+
+        buildConfigField("String", "PUSH_API_KEY", "\"${localProps["PUSH_API_KEY"] ?: ""}\"")
+        buildConfigField("String", "PUSH_SERVER_URL", "\"https://bydstatus-production.up.railway.app\"")
     }
 
     buildTypes {
@@ -40,6 +50,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     testOptions {
@@ -83,6 +94,10 @@ dependencies {
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
+
+    // Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
 
     // GPS
     implementation(libs.play.services.location)

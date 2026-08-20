@@ -43,6 +43,9 @@ class DataCollector(
         pollingJob = null
     }
 
+    /** FCM silent push 수신 시 즉시 1회 폴링 */
+    suspend fun pollOnce() = doPoll()
+
     private fun scheduleNextPoll() {
         pollingJob?.cancel()
         pollingJob = scope.launch {

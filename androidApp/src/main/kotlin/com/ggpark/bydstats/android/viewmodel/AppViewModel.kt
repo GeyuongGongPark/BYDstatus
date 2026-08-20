@@ -13,6 +13,8 @@ import com.ggpark.bydstats.android.data.entity.ChargingSessionEntity
 import com.ggpark.bydstats.android.data.entity.DataPointEntity
 import com.ggpark.bydstats.android.data.entity.DrivingSessionEntity
 import com.ggpark.bydstats.android.service.PollingService
+import com.ggpark.bydstats.android.service.PushRegistrar
+import com.google.firebase.messaging.FirebaseMessaging
 import com.ggpark.bydstats.api.BydApiClient
 import com.ggpark.bydstats.api.BydConfig
 import com.ggpark.bydstats.api.BydError
@@ -179,6 +181,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                     it.copy(isLoggingIn = false, isLoggedIn = true, loginError = null, vehicles = vehicles)
                 }
                 if (vin.isNotEmpty()) PollingService.start(context)
+                registerFcmToken()
             } catch (e: BydError.ServerError) {
                 _uiState.update { it.copy(isLoggingIn = false, loginError = "로그인 실패: ${e.msg}") }
             } catch (e: Exception) {
@@ -232,10 +235,23 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     fun logout() {
         viewModelScope.launch {
+            unregisterFcmToken()
             PollingService.stop(context)
             context.dataStore.edit { it.clear() }
             _settings.value = AppSettings()
             _uiState.value = AppUiState(isLoading = false, isLoggedIn = false)
+        }
+    }
+
+    private fun registerFcmToken() {
+        FirebaseMessaging.getInstance().token.addOnSuccessListener { token ->
+            viewModelScope.launch { PushRegistrar.register(context, token) }
+        }
+    }
+
+    private fun unregisterFcmToken() {
+        FirebaseMessaging.getInstance().token.addOnSuccessListener { token ->
+            viewModelScope.launch { PushRegistrar.unregister(token) }
         }
     }
 

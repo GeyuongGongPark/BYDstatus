@@ -55,8 +55,9 @@ class PollingService : Service() {
     // MARK: - Companion
 
     companion object {
-        private const val ACTION_START  = "com.ggpark.bydstats.START"
-        private const val ACTION_STOP   = "com.ggpark.bydstats.STOP"
+        private const val ACTION_START    = "com.ggpark.bydstats.START"
+        private const val ACTION_STOP     = "com.ggpark.bydstats.STOP"
+        private const val ACTION_POLL_NOW = "com.ggpark.bydstats.POLL_NOW"
         private const val CHANNEL_ID    = "byd_polling"
         private const val NOTIF_ID      = 1001
 
@@ -77,6 +78,12 @@ class PollingService : Service() {
             stop(context)
             start(context)
         }
+
+        fun pollNow(context: Context) {
+            context.startService(
+                Intent(context, PollingService::class.java).apply { action = ACTION_POLL_NOW }
+            )
+        }
     }
 
     // MARK: - Lifecycle
@@ -95,6 +102,9 @@ class PollingService : Service() {
             ACTION_STOP -> {
                 stopSelf()
                 return START_NOT_STICKY
+            }
+            ACTION_POLL_NOW -> {
+                dataCollector?.let { scope.launch { it.pollOnce() } }
             }
         }
         return START_STICKY
