@@ -12,7 +12,12 @@ enum PushRegistrar {
 
     static func register(tokenData: Data) {
         let token = tokenData.map { String(format: "%02x", $0) }.joined()
-        send(method: "POST", path: "/api/register", body: ["token": token, "platform": "ios"])
+        #if DEBUG
+        let sandbox = "1"
+        #else
+        let sandbox = "0"
+        #endif
+        send(method: "POST", path: "/api/register", body: ["token": token, "platform": "ios", "sandbox": sandbox])
     }
 
     static func unregister(tokenData: Data) {

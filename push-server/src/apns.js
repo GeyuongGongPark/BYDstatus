@@ -2,7 +2,8 @@ const http2 = require('http2');
 const jwt   = require('jsonwebtoken');
 const { unregisterToken } = require('./db');
 
-const APNS_HOST = 'https://api.push.apple.com';
+const APNS_HOST_PROD    = 'https://api.push.apple.com';
+const APNS_HOST_SANDBOX = 'https://api.development.push.apple.com';
 
 function buildKey() {
   if (process.env.APNS_KEY_P8_B64) {
@@ -14,32 +15,21 @@ function buildKey() {
 }
 
 function makeJwt() {
-  const key = buildKey();
-  const firstLine = key.split('\n')[0];
-  const lineCount = key.split('\n').length;
-  console.log(`[apns] key src=${process.env.APNS_KEY_P8_B64 ? 'B64' : 'RAW'} firstLine="${firstLine}" lines=${lineCount}`);
-  console.log(`[apns] teamId=${process.env.APNS_TEAM_ID} keyId=${process.env.APNS_KEY_ID} bundleId=${process.env.APNS_BUNDLE_ID}`);
-
-  const token = jwt.sign(
+  return jwt.sign(
     { iss: process.env.APNS_TEAM_ID },
-    key,
+    buildKey(),
     {
       algorithm: 'ES256',
       keyid: process.env.APNS_KEY_ID,
       expiresIn: '50m',
     }
   );
-  const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString());
-  console.log(`[apns] JWT payload: iss=${payload.iss} iat=${payload.iat}`);
-  return token;
 }
 
-/**
- * 단일 token에 silent push 전송.
- */
-function sendOne(token, jwtToken) {
+function sendOne(token, jwtToken, sandbox) {
   return new Promise((resolve) => {
-    const client = http2.connect(APNS_HOST);
+    const host = sandbox ? APNS_HOST_SANDBOX : APNS_HOST_PROD;
+    const client = http2.connect(host);
     client.on('error', (err) => {
       console.error(`[apns] http2 connect error: ${err.message}`);
       resolve({ ok: false, reason: err.message });
@@ -81,10 +71,10 @@ function sendOne(token, jwtToken) {
 
 /**
  * iOS silent push (content-available: 1)
- * - apns-push-type: background
- * - apns-priority: 5  (silent push는 반드시 5, 10이면 iOS가 무시)
+ * sandbox=true  → api.development.push.apple.com (Xcode direct install)
+ * sandbox=false → api.push.apple.com (TestFlight / App Store)
  */
-async function sendApns(tokens) {
+async function sendApns(tokens, sandbox = false) {
   if (!tokens.length) return;
 
   let jwtToken;
@@ -96,20 +86,21 @@ async function sendApns(tokens) {
   }
 
   let ok = 0, fail = 0;
+  const env = sandbox ? 'sandbox' : 'prod';
   for (const token of tokens) {
-    const result = await sendOne(token, jwtToken);
+    const result = await sendOne(token, jwtToken, sandbox);
     if (result.ok) {
       ok++;
     } else {
       fail++;
-      console.error(`[apns] error token=${token.slice(-8)} status=${result.status} reason=${result.reason}`);
+      console.error(`[apns][${env}] error token=${token.slice(-8)} status=${result.status} reason=${result.reason}`);
       if (result.reason === 'Unregistered') {
         await unregisterToken(token);
         console.log(`[apns] removed stale token ${token.slice(-8)}`);
       }
     }
   }
-  console.log(`[apns] sent total=${tokens.length} ok=${ok} fail=${fail}`);
+  console.log(`[apns][${env}] sent total=${tokens.length} ok=${ok} fail=${fail}`);
 }
 
 module.exports = { sendApns };

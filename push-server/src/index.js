@@ -1,6 +1,6 @@
 const express = require('express');
 const cron    = require('node-cron');
-const { initDB, registerToken, unregisterToken, getTokensByPlatform, cleanOldTokens } = require('./db');
+const { initDB, registerToken, unregisterToken, getIosTokens, getAndroidTokens, cleanOldTokens } = require('./db');
 const { sendApns } = require('./apns');
 const { sendFcm  } = require('./fcm');
 
@@ -29,12 +29,13 @@ app.get('/health', (_, res) => res.json({ ok: true, ts: new Date().toISOString()
 
 /** 앱 → 서버: device token 등록/갱신 */
 app.post('/api/register', auth, async (req, res) => {
-  const { token, platform } = req.body;
+  const { token, platform, sandbox } = req.body;
   if (!token || !['ios', 'android'].includes(platform)) {
     return res.status(400).json({ error: 'token and platform(ios|android) required' });
   }
-  await registerToken(token, platform);
-  console.log(`[api] registered token=${token.slice(-8)} platform=${platform}`);
+  const isSandbox = sandbox === '1' || sandbox === true;
+  await registerToken(token, platform, isSandbox);
+  console.log(`[api] registered token=${token.slice(-8)} platform=${platform} sandbox=${isSandbox}`);
   res.json({ ok: true });
 });
 
@@ -53,12 +54,14 @@ async function sendPushToAll() {
   const ts = new Date().toISOString();
   console.log(`[cron] push start at ${ts}`);
   try {
-    const [iosTokens, androidTokens] = await Promise.all([
-      getTokensByPlatform('ios'),
-      getTokensByPlatform('android'),
+    const [iosProd, iosSandbox, androidTokens] = await Promise.all([
+      getIosTokens(false),
+      getIosTokens(true),
+      getAndroidTokens(),
     ]);
     await Promise.all([
-      sendApns(iosTokens),
+      sendApns(iosProd, false),
+      sendApns(iosSandbox, true),
       sendFcm(androidTokens),
     ]);
   } catch (err) {
