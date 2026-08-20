@@ -4,10 +4,10 @@ import android.app.Application
 import android.content.Context
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.ggpark.bydstats.android.BydStatsApp
+import com.ggpark.bydstats.android.appDataStore
 import com.ggpark.bydstats.android.data.AppDatabase
 import com.ggpark.bydstats.android.data.entity.ChargingSessionEntity
 import com.ggpark.bydstats.android.data.entity.DataPointEntity
@@ -27,8 +27,6 @@ import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
-
-private val Context.dataStore by preferencesDataStore(name = "settings")
 
 private object PrefKeys {
     val USERNAME         = stringPreferencesKey("username")
@@ -104,7 +102,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     // MARK: - Settings
 
     private suspend fun loadSettings() {
-        val prefs = context.dataStore.data.first()
+        val prefs = context.appDataStore.data.first()
         val s = AppSettings(
             username           = prefs[PrefKeys.USERNAME] ?: "",
             password           = prefs[PrefKeys.PASSWORD] ?: "",
@@ -148,7 +146,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             client.setCredentials(settings.username, settings.password)
             client.onSessionUpdated = { uid, sign, encry ->
                 viewModelScope.launch {
-                    context.dataStore.edit { p ->
+                    context.appDataStore.edit { p ->
                         p[PrefKeys.USER_ID]    = uid
                         p[PrefKeys.SIGN_TOKEN]  = sign
                         p[PrefKeys.ENCRY_TOKEN] = encry
@@ -237,7 +235,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             unregisterFcmToken()
             PollingService.stop(context)
-            context.dataStore.edit { it.clear() }
+            context.appDataStore.edit { it.clear() }
             _settings.value = AppSettings()
             _uiState.value = AppUiState(isLoading = false, isLoggedIn = false)
         }
@@ -269,11 +267,11 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private suspend fun saveSetting(key: androidx.datastore.preferences.core.Preferences.Key<String>, value: String) {
-        context.dataStore.edit { prefs -> prefs[key] = value }
+        context.appDataStore.edit { prefs -> prefs[key] = value }
     }
 
     private suspend fun saveCredentials(s: AppSettings) {
-        context.dataStore.edit { prefs ->
+        context.appDataStore.edit { prefs ->
             prefs[PrefKeys.USERNAME] = s.username
             prefs[PrefKeys.PASSWORD] = s.password
             prefs[PrefKeys.REGION]   = s.region

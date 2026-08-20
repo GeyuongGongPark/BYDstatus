@@ -11,9 +11,9 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import com.ggpark.bydstats.android.BydStatsApp
+import com.ggpark.bydstats.android.appDataStore
 import com.ggpark.bydstats.android.data.AppDatabase
 import com.ggpark.bydstats.android.data.ChargingRatePlan
 import com.ggpark.bydstats.android.data.ratePlanById
@@ -30,8 +30,6 @@ import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.json.Json
-
-private val Context.dataStore by preferencesDataStore(name = "settings")
 
 private object Keys {
     val USERNAME         = stringPreferencesKey("username")
@@ -75,8 +73,12 @@ class PollingService : Service() {
         }
 
         fun restart(context: Context) {
-            stop(context)
-            start(context)
+            // stop+start 분리 시 타이밍 이슈 → ACTION_START 하나만 전송
+            // onStartCommand에서 기존 collector 정리 후 재시작
+            ContextCompat.startForegroundService(
+                context,
+                Intent(context, PollingService::class.java).apply { action = ACTION_START }
+            )
         }
 
         fun pollNow(context: Context) {
@@ -97,6 +99,8 @@ class PollingService : Service() {
         when (intent?.action) {
             ACTION_START -> {
                 startForeground(NOTIF_ID, buildNotification(null, null))
+                dataCollector?.stop()
+                dataCollector = null
                 startCollecting()
             }
             ACTION_STOP -> {
@@ -123,7 +127,7 @@ class PollingService : Service() {
     private fun startCollecting() {
         scope.launch {
             // DataStore에서 설정 로드
-            val prefs = applicationContext.dataStore.data.first()
+            val prefs = applicationContext.appDataStore.data.first()
             val username    = prefs[Keys.USERNAME]  ?: return@launch
             val password    = prefs[Keys.PASSWORD]  ?: return@launch
             val vin         = prefs[Keys.VIN]       ?: return@launch
@@ -150,7 +154,7 @@ class PollingService : Service() {
                 }
                 client.onSessionUpdated = { uid, sign, encry ->
                     scope.launch {
-                        applicationContext.dataStore.edit { p ->
+                        applicationContext.appDataStore.edit { p ->
                             p[Keys.USER_ID]    = uid
                             p[Keys.SIGN_TOKEN]  = sign
                             p[Keys.ENCRY_TOKEN] = encry
