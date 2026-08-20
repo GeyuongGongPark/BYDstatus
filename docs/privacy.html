@@ -146,7 +146,7 @@
 
 <header>
   <h1>개인정보 처리방침</h1>
-  <p>최종 업데이트: 2026-08-13</p>
+  <p>최종 업데이트: 2026-08-20</p>
 </header>
 
 <div class="lang-tabs">
@@ -203,6 +203,12 @@
               <td>세션 위치 기록</td>
               <td><span class="badge">기기 내 (SwiftData)</span></td>
             </tr>
+            <tr>
+              <td>푸시 토큰</td>
+              <td>iOS APNS 기기 토큰</td>
+              <td>백그라운드 데이터 갱신을 위한 silent push 발송</td>
+              <td><span class="badge">개발자 서버 (Railway)</span></td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -210,7 +216,26 @@
 
     <section>
       <h2>2. 외부 서버 전송</h2>
-      <p>앱은 차량 데이터 조회를 위해 <strong>BYD 공식 서버(*.byd.auto)</strong>에만 통신합니다. 그 외 어떠한 외부 서버, 분석 서비스, 광고 네트워크와도 통신하지 않습니다.</p>
+      <p>앱은 아래 두 서버와만 통신합니다. 그 외 어떠한 분석 서비스, 광고 네트워크와도 통신하지 않습니다.</p>
+      <div class="table-wrap" style="margin-top:12px;">
+        <table>
+          <thead>
+            <tr><th>서버</th><th>목적</th><th>전송 데이터</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>BYD 공식 서버<br><code style="font-size:12px;">*.byd.auto</code></td>
+              <td>차량 상태 조회</td>
+              <td>BYD 계정 세션 토큰</td>
+            </tr>
+            <tr>
+              <td>개발자 운영 서버<br><code style="font-size:12px;">bydstatus-production.up.railway.app</code></td>
+              <td>iOS 백그라운드 갱신 트리거 (silent push)</td>
+              <td>APNS 기기 토큰</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
       <div class="callout info" style="margin-top:12px;">
         <p>BYD 서버로의 모든 요청은 BYD 공식 앱과 동일한 암호화 프로토콜(Bangcle, AES-128-CBC)로 보호됩니다.</p>
       </div>
@@ -224,10 +249,11 @@
     <section>
       <h2>4. 데이터 보관 및 삭제</h2>
       <ul>
-        <li>모든 데이터는 사용자의 기기 내에만 저장됩니다.</li>
+        <li>차량 이력, 충전·주행 세션, 위치 데이터는 사용자의 기기 내에만 저장됩니다.</li>
         <li>앱을 삭제하면 SwiftData에 저장된 모든 이력이 자동으로 삭제됩니다.</li>
         <li>Keychain에 저장된 계정 정보는 앱 설정의 <strong>로그아웃</strong> 기능으로 즉시 삭제할 수 있습니다.</li>
         <li>위치 권한은 iOS 설정 앱에서 언제든지 철회할 수 있습니다.</li>
+        <li>개발자 서버에 저장된 APNS 기기 토큰은 <strong>90일 미사용 시 자동 만료·삭제</strong>됩니다. 로그아웃 시에도 서버에서 즉시 삭제됩니다.</li>
       </ul>
     </section>
 
@@ -308,6 +334,12 @@
               <td>Session location logging</td>
               <td><span class="badge">On-device (SwiftData)</span></td>
             </tr>
+            <tr>
+              <td>Push Token</td>
+              <td>iOS APNS device token</td>
+              <td>Silent push to trigger background data refresh</td>
+              <td><span class="badge">Developer Server (Railway)</span></td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -315,7 +347,26 @@
 
     <section>
       <h2>2. External Communications</h2>
-      <p>The app communicates exclusively with <strong>BYD's official servers (*.byd.auto)</strong> to retrieve vehicle data. No other external servers, analytics services, or advertising networks are used.</p>
+      <p>The app communicates only with the two servers listed below. No analytics services or advertising networks are used.</p>
+      <div class="table-wrap" style="margin-top:12px;">
+        <table>
+          <thead>
+            <tr><th>Server</th><th>Purpose</th><th>Data Sent</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>BYD Official Servers<br><code style="font-size:12px;">*.byd.auto</code></td>
+              <td>Vehicle status retrieval</td>
+              <td>BYD account session token</td>
+            </tr>
+            <tr>
+              <td>Developer-operated Server<br><code style="font-size:12px;">bydstatus-production.up.railway.app</code></td>
+              <td>iOS background refresh trigger (silent push)</td>
+              <td>APNS device token</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
       <div class="callout info" style="margin-top:12px;">
         <p>All requests to BYD servers are protected using the same encryption protocol as the official BYD app (Bangcle, AES-128-CBC).</p>
       </div>
@@ -329,10 +380,11 @@
     <section>
       <h2>4. Data Retention &amp; Deletion</h2>
       <ul>
-        <li>All data is stored locally on your device only.</li>
+        <li>Vehicle history, charging/driving sessions, and location data are stored locally on your device only.</li>
         <li>Deleting the app will automatically remove all SwiftData history.</li>
         <li>Account credentials stored in Keychain can be deleted immediately via the <strong>Logout</strong> option in Settings.</li>
         <li>Location permissions can be revoked at any time in iOS Settings.</li>
+        <li>APNS device tokens stored on the developer server are <strong>automatically expired and deleted after 90 days of inactivity</strong>. They are also deleted immediately upon logout.</li>
       </ul>
     </section>
 
