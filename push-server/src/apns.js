@@ -1,20 +1,20 @@
-const { ApnsClient, Notification } = require('apns2');
+const apn = require('apn');
 const { unregisterToken } = require('./db');
 
-let client = null;
+let provider = null;
 
-function getClient() {
-  if (!client) {
-    client = new ApnsClient({
-      team:         process.env.APNS_TEAM_ID,
-      keyId:        process.env.APNS_KEY_ID,
-      signingKey:   process.env.APNS_KEY_P8.replace(/\\n/g, '\n'),
-      defaultTopic: process.env.APNS_BUNDLE_ID,
-      production:   true,   // TestFlight/App Store는 production APNS 환경
-      requestTimeout: 10000,
+function getProvider() {
+  if (!provider) {
+    provider = new apn.Provider({
+      token: {
+        key:    process.env.APNS_KEY_P8.replace(/\\n/g, '\n'),
+        keyId:  process.env.APNS_KEY_ID,
+        teamId: process.env.APNS_TEAM_ID,
+      },
+      production: true,   // TestFlight/App Store는 production APNS 환경
     });
   }
-  return client;
+  return provider;
 }
 
 /**
@@ -24,32 +24,25 @@ function getClient() {
  */
 async function sendApns(tokens) {
   if (!tokens.length) return;
-  const c = getClient();
-  let ok = 0, fail = 0;
+  const p = getProvider();
 
-  for (const token of tokens) {
-    try {
-      const notif = new Notification(token, {
-        aps: { 'content-available': 1 },
-      });
-      notif.priority  = 5;
-      notif.pushType  = 'background';
+  const notif = new apn.Notification();
+  notif.topic           = process.env.APNS_BUNDLE_ID;
+  notif.priority        = 5;
+  notif.pushType        = 'background';
+  notif.contentAvailable = 1;
 
-      await c.send(notif);
-      ok++;
-    } catch (err) {
-      fail++;
-      const status = err.response?.statusCode ?? err.statusCode;
-      console.error(`[apns] error token=${token.slice(-8)} status=${status} reason=${err.reason ?? err.message}`);
+  const result = await p.send(notif, tokens);
+  console.log(`[apns] sent total=${tokens.length} ok=${result.sent.length} fail=${result.failed.length}`);
 
-      // 410 Unregistered: 앱 삭제 → DB에서 제거
-      if (status === 410) {
-        await unregisterToken(token);
-        console.log(`[apns] removed stale token ${token.slice(-8)}`);
-      }
+  for (const f of result.failed) {
+    console.error(`[apns] error token=${f.device.slice(-8)} reason=${f.response?.reason ?? f.error}`);
+    // Unregistered: 앱 삭제 → DB에서 제거
+    if (f.response?.reason === 'Unregistered') {
+      await unregisterToken(f.device);
+      console.log(`[apns] removed stale token ${f.device.slice(-8)}`);
     }
   }
-  console.log(`[apns] sent total=${tokens.length} ok=${ok} fail=${fail}`);
 }
 
 module.exports = { sendApns };

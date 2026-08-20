@@ -23,12 +23,14 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
 
     func application(_ application: UIApplication,
                      didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        let token = deviceToken.map { String(format: "%02x", $0) }.joined()
+        print("[AppDelegate] got device token (last16): \(token.suffix(16))")
         PushRegistrar.register(tokenData: deviceToken)
     }
 
     func application(_ application: UIApplication,
                      didFailToRegisterForRemoteNotificationsWithError error: Error) {
-        print("[AppDelegate] remote notification registration failed: \(error.localizedDescription)")
+        print("[AppDelegate] registration failed: \(error.localizedDescription)")
     }
 
     // MARK: - Silent Push 수신 → 폴링

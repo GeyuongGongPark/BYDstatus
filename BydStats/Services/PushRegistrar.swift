@@ -29,9 +29,9 @@ enum PushRegistrar {
         req.httpBody = try? JSONEncoder().encode(body)
         URLSession.shared.dataTask(with: req) { _, res, err in
             if let err {
-                print("[PushRegistrar] error: \(err.localizedDescription)")
-            } else if let http = res as? HTTPURLResponse, http.statusCode != 200 {
-                print("[PushRegistrar] status \(http.statusCode)")
+                print("[PushRegistrar] network error: \(err.localizedDescription)")
+            } else if let http = res as? HTTPURLResponse {
+                print("[PushRegistrar] \(method) \(path) -> HTTP \(http.statusCode)")
             }
         }.resume()
     }
