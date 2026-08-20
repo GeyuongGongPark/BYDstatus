@@ -146,7 +146,7 @@
 
 <header>
   <h1>개인정보 처리방침</h1>
-  <p>최종 업데이트: 2026-08-20</p>
+  <p>최종 업데이트: 2026-08-20 (v0.4.0)</p>
 </header>
 
 <div class="lang-tabs">
@@ -183,29 +183,29 @@
               <td>차량 데이터</td>
               <td>배터리 잔량, 주행가능거리, 충전 상태, 순간 전력, 총 주행거리, 실내 온도</td>
               <td>대시보드 표시 및 이력 기록</td>
-              <td><span class="badge">기기 내 (SwiftData)</span></td>
+              <td><span class="badge">기기 내 (iOS: SwiftData / Android: Room)</span></td>
             </tr>
             <tr>
               <td>충전 세션</td>
               <td>충전 시작/종료 시각, SOC 변화, 충전량(kWh), 예상 비용</td>
               <td>충전 이력 및 비용 분석</td>
-              <td><span class="badge">기기 내 (SwiftData)</span></td>
+              <td><span class="badge">기기 내 (iOS: SwiftData / Android: Room)</span></td>
             </tr>
             <tr>
               <td>주행 세션</td>
               <td>주행 시작/종료 시각, 이동 거리, 소비 전력</td>
               <td>주행 이력 및 전비 분석</td>
-              <td><span class="badge">기기 내 (SwiftData)</span></td>
+              <td><span class="badge">기기 내 (iOS: SwiftData / Android: Room)</span></td>
             </tr>
             <tr>
               <td>위치 정보</td>
               <td>충전·주행 세션 발생 위치 (선택적)</td>
               <td>세션 위치 기록</td>
-              <td><span class="badge">기기 내 (SwiftData)</span></td>
+              <td><span class="badge">기기 내 (iOS: SwiftData / Android: Room)</span></td>
             </tr>
             <tr>
               <td>푸시 토큰</td>
-              <td>iOS APNS 기기 토큰</td>
+              <td>iOS APNS 기기 토큰 · Android FCM 기기 토큰</td>
               <td>백그라운드 데이터 갱신을 위한 silent push 발송</td>
               <td><span class="badge">개발자 서버 (Railway)</span></td>
             </tr>
@@ -230,8 +230,13 @@
             </tr>
             <tr>
               <td>개발자 운영 서버<br><code style="font-size:12px;">bydstatus-production.up.railway.app</code></td>
-              <td>iOS 백그라운드 갱신 트리거 (silent push)</td>
-              <td>APNS 기기 토큰</td>
+              <td>iOS · Android 백그라운드 갱신 트리거 (silent push)</td>
+              <td>APNS 기기 토큰 (iOS) · FCM 기기 토큰 (Android)</td>
+            </tr>
+            <tr>
+              <td>Google Firebase FCM<br><code style="font-size:12px;">fcm.googleapis.com</code></td>
+              <td>Android silent push 발송 (개발자 서버 → FCM → 기기)</td>
+              <td>FCM 기기 토큰</td>
             </tr>
           </tbody>
         </table>
@@ -250,10 +255,10 @@
       <h2>4. 데이터 보관 및 삭제</h2>
       <ul>
         <li>차량 이력, 충전·주행 세션, 위치 데이터는 사용자의 기기 내에만 저장됩니다.</li>
-        <li>앱을 삭제하면 SwiftData에 저장된 모든 이력이 자동으로 삭제됩니다.</li>
-        <li>Keychain에 저장된 계정 정보는 앱 설정의 <strong>로그아웃</strong> 기능으로 즉시 삭제할 수 있습니다.</li>
-        <li>위치 권한은 iOS 설정 앱에서 언제든지 철회할 수 있습니다.</li>
-        <li>개발자 서버에 저장된 APNS 기기 토큰은 <strong>90일 미사용 시 자동 만료·삭제</strong>됩니다. 로그아웃 시에도 서버에서 즉시 삭제됩니다.</li>
+        <li>앱을 삭제하면 기기 내 모든 이력(iOS: SwiftData, Android: Room DB)이 자동으로 삭제됩니다.</li>
+        <li>계정 정보는 앱 설정의 <strong>로그아웃</strong> 기능으로 즉시 삭제할 수 있습니다 (iOS: Keychain, Android: DataStore).</li>
+        <li>위치 권한은 기기 설정에서 언제든지 철회할 수 있습니다.</li>
+        <li>개발자 서버에 저장된 APNS(iOS) · FCM(Android) 기기 토큰은 <strong>90일 미사용 시 자동 만료·삭제</strong>됩니다. 로그아웃 시에도 서버에서 즉시 삭제됩니다.</li>
       </ul>
     </section>
 
@@ -314,29 +319,29 @@
               <td>Vehicle Data</td>
               <td>Battery %, range, charge status, instant power, total mileage, cabin temp</td>
               <td>Dashboard display and history logging</td>
-              <td><span class="badge">On-device (SwiftData)</span></td>
+              <td><span class="badge">On-device (iOS: SwiftData / Android: Room)</span></td>
             </tr>
             <tr>
               <td>Charging Sessions</td>
               <td>Start/end time, SOC change, energy (kWh), estimated cost</td>
               <td>Charging history and cost analysis</td>
-              <td><span class="badge">On-device (SwiftData)</span></td>
+              <td><span class="badge">On-device (iOS: SwiftData / Android: Room)</span></td>
             </tr>
             <tr>
               <td>Driving Sessions</td>
               <td>Start/end time, distance, energy consumed</td>
               <td>Driving history and efficiency analysis</td>
-              <td><span class="badge">On-device (SwiftData)</span></td>
+              <td><span class="badge">On-device (iOS: SwiftData / Android: Room)</span></td>
             </tr>
             <tr>
               <td>Location</td>
               <td>Location of charging/driving sessions (optional)</td>
               <td>Session location logging</td>
-              <td><span class="badge">On-device (SwiftData)</span></td>
+              <td><span class="badge">On-device (iOS: SwiftData / Android: Room)</span></td>
             </tr>
             <tr>
               <td>Push Token</td>
-              <td>iOS APNS device token</td>
+              <td>iOS APNS device token · Android FCM device token</td>
               <td>Silent push to trigger background data refresh</td>
               <td><span class="badge">Developer Server (Railway)</span></td>
             </tr>
@@ -361,8 +366,13 @@
             </tr>
             <tr>
               <td>Developer-operated Server<br><code style="font-size:12px;">bydstatus-production.up.railway.app</code></td>
-              <td>iOS background refresh trigger (silent push)</td>
-              <td>APNS device token</td>
+              <td>iOS · Android background refresh trigger (silent push)</td>
+              <td>APNS device token (iOS) · FCM device token (Android)</td>
+            </tr>
+            <tr>
+              <td>Google Firebase FCM<br><code style="font-size:12px;">fcm.googleapis.com</code></td>
+              <td>Android silent push delivery (server → FCM → device)</td>
+              <td>FCM device token</td>
             </tr>
           </tbody>
         </table>
@@ -381,10 +391,10 @@
       <h2>4. Data Retention &amp; Deletion</h2>
       <ul>
         <li>Vehicle history, charging/driving sessions, and location data are stored locally on your device only.</li>
-        <li>Deleting the app will automatically remove all SwiftData history.</li>
-        <li>Account credentials stored in Keychain can be deleted immediately via the <strong>Logout</strong> option in Settings.</li>
-        <li>Location permissions can be revoked at any time in iOS Settings.</li>
-        <li>APNS device tokens stored on the developer server are <strong>automatically expired and deleted after 90 days of inactivity</strong>. They are also deleted immediately upon logout.</li>
+        <li>Deleting the app will automatically remove all on-device history (iOS: SwiftData, Android: Room DB).</li>
+        <li>Account credentials can be deleted immediately via the <strong>Logout</strong> option in Settings (iOS: Keychain, Android: DataStore).</li>
+        <li>Location permissions can be revoked at any time in device Settings.</li>
+        <li>APNS (iOS) and FCM (Android) device tokens stored on the developer server are <strong>automatically expired and deleted after 90 days of inactivity</strong>. They are also deleted immediately upon logout.</li>
       </ul>
     </section>
 

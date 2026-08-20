@@ -2,7 +2,7 @@
 
 BYD 공식 앱에 없는 배터리 이력, 충전 세션, 주행 효율, 월별 비용 분석을 제공하는 iOS · Android 통계 앱.
 
-**현재 버전: v0.3.1**
+**현재 버전: v0.4.0**
 
 ---
 
@@ -18,7 +18,7 @@ BYD 공식 앱에 없는 배터리 이력, 충전 세션, 주행 효율, 월별 
 | GPS 트래킹 | ✓ | ✓ |
 | 어댑티브 폴링 (주행 1분 / 충전 2분 / 주차 설정값) | ✓ | ✓ |
 | 라이브 액티비티 (Dynamic Island · 잠금화면) | ✓ | — |
-| 백그라운드 수집 (앱 종료 시에도 수집) | ✓ | — |
+| 백그라운드 수집 (앱 종료 시에도 수집) | ✓ (BGAppRefresh + Silent Push) | ✓ (Foreground Service + FCM) |
 | 앱 로그 / 진단 (공유 가능) | — | ✓ |
 
 ## 지원 차종
@@ -63,12 +63,13 @@ Xcode에서 시뮬레이터 또는 실기기를 선택하고 빌드.
 ### iOS
 - **UI** — SwiftUI · Swift Charts
 - **데이터** — SwiftData
-- **백그라운드** — BGAppRefreshTask · ActivityKit
+- **백그라운드** — BGAppRefreshTask · ActivityKit · Silent Push (APNS)
 - **위치** — CoreLocation
 
 ### Android
 - **UI** — Jetpack Compose · Material3
 - **데이터** — Room · DataStore
+- **백그라운드** — Foreground Service · FCM Silent Push
 - **위젯** — Glance AppWidget
 - **네트워크** — Ktor
 - **위치** — FusedLocationProviderClient
