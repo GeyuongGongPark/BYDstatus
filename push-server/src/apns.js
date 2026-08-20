@@ -1,20 +1,70 @@
-const apn = require('@parse/node-apn');
+const http2 = require('http2');
+const jwt   = require('jsonwebtoken');
 const { unregisterToken } = require('./db');
 
-let provider = null;
+const APNS_HOST = 'https://api.push.apple.com';
 
-function getProvider() {
-  if (!provider) {
-    provider = new apn.Provider({
-      token: {
-        key:    process.env.APNS_KEY_P8.replace(/\\\\n/g, '\n').replace(/\\n/g, '\n'),
-        keyId:  process.env.APNS_KEY_ID,
-        teamId: process.env.APNS_TEAM_ID,
-      },
-      production: true,   // TestFlight/App Store는 production APNS 환경
+function buildKey() {
+  return process.env.APNS_KEY_P8
+    .replace(/\\\\n/g, '\n')
+    .replace(/\\n/g, '\n');
+}
+
+function makeJwt() {
+  return jwt.sign(
+    { iss: process.env.APNS_TEAM_ID },
+    buildKey(),
+    {
+      algorithm: 'ES256',
+      keyid: process.env.APNS_KEY_ID,
+      expiresIn: '50m',
+    }
+  );
+}
+
+/**
+ * 단일 token에 silent push 전송.
+ */
+function sendOne(token, jwtToken) {
+  return new Promise((resolve) => {
+    const client = http2.connect(APNS_HOST);
+    client.on('error', (err) => {
+      console.error(`[apns] http2 connect error: ${err.message}`);
+      resolve({ ok: false, reason: err.message });
     });
-  }
-  return provider;
+
+    const body = JSON.stringify({ aps: { 'content-available': 1 } });
+    const req = client.request({
+      ':method':        'POST',
+      ':path':          `/3/device/${token}`,
+      'authorization':  `bearer ${jwtToken}`,
+      'apns-push-type': 'background',
+      'apns-priority':  '5',
+      'apns-topic':     process.env.APNS_BUNDLE_ID,
+      'content-type':   'application/json',
+      'content-length': Buffer.byteLength(body),
+    });
+
+    let status;
+    req.on('response', (headers) => { status = headers[':status']; });
+
+    let data = '';
+    req.setEncoding('utf8');
+    req.on('data', (chunk) => { data += chunk; });
+    req.on('end', () => {
+      client.close();
+      if (status === 200) {
+        resolve({ ok: true });
+      } else {
+        let reason = 'Unknown';
+        try { reason = JSON.parse(data).reason; } catch (_) {}
+        resolve({ ok: false, reason, status });
+      }
+    });
+
+    req.write(body);
+    req.end();
+  });
 }
 
 /**
@@ -24,25 +74,30 @@ function getProvider() {
  */
 async function sendApns(tokens) {
   if (!tokens.length) return;
-  const p = getProvider();
 
-  const notif = new apn.Notification();
-  notif.topic           = process.env.APNS_BUNDLE_ID;
-  notif.priority        = 5;
-  notif.pushType        = 'background';
-  notif.contentAvailable = 1;
+  let jwtToken;
+  try {
+    jwtToken = makeJwt();
+  } catch (err) {
+    console.error(`[apns] JWT 생성 실패: ${err.message}`);
+    return;
+  }
 
-  const result = await p.send(notif, tokens);
-  console.log(`[apns] sent total=${tokens.length} ok=${result.sent.length} fail=${result.failed.length}`);
-
-  for (const f of result.failed) {
-    console.error(`[apns] error token=${f.device.slice(-8)} reason=${f.response?.reason ?? f.error}`);
-    // Unregistered: 앱 삭제 → DB에서 제거
-    if (f.response?.reason === 'Unregistered') {
-      await unregisterToken(f.device);
-      console.log(`[apns] removed stale token ${f.device.slice(-8)}`);
+  let ok = 0, fail = 0;
+  for (const token of tokens) {
+    const result = await sendOne(token, jwtToken);
+    if (result.ok) {
+      ok++;
+    } else {
+      fail++;
+      console.error(`[apns] error token=${token.slice(-8)} status=${result.status} reason=${result.reason}`);
+      if (result.reason === 'Unregistered') {
+        await unregisterToken(token);
+        console.log(`[apns] removed stale token ${token.slice(-8)}`);
+      }
     }
   }
+  console.log(`[apns] sent total=${tokens.length} ok=${ok} fail=${fail}`);
 }
 
 module.exports = { sendApns };

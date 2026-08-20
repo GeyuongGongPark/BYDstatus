@@ -8,7 +8,7 @@
     "dev": "node --watch src/index.js"
   },
   "dependencies": {
-    "@parse/node-apn": "^3.0.0",
+    "jsonwebtoken": "^9.0.2",
     "express": "^4.19.2",
     "firebase-admin": "^12.3.0",
     "node-cron": "^3.0.3",
