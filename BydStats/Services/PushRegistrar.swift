@@ -3,8 +3,12 @@ import Foundation
 /// 서버에 device token을 등록/삭제하는 유틸리티
 enum PushRegistrar {
 
-    private static let serverURL = "https://your-railway-url.railway.app" // 배포 후 교체
-    private static let apiKey    = "YOUR_API_KEY"                          // 환경변수와 동일한 값
+    private static let serverURL = "https://bydstatus-production.up.railway.app"
+
+    /// Info.plist의 PushAPIKey 값 (Secrets.xcconfig → $(PUSH_API_KEY))
+    private static var apiKey: String {
+        Bundle.main.object(forInfoDictionaryKey: "PushAPIKey") as? String ?? ""
+    }
 
     static func register(tokenData: Data) {
         let token = tokenData.map { String(format: "%02x", $0) }.joined()

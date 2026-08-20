@@ -30,6 +30,8 @@
 	<string>충전 세션 위치 기록 및 주행 거리 측정에 사용됩니다.</string>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
+	<key>PushAPIKey</key>
+	<string>$(PUSH_API_KEY)</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>

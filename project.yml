@@ -39,6 +39,10 @@ targets:
         BGTaskSchedulerPermittedIdentifiers:
           - com.ggpark.BydStats.refresh
         NSSupportsLiveActivities: YES
+        PushAPIKey: $(PUSH_API_KEY)
+    configFiles:
+      Debug: BydStats/Resources/Secrets.xcconfig
+      Release: BydStats/Resources/Secrets.xcconfig
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: com.ggpark.BydStats
       SWIFT_VERSION: "6.0"

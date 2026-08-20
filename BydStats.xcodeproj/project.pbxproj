@@ -71,6 +71,7 @@
 		04788C17EDAEA6AB900D4CD7 /* BackgroundTasks.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = BackgroundTasks.framework; sourceTree = "<group>"; };
 		059DFA08AD29A0C22AE31C92 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		0F4DE63D18E7644C243C48B7 /* BydStatsWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BydStatsWidget.swift; sourceTree = "<group>"; };
+		13A9ED1EF72A76C8DE01668C /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		1990F1E772C2BBD6CF01F33C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		20EA78FF1C786628B2798904 /* DataPoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataPoint.swift; sourceTree = "<group>"; };
 		26054D2FBC8FCC5F9F74267F /* ChargingSessionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChargingSessionsView.swift; sourceTree = "<group>"; };
@@ -229,6 +230,7 @@
 				DB27E28B744FBC2888F6B621 /* bangcle_tables.bin */,
 				762475AEEAE8D4D829E18F11 /* BydStats.entitlements */,
 				DD02993CC5C4CAECF6E37313 /* Info.plist */,
+				13A9ED1EF72A76C8DE01668C /* Secrets.xcconfig */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -380,6 +382,7 @@
 /* Begin XCBuildConfiguration section */
 		1AAE9E5262CE1D2792631170 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 13A9ED1EF72A76C8DE01668C /* Secrets.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
@@ -503,6 +506,7 @@
 		};
 		ED94298588E009C26C906C97 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 13A9ED1EF72A76C8DE01668C /* Secrets.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;

@@ -46,3 +46,4 @@ androidApp/.cxx/
 push-server/node_modules/
 push-server/.env
 push-server/*.p8
+BydStats/Resources/Secrets.xcconfig
