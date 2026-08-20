@@ -1,4 +1,4 @@
-const apn = require('apn');
+const apn = require('@parse/node-apn');
 const { unregisterToken } = require('./db');
 
 let provider = null;
