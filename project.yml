@@ -57,6 +57,7 @@ targets:
       properties:
         com.apple.security.application-groups:
           - group.com.ggpark.BydStats
+        aps-environment: production
     dependencies:
       - framework: BackgroundTasks.framework
         embed: false
