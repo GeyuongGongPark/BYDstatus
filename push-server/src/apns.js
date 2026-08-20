@@ -94,7 +94,7 @@ async function sendApns(tokens, sandbox = false) {
     } else {
       fail++;
       console.error(`[apns][${env}] error token=${token.slice(-8)} status=${result.status} reason=${result.reason}`);
-      if (result.reason === 'Unregistered') {
+      if (result.reason === 'Unregistered' || result.reason === 'BadDeviceToken' || result.reason === 'BadEnvironmentKeyInToken') {
         await unregisterToken(token);
         console.log(`[apns] removed stale token ${token.slice(-8)}`);
       }
