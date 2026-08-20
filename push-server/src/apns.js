@@ -6,10 +6,11 @@ let client = null;
 function getClient() {
   if (!client) {
     client = new ApnsClient({
-      team:       process.env.APNS_TEAM_ID,
-      keyId:      process.env.APNS_KEY_ID,
-      signingKey: process.env.APNS_KEY_P8.replace(/\\n/g, '\n'),
+      team:         process.env.APNS_TEAM_ID,
+      keyId:        process.env.APNS_KEY_ID,
+      signingKey:   process.env.APNS_KEY_P8.replace(/\\n/g, '\n'),
       defaultTopic: process.env.APNS_BUNDLE_ID,
+      production:   true,   // TestFlight/App Store는 production APNS 환경
       requestTimeout: 10000,
     });
   }
