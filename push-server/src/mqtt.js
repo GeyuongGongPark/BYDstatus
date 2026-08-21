@@ -53,7 +53,7 @@ function connect(session) {
   const topic    = `oversea/res/${user_id}`;
   const decryptKey = md5(encry_token); // MD5(encry_token) = AES 키
 
-  console.log(`[mqtt] connecting user=${user_id.slice(-6)} host=${broker_host}:${broker_port}`);
+  console.log(`[mqtt] connecting user=${user_id.slice(-6)} host=${broker_host}:${broker_port} clientId=${clientId}`);
 
   const client = mqtt.connect(`mqtts://${broker_host}:${broker_port}`, {
     clientId,
@@ -85,7 +85,7 @@ function connect(session) {
   });
 
   client.on('error', (err) => {
-    console.error(`[mqtt] error user=${user_id.slice(-6)}: ${err.message}`);
+    console.error(`[mqtt] error user=${user_id.slice(-6)}: ${err.message} code=${err.code} reasonCode=${err.reasonCode}`);
   });
 
   client.on('close', () => {
