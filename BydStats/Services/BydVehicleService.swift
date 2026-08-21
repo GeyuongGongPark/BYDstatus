@@ -13,8 +13,12 @@ actor BydVehicleService {
     private(set) var encryToken: String?
     private var accountImeiMD5 = "00000000000000000000000000000000"
 
-    var onSessionUpdated: ((String, String, String) -> Void)?
-    var onSessionExpired: (() -> Void)?
+    var onSessionUpdated: (@Sendable (String, String, String) -> Void)?
+    var onSessionExpired: (@Sendable () -> Void)?
+
+    func setOnSessionUpdated(_ handler: (@Sendable (String, String, String) -> Void)?) {
+        onSessionUpdated = handler
+    }
 
     private var storedUsername: String?
     private var storedPassword: String?
@@ -528,8 +532,8 @@ actor BydVehicleService {
 
     // MARK: - MQTT Broker
 
-    /// MQTT 브로커 주소 조회 → (host, port)
-    func fetchMqttBroker() async throws -> (host: String, port: Int) {
+    /// MQTT 브로커 주소 및 clientId 조회 → (host, port, clientId)
+    func fetchMqttBroker() async throws -> (host: String, port: Int, clientId: String) {
         let result = try await postTokenSecure(
             endpoint: "/app/emqAuth/getEmqBrokerIp",
             innerMap: buildInnerBase(), vin: nil
@@ -541,12 +545,13 @@ actor BydVehicleService {
             if clean.hasPrefix(prefix) { clean = String(clean.dropFirst(prefix.count)) }
         }
         clean = String(clean.split(separator: "/").first ?? Substring(clean))
+        let clientId = "oversea_\(accountImeiMD5.uppercased())"
         if let colonIdx = clean.lastIndex(of: ":") {
             let host = String(clean[clean.startIndex..<colonIdx])
             let portStr = String(clean[clean.index(after: colonIdx)...])
-            return (host, Int(portStr) ?? 8883)
+            return (host, Int(portStr) ?? 8883, clientId)
         }
-        return (clean, 8883)
+        return (clean, 8883, clientId)
     }
 }
 

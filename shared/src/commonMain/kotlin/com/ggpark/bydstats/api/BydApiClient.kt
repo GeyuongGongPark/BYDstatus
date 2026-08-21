@@ -480,8 +480,8 @@ class BydApiClient(
 
     // MARK: - MQTT Broker
 
-    /** MQTT 브로커 주소 조회 → "host:port" 문자열 반환 */
-    suspend fun fetchMqttBroker(): Pair<String, Int> {
+    /** MQTT 브로커 주소 및 clientId 조회 → Triple(host, port, clientId) */
+    suspend fun fetchMqttBroker(): Triple<String, Int, String> {
         val inner = buildInnerBase()
         val r = postTokenSecure("/app/emqAuth/getEmqBrokerIp", inner, vin = null)
         val raw = r["emqBorker"]?.jsonPrimitive?.content
@@ -490,12 +490,13 @@ class BydApiClient(
         val clean = raw.trim()
             .removePrefix("mqtt://").removePrefix("mqtts://")
             .substringBefore("/")
+        val clientId = "oversea_${accountImeiMD5.uppercase()}"
         return if (clean.contains(":")) {
             val host = clean.substringBeforeLast(":")
             val port = clean.substringAfterLast(":").toIntOrNull() ?: 8883
-            host to port
+            Triple(host, port, clientId)
         } else {
-            clean to 8883
+            Triple(clean, 8883, clientId)
         }
     }
 }

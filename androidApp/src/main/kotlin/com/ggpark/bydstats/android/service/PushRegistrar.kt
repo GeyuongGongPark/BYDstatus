@@ -33,6 +33,7 @@ object PushRegistrar {
         encryToken: String,
         brokerHost: String,
         brokerPort: Int,
+        clientId: String,
         vin: String?,
     ) = withContext(Dispatchers.IO) {
         send("POST", "/api/session/register", JSONObject().apply {
@@ -41,6 +42,7 @@ object PushRegistrar {
             put("encry_token", encryToken)
             put("broker_host", brokerHost)
             put("broker_port", brokerPort)
+            put("client_id",  clientId)
             if (vin != null) put("vin", vin)
         })
     }
