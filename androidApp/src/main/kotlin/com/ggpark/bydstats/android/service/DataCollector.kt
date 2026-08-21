@@ -8,6 +8,7 @@ import com.ggpark.bydstats.model.VehicleStatus
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import java.net.UnknownHostException
 
 private const val TAG = "DataCollector"
 
@@ -41,6 +42,7 @@ class DataCollector(
     fun stop() {
         pollingJob?.cancel()
         pollingJob = null
+        scope.cancel()
     }
 
     /** FCM silent push 수신 시 즉시 1회 폴링 */
@@ -101,7 +103,13 @@ class DataCollector(
 
         } catch (e: BydError.ServerError) {
             Log.w(TAG, "서버 오류 ${e.code}: ${e.msg}")
-            _error.value = "서버 오류: ${e.msg}"
+            _error.value = when (e.code) {
+                "1008" -> "차량이 응답하지 않습니다 (절전 모드일 수 있음)"
+                else   -> "서버 오류: ${e.msg}"
+            }
+        } catch (e: UnknownHostException) {
+            Log.w(TAG, "DNS 조회 실패: ${e.message}")
+            _error.value = "네트워크 오류: 서버에 연결할 수 없습니다"
         } catch (e: Exception) {
             Log.e(TAG, "폴링 실패: ${e.message}")
             _error.value = e.message
