@@ -477,4 +477,25 @@ class BydApiClient(
             recent50kmKwhPer100km    = nearest["energyConsumption"]?.jsonPrimitive?.doubleOrNull ?: 0.0,
         )
     }
+
+    // MARK: - MQTT Broker
+
+    /** MQTT 브로커 주소 조회 → "host:port" 문자열 반환 */
+    suspend fun fetchMqttBroker(): Pair<String, Int> {
+        val inner = buildInnerBase()
+        val r = postTokenSecure("/app/emqAuth/getEmqBrokerIp", inner, vin = null)
+        val raw = r["emqBorker"]?.jsonPrimitive?.content
+            ?: r["emqBroker"]?.jsonPrimitive?.content
+            ?: throw BydError.ServerError("MQTT 브로커 주소 없음", "MQTT_01")
+        val clean = raw.trim()
+            .removePrefix("mqtt://").removePrefix("mqtts://")
+            .substringBefore("/")
+        return if (clean.contains(":")) {
+            val host = clean.substringBeforeLast(":")
+            val port = clean.substringAfterLast(":").toIntOrNull() ?: 8883
+            host to port
+        } else {
+            clean to 8883
+        }
+    }
 }

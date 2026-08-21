@@ -1,8 +1,10 @@
 const express = require('express');
 const cron    = require('node-cron');
-const { initDB, registerToken, unregisterToken, getIosTokens, getAndroidTokens, cleanOldTokens } = require('./db');
+const { initDB, registerToken, unregisterToken, getIosTokens, getAndroidTokens, cleanOldTokens,
+        upsertSession, updateSessionTokens, getAllSessions } = require('./db');
 const { sendApns } = require('./apns');
 const { sendFcm  } = require('./fcm');
+const mqttMgr     = require('./mqtt');
 
 // ─── 환경변수 검증 ────────────────────────────────────────────────────────────
 
@@ -48,6 +50,40 @@ app.delete('/api/unregister', auth, async (req, res) => {
   res.json({ ok: true });
 });
 
+/** 앱 → 서버: BYD 세션 등록 (로그인 후) */
+app.post('/api/session/register', auth, async (req, res) => {
+  const { user_id, sign_token, encry_token, broker_host, broker_port, vin } = req.body;
+  if (!user_id || !sign_token || !encry_token || !broker_host) {
+    return res.status(400).json({ error: 'user_id, sign_token, encry_token, broker_host required' });
+  }
+  await upsertSession(user_id, sign_token, encry_token, broker_host, broker_port || 8883, vin || null);
+  mqttMgr.connect({ user_id, sign_token, encry_token, broker_host, broker_port: broker_port || 8883 });
+  console.log(`[api] session registered user=${user_id.slice(-6)}`);
+  res.json({ ok: true });
+});
+
+/** 앱 → 서버: BYD 세션 토큰 갱신 (onSessionUpdated 시) */
+app.put('/api/session/update', auth, async (req, res) => {
+  const { user_id, sign_token, encry_token } = req.body;
+  if (!user_id || !sign_token || !encry_token) {
+    return res.status(400).json({ error: 'user_id, sign_token, encry_token required' });
+  }
+  await updateSessionTokens(user_id, sign_token, encry_token);
+  // DB에서 전체 세션 읽어 재연결 (broker_host 필요)
+  const sessions = await getAllSessions();
+  const session  = sessions.find(s => s.user_id === user_id);
+  if (session) mqttMgr.reconnect(session);
+  console.log(`[api] session updated user=${user_id.slice(-6)}`);
+  res.json({ ok: true });
+});
+
+// ─── MQTT 이벤트 → 즉시 Push ─────────────────────────────────────────────────
+
+mqttMgr.setOnPush(async (userId, event, _msg) => {
+  console.log(`[mqtt] push triggered by event=${event} user=${userId.slice(-6)}`);
+  await sendPushToAll();
+});
+
 // ─── Push 전송 ────────────────────────────────────────────────────────────────
 
 async function sendPushToAll() {
@@ -81,10 +117,16 @@ cron.schedule('0 0 * * 0', () => cleanOldTokens(90));
 
 const PORT = process.env.PORT || 3000;
 
-initDB().then(() => {
+initDB().then(async () => {
+  // 저장된 세션으로 MQTT 연결 복구
+  const sessions = await getAllSessions();
+  if (sessions.length > 0) {
+    console.log(`[startup] restoring ${sessions.length} MQTT session(s)`);
+    mqttMgr.connectAll(sessions);
+  }
+
   app.listen(PORT, () => {
     console.log(`[server] listening on port ${PORT}`);
-    // 시작 직후 1회 즉시 전송 (서버 재시작 후 빠른 복구)
     sendPushToAll();
   });
 }).catch(err => {
