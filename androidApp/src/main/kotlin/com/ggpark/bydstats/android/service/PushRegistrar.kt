@@ -27,6 +27,36 @@ object PushRegistrar {
         })
     }
 
+    suspend fun registerSession(
+        userId: String,
+        signToken: String,
+        encryToken: String,
+        brokerHost: String,
+        brokerPort: Int,
+        vin: String?,
+    ) = withContext(Dispatchers.IO) {
+        send("POST", "/api/session/register", JSONObject().apply {
+            put("user_id",    userId)
+            put("sign_token", signToken)
+            put("encry_token", encryToken)
+            put("broker_host", brokerHost)
+            put("broker_port", brokerPort)
+            if (vin != null) put("vin", vin)
+        })
+    }
+
+    suspend fun updateSession(
+        userId: String,
+        signToken: String,
+        encryToken: String,
+    ) = withContext(Dispatchers.IO) {
+        send("PUT", "/api/session/update", JSONObject().apply {
+            put("user_id",    userId)
+            put("sign_token", signToken)
+            put("encry_token", encryToken)
+        })
+    }
+
     private fun send(method: String, path: String, body: JSONObject) {
         try {
             val url = URL(BuildConfig.PUSH_SERVER_URL + path)

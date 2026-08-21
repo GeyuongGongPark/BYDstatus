@@ -63,6 +63,9 @@ final class AppState {
         let username = KeychainHelper.load(forKey: Keys.username) ?? ""
         let password = KeychainHelper.load(forKey: Keys.password) ?? ""
 
+        svc.onSessionUpdated = { uid, sign, encry in
+            Task { PushRegistrar.updateSession(userId: uid, signToken: sign, encryToken: encry) }
+        }
         Task {
             await svc.restoreSession(userId: uid, signToken: sign, encryToken: encry)
             await svc.setCredentials(username: username, password: password)
@@ -81,6 +84,9 @@ final class AppState {
 
         do {
             let svc = try BydVehicleService(config: BydConfig.fromRegion(region))
+            svc.onSessionUpdated = { uid, sign, encry in
+                Task { PushRegistrar.updateSession(userId: uid, signToken: sign, encryToken: encry) }
+            }
             await svc.setCredentials(username: username, password: password)
             _ = try await svc.login(username: username, password: password)
 
@@ -106,11 +112,29 @@ final class AppState {
             if selectedVin == nil, let first = vehicles.first {
                 selectVin(first.vin)
             }
+
+            // MQTT 세션 등록 (백그라운드)
+            registerMqttSession(svc: svc, vin: selectedVin)
         } catch {
             loginError = error.localizedDescription
         }
 
         isLoggingIn = false
+    }
+
+    private func registerMqttSession(svc: BydVehicleService, vin: String?) {
+        Task {
+            do {
+                let (host, port) = try await svc.fetchMqttBroker()
+                guard let uid   = await svc.userId,
+                      let sign  = await svc.signToken,
+                      let encry = await svc.encryToken else { return }
+                PushRegistrar.registerSession(userId: uid, signToken: sign, encryToken: encry,
+                                              brokerHost: host, brokerPort: port, vin: vin)
+            } catch {
+                print("[AppState] MQTT session register failed: \(error)")
+            }
+        }
     }
 
     // MARK: - 차량 선택

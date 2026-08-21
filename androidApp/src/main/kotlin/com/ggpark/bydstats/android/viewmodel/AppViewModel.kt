@@ -151,6 +151,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                         p[PrefKeys.SIGN_TOKEN]  = sign
                         p[PrefKeys.ENCRY_TOKEN] = encry
                     }
+                    PushRegistrar.updateSession(uid, sign, encry)
                 }
             }
             client.onSessionExpired = {
@@ -180,6 +181,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 if (vin.isNotEmpty()) PollingService.start(context)
                 registerFcmToken()
+                registerMqttSession(vin.ifEmpty { null })
             } catch (e: BydError.ServerError) {
                 _uiState.update { it.copy(isLoggingIn = false, loginError = "로그인 실패: ${e.msg}") }
             } catch (e: Exception) {
@@ -250,6 +252,22 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private fun unregisterFcmToken() {
         FirebaseMessaging.getInstance().token.addOnSuccessListener { token ->
             viewModelScope.launch { PushRegistrar.unregister(token) }
+        }
+    }
+
+    private fun registerMqttSession(vin: String?) {
+        viewModelScope.launch {
+            try {
+                val client = apiClient ?: return@launch
+                val prefs = context.appDataStore.data.first()
+                val userId    = prefs[PrefKeys.USER_ID]    ?: return@launch
+                val signToken = prefs[PrefKeys.SIGN_TOKEN] ?: return@launch
+                val encryToken = prefs[PrefKeys.ENCRY_TOKEN] ?: return@launch
+                val (host, port) = client.fetchMqttBroker()
+                PushRegistrar.registerSession(userId, signToken, encryToken, host, port, vin)
+            } catch (e: Exception) {
+                android.util.Log.w("AppViewModel", "MQTT session register failed: ${e.message}")
+            }
         }
     }
 

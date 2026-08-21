@@ -13,11 +13,47 @@ async function initDB() {
       last_seen     TIMESTAMPTZ DEFAULT NOW()
     )
   `);
-  // 기존 테이블에 sandbox 컬럼 없으면 추가
   await pool.query(`
     ALTER TABLE device_tokens ADD COLUMN IF NOT EXISTS sandbox BOOLEAN NOT NULL DEFAULT false
   `);
-  console.log('[db] device_tokens table ready');
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS user_sessions (
+      user_id     TEXT PRIMARY KEY,
+      sign_token  TEXT        NOT NULL,
+      encry_token TEXT        NOT NULL,
+      broker_host TEXT        NOT NULL,
+      broker_port INT         NOT NULL DEFAULT 8883,
+      vin         TEXT,
+      updated_at  TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+  console.log('[db] tables ready');
+}
+
+async function upsertSession(userId, signToken, encryToken, brokerHost, brokerPort, vin) {
+  await pool.query(`
+    INSERT INTO user_sessions (user_id, sign_token, encry_token, broker_host, broker_port, vin, updated_at)
+    VALUES ($1, $2, $3, $4, $5, $6, NOW())
+    ON CONFLICT (user_id) DO UPDATE SET
+      sign_token  = $2,
+      encry_token = $3,
+      broker_host = $4,
+      broker_port = $5,
+      vin         = COALESCE($6, user_sessions.vin),
+      updated_at  = NOW()
+  `, [userId, signToken, encryToken, brokerHost, brokerPort, vin]);
+}
+
+async function updateSessionTokens(userId, signToken, encryToken) {
+  await pool.query(`
+    UPDATE user_sessions SET sign_token = $2, encry_token = $3, updated_at = NOW()
+    WHERE user_id = $1
+  `, [userId, signToken, encryToken]);
+}
+
+async function getAllSessions() {
+  const res = await pool.query('SELECT * FROM user_sessions');
+  return res.rows;
 }
 
 async function registerToken(token, platform, sandbox = false) {
@@ -55,4 +91,8 @@ async function cleanOldTokens(days = 90) {
   console.log(`[db] cleaned ${res.rowCount} stale tokens (>${days}d)`);
 }
 
-module.exports = { initDB, registerToken, unregisterToken, getIosTokens, getAndroidTokens, cleanOldTokens };
+module.exports = {
+  initDB,
+  registerToken, unregisterToken, getIosTokens, getAndroidTokens, cleanOldTokens,
+  upsertSession, updateSessionTokens, getAllSessions,
+};
