@@ -490,7 +490,7 @@ class BydApiClient(
         val clean = raw.trim()
             .removePrefix("mqtt://").removePrefix("mqtts://")
             .substringBefore("/")
-        val clientId = "oversea_$accountImeiMD5"
+        val clientId = "oversea_${accountImeiMD5.uppercase()}"
         return if (clean.contains(":")) {
             val host = clean.substringBeforeLast(":")
             val port = clean.substringAfterLast(":").toIntOrNull() ?: 8883

@@ -545,7 +545,7 @@ actor BydVehicleService {
             if clean.hasPrefix(prefix) { clean = String(clean.dropFirst(prefix.count)) }
         }
         clean = String(clean.split(separator: "/").first ?? Substring(clean))
-        let clientId = "oversea_\(accountImeiMD5)"
+        let clientId = "oversea_\(accountImeiMD5.uppercased())"
         if let colonIdx = clean.lastIndex(of: ":") {
             let host = String(clean[clean.startIndex..<colonIdx])
             let portStr = String(clean[clean.index(after: colonIdx)...])
