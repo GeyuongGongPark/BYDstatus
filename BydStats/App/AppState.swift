@@ -63,10 +63,10 @@ final class AppState {
         let username = KeychainHelper.load(forKey: Keys.username) ?? ""
         let password = KeychainHelper.load(forKey: Keys.password) ?? ""
 
-        svc.onSessionUpdated = { uid, sign, encry in
-            Task { PushRegistrar.updateSession(userId: uid, signToken: sign, encryToken: encry) }
-        }
         Task {
+            await svc.setOnSessionUpdated { uid, sign, encry in
+                Task { PushRegistrar.updateSession(userId: uid, signToken: sign, encryToken: encry) }
+            }
             await svc.restoreSession(userId: uid, signToken: sign, encryToken: encry)
             await svc.setCredentials(username: username, password: password)
         }
@@ -84,7 +84,7 @@ final class AppState {
 
         do {
             let svc = try BydVehicleService(config: BydConfig.fromRegion(region))
-            svc.onSessionUpdated = { uid, sign, encry in
+            await svc.setOnSessionUpdated { uid, sign, encry in
                 Task { PushRegistrar.updateSession(userId: uid, signToken: sign, encryToken: encry) }
             }
             await svc.setCredentials(username: username, password: password)
@@ -125,12 +125,13 @@ final class AppState {
     private func registerMqttSession(svc: BydVehicleService, vin: String?) {
         Task {
             do {
-                let (host, port) = try await svc.fetchMqttBroker()
+                let (host, port, clientId) = try await svc.fetchMqttBroker()
                 guard let uid   = await svc.userId,
                       let sign  = await svc.signToken,
                       let encry = await svc.encryToken else { return }
                 PushRegistrar.registerSession(userId: uid, signToken: sign, encryToken: encry,
-                                              brokerHost: host, brokerPort: port, vin: vin)
+                                              brokerHost: host, brokerPort: port,
+                                              clientId: clientId, vin: vin)
             } catch {
                 print("[AppState] MQTT session register failed: \(error)")
             }

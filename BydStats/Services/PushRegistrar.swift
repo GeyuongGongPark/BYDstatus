@@ -26,13 +26,14 @@ enum PushRegistrar {
     }
 
     static func registerSession(userId: String, signToken: String, encryToken: String,
-                                brokerHost: String, brokerPort: Int, vin: String?) {
+                                brokerHost: String, brokerPort: Int, clientId: String, vin: String?) {
         var body: [String: String] = [
             "user_id":    userId,
             "sign_token": signToken,
             "encry_token": encryToken,
             "broker_host": brokerHost,
             "broker_port": String(brokerPort),
+            "client_id":   clientId,
         ]
         if let vin { body["vin"] = vin }
         send(method: "POST", path: "/api/session/register", body: body)

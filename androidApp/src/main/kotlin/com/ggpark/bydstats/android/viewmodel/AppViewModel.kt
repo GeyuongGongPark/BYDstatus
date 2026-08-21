@@ -263,8 +263,8 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                 val userId    = prefs[PrefKeys.USER_ID]    ?: return@launch
                 val signToken = prefs[PrefKeys.SIGN_TOKEN] ?: return@launch
                 val encryToken = prefs[PrefKeys.ENCRY_TOKEN] ?: return@launch
-                val (host, port) = client.fetchMqttBroker()
-                PushRegistrar.registerSession(userId, signToken, encryToken, host, port, vin)
+                val (host, port, clientId) = client.fetchMqttBroker()
+                PushRegistrar.registerSession(userId, signToken, encryToken, host, port, clientId, vin)
             } catch (e: Exception) {
                 android.util.Log.w("AppViewModel", "MQTT session register failed: ${e.message}")
             }
