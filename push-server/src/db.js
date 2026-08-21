@@ -23,25 +23,30 @@ async function initDB() {
       encry_token TEXT        NOT NULL,
       broker_host TEXT        NOT NULL,
       broker_port INT         NOT NULL DEFAULT 8883,
+      client_id   TEXT,
       vin         TEXT,
       updated_at  TIMESTAMPTZ DEFAULT NOW()
     )
   `);
+  await pool.query(`
+    ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS client_id TEXT
+  `);
   console.log('[db] tables ready');
 }
 
-async function upsertSession(userId, signToken, encryToken, brokerHost, brokerPort, vin) {
+async function upsertSession(userId, signToken, encryToken, brokerHost, brokerPort, clientId, vin) {
   await pool.query(`
-    INSERT INTO user_sessions (user_id, sign_token, encry_token, broker_host, broker_port, vin, updated_at)
-    VALUES ($1, $2, $3, $4, $5, $6, NOW())
+    INSERT INTO user_sessions (user_id, sign_token, encry_token, broker_host, broker_port, client_id, vin, updated_at)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
     ON CONFLICT (user_id) DO UPDATE SET
       sign_token  = $2,
       encry_token = $3,
       broker_host = $4,
       broker_port = $5,
-      vin         = COALESCE($6, user_sessions.vin),
+      client_id   = COALESCE($6, user_sessions.client_id),
+      vin         = COALESCE($7, user_sessions.vin),
       updated_at  = NOW()
-  `, [userId, signToken, encryToken, brokerHost, brokerPort, vin]);
+  `, [userId, signToken, encryToken, brokerHost, brokerPort, clientId, vin]);
 }
 
 async function updateSessionTokens(userId, signToken, encryToken) {

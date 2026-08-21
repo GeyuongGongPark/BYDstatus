@@ -52,12 +52,12 @@ app.delete('/api/unregister', auth, async (req, res) => {
 
 /** 앱 → 서버: BYD 세션 등록 (로그인 후) */
 app.post('/api/session/register', auth, async (req, res) => {
-  const { user_id, sign_token, encry_token, broker_host, broker_port, vin } = req.body;
+  const { user_id, sign_token, encry_token, broker_host, broker_port, client_id, vin } = req.body;
   if (!user_id || !sign_token || !encry_token || !broker_host) {
     return res.status(400).json({ error: 'user_id, sign_token, encry_token, broker_host required' });
   }
-  await upsertSession(user_id, sign_token, encry_token, broker_host, broker_port || 8883, vin || null);
-  mqttMgr.connect({ user_id, sign_token, encry_token, broker_host, broker_port: broker_port || 8883 });
+  await upsertSession(user_id, sign_token, encry_token, broker_host, broker_port || 8883, client_id || null, vin || null);
+  mqttMgr.connect({ user_id, sign_token, encry_token, broker_host, broker_port: broker_port || 8883, client_id });
   console.log(`[api] session registered user=${user_id.slice(-6)}`);
   res.json({ ok: true });
 });

@@ -43,12 +43,12 @@ function buildPassword(signToken, clientId, userId) {
 
 /** 단일 세션에 대한 MQTT 연결 시작/재시작 */
 function connect(session) {
-  const { user_id, sign_token, encry_token, broker_host, broker_port } = session;
+  const { user_id, sign_token, encry_token, broker_host, broker_port, client_id } = session;
 
   // 기존 연결 종료
   disconnect(user_id);
 
-  const clientId = `oversea_${md5(user_id)}`;
+  const clientId = client_id || `oversea_${md5(user_id)}`;
   const password = buildPassword(sign_token, clientId, user_id);
   const topic    = `oversea/res/${user_id}`;
   const decryptKey = md5(encry_token); // MD5(encry_token) = AES 키
