@@ -483,7 +483,7 @@ class BydApiClient(
     /** MQTT 브로커 주소 조회 → "host:port" 문자열 반환 */
     suspend fun fetchMqttBroker(): Pair<String, Int> {
         val inner = buildInnerBase()
-        val r = postTokenSecure("/app/emqAuth/getEmqBrokerIp", inner)
+        val r = postTokenSecure("/app/emqAuth/getEmqBrokerIp", inner, vin = null)
         val raw = r["emqBorker"]?.jsonPrimitive?.content
             ?: r["emqBroker"]?.jsonPrimitive?.content
             ?: throw BydError.ServerError("MQTT 브로커 주소 없음", "MQTT_01")
