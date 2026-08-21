@@ -41,6 +41,11 @@ fastlane/test_output
 *.jks
 local.properties
 androidApp/.cxx/
+.gradle/
+.kotlin/
+androidApp/.gradle/
+androidApp/.idea/
+*.textClipping
 
 # Push Server
 push-server/node_modules/
