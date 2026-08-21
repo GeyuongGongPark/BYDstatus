@@ -48,7 +48,7 @@ function connect(session) {
   // 기존 연결 종료
   disconnect(user_id);
 
-  const clientId = `oversea_srv_${md5(user_id)}`;
+  const clientId = `oversea_${md5(user_id)}`;
   const password = buildPassword(sign_token, clientId, user_id);
   const topic    = `oversea/res/${user_id}`;
   const decryptKey = md5(encry_token); // MD5(encry_token) = AES 키
@@ -57,12 +57,13 @@ function connect(session) {
 
   const client = mqtt.connect(`mqtts://${broker_host}:${broker_port}`, {
     clientId,
-    username:          user_id,
+    username:           user_id,
     password,
+    protocolVersion:    5,     // BYD EMQ 브로커는 MQTTv5 사용
     rejectUnauthorized: false, // BYD 브로커 self-signed 대응
-    reconnectPeriod:   30_000,
-    connectTimeout:    15_000,
-    keepalive:         120,
+    reconnectPeriod:    30_000,
+    connectTimeout:     15_000,
+    keepalive:          120,
   });
 
   client.on('connect', () => {
