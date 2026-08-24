@@ -1,6 +1,7 @@
 package com.ggpark.bydstats.android.ui.settings
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -107,7 +108,7 @@ fun SettingsScreen(vm: AppViewModel, onNavigateToLog: () -> Unit = {}) {
                     leadingContent = {
                         Icon(Icons.AutoMirrored.Filled.Logout, null, tint = MaterialTheme.colorScheme.error)
                     },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().clickable { showLogoutDialog = true },
                     colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
                     supportingContent = null,
                 )
