@@ -35,8 +35,10 @@ class DataCollector(
     fun start(vin: String) {
         this.vin = vin
         detector = SessionDetector(db, getElectricityRateAt, getBatteryCapacityKwh())
-        scope.launch { detector?.recover() }
-        scheduleNextPoll()
+        scope.launch {
+            detector?.recover()   // recover 완료 후 폴링 시작 (race condition 방지)
+            scheduleNextPoll()
+        }
     }
 
     fun stop() {
@@ -101,6 +103,9 @@ class DataCollector(
             _error.value = null
             detector?.process(status, System.currentTimeMillis(), gpsDistanceKm)
 
+        } catch (e: BydError.ControlTimeout) {
+            Log.w(TAG, "차량 응답 시간 초과")
+            _error.value = "차량이 응답하지 않습니다 (절전 모드일 수 있음)"
         } catch (e: BydError.ServerError) {
             Log.w(TAG, "서버 오류 ${e.code}: ${e.msg}")
             _error.value = when (e.code) {
@@ -112,7 +117,7 @@ class DataCollector(
             _error.value = "네트워크 오류: 서버에 연결할 수 없습니다"
         } catch (e: Exception) {
             Log.e(TAG, "폴링 실패: ${e.message}")
-            _error.value = e.message
+            _error.value = "오류: ${e.message ?: "알 수 없는 오류"}"
         }
     }
 }
