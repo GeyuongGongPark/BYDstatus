@@ -13,7 +13,6 @@ actor BydVehicleService {
     private(set) var encryToken: String?
     private var accountImeiMD5 = "00000000000000000000000000000000"
 
-    var onSessionUpdated: ((String, String, String) -> Void)?
     var onSessionExpired: (() -> Void)?
 
     private var storedUsername: String?
@@ -334,7 +333,6 @@ actor BydVehicleService {
         storedUsername = username
         storedPassword = password
 
-        onSessionUpdated?(uid, sign, encry)
         return uid
     }
 
@@ -526,28 +524,6 @@ actor BydVehicleService {
         )
     }
 
-    // MARK: - MQTT Broker
-
-    /// MQTT 브로커 주소 조회 → (host, port)
-    func fetchMqttBroker() async throws -> (host: String, port: Int) {
-        let result = try await postTokenSecure(
-            endpoint: "/app/emqAuth/getEmqBrokerIp",
-            innerMap: buildInnerBase(), vin: nil
-        )
-        let raw = result["emqBorker"] as? String ?? result["emqBroker"] as? String ?? ""
-        guard !raw.isEmpty else { throw BydError.invalidResponse }
-        var clean = raw.trimmingCharacters(in: .whitespaces)
-        for prefix in ["mqtts://", "mqtt://"] {
-            if clean.hasPrefix(prefix) { clean = String(clean.dropFirst(prefix.count)) }
-        }
-        clean = String(clean.split(separator: "/").first ?? Substring(clean))
-        if let colonIdx = clean.lastIndex(of: ":") {
-            let host = String(clean[clean.startIndex..<colonIdx])
-            let portStr = String(clean[clean.index(after: colonIdx)...])
-            return (host, Int(portStr) ?? 8883)
-        }
-        return (clean, 8883)
-    }
 }
 
 // MARK: - Error Types

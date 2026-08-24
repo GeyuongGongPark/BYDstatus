@@ -95,7 +95,6 @@ class BydApiClient(
     private var storedPassword: String? = null
     private var isRelogging = false
 
-    var onSessionUpdated: ((String, String, String) -> Unit)? = null
     var onSessionExpired: (() -> Unit)? = null
 
     val isLoggedIn get() = !signToken.isNullOrEmpty()
@@ -379,7 +378,6 @@ class BydApiClient(
         storedUsername = username
         storedPassword = password
 
-        onSessionUpdated?.invoke(uid, sign2, encry)
         return uid
     }
 
@@ -478,24 +476,4 @@ class BydApiClient(
         )
     }
 
-    // MARK: - MQTT Broker
-
-    /** MQTT 브로커 주소 조회 → "host:port" 문자열 반환 */
-    suspend fun fetchMqttBroker(): Pair<String, Int> {
-        val inner = buildInnerBase()
-        val r = postTokenSecure("/app/emqAuth/getEmqBrokerIp", inner, vin = null)
-        val raw = r["emqBorker"]?.jsonPrimitive?.content
-            ?: r["emqBroker"]?.jsonPrimitive?.content
-            ?: throw BydError.ServerError("MQTT 브로커 주소 없음", "MQTT_01")
-        val clean = raw.trim()
-            .removePrefix("mqtt://").removePrefix("mqtts://")
-            .substringBefore("/")
-        return if (clean.contains(":")) {
-            val host = clean.substringBeforeLast(":")
-            val port = clean.substringAfterLast(":").toIntOrNull() ?: 8883
-            host to port
-        } else {
-            clean to 8883
-        }
-    }
 }
