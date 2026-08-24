@@ -70,6 +70,12 @@ class DataCollector(
         try {
             var status = apiClient.fetchVehicleStatus(v)
 
+            // soc=0은 API 준비 미완료로 간주 — 상태 불확실하므로 GPS/세션 처리 없이 건너뜀
+            if (status.batteryPercentage == 0) {
+                Log.d(TAG, "poll skip: soc=0")
+                return
+            }
+
             // totalMileage == 0이면 Energy API로 ODO 보완
             val wasOrIsDriving = (_currentStatus.value?.isDriving == true) || status.isDriving
             if (wasOrIsDriving && status.totalMileage == 0.0) {
@@ -86,6 +92,7 @@ class DataCollector(
             // GPS 트래킹 제어: 주행 시작/종료 감지
             val prevDriving = _currentStatus.value?.isDriving == true
             val nowDriving = status.isDriving
+            Log.d(TAG, "poll ok: soc=${status.batteryPercentage} isDriving=$nowDriving powerGear=${status.powerGear} speed=${status.speed} prevDriving=$prevDriving")
             val gpsDistanceKm: Double = when {
                 nowDriving && !prevDriving -> {
                     locationTracker?.startTracking()
@@ -97,8 +104,6 @@ class DataCollector(
                 else -> 0.0
             }
 
-            // soc=0은 API 준비 미완료로 간주 — UI 및 세션 기록 건너뜀
-            if (status.batteryPercentage == 0) return
             _currentStatus.value = status
             _error.value = null
             detector?.process(status, System.currentTimeMillis(), gpsDistanceKm)

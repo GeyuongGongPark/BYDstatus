@@ -1,8 +1,11 @@
 package com.ggpark.bydstats.android.service
 
+import android.util.Log
 import com.ggpark.bydstats.android.data.AppDatabase
 import com.ggpark.bydstats.android.data.entity.*
 import com.ggpark.bydstats.model.VehicleStatus
+
+private const val TAG = "SessionDetector"
 
 class SessionDetector(
     private val db: AppDatabase,
@@ -90,6 +93,7 @@ class SessionDetector(
     }
 
     private suspend fun handleDriving(status: VehicleStatus, timestamp: Long, gpsDistanceKm: Double = 0.0) {
+        Log.d(TAG, "handleDriving: isDriving=${status.isDriving} activeDriving=${activeDriving?.id} gpsKm=$gpsDistanceKm")
         if (status.isDriving) {
             if (activeDriving == null) {
                 val entity = DrivingSessionEntity(
@@ -113,7 +117,9 @@ class SessionDetector(
         } else {
             activeDriving?.let { session ->
                 val duration = timestamp - session.startTime
+                Log.d(TAG, "driving ended: durationMs=$duration gpsKm=$gpsDistanceKm odo=${status.totalMileage}")
                 if (duration < 120_000) {
+                    Log.d(TAG, "driving session discarded: too short (${duration}ms < 120s)")
                     db.drivingSessionDao().delete(session)
                     activeDriving = null
                     return
