@@ -97,6 +97,7 @@ class BydApiClient(
     private var storedPassword: String? = null
     private var isRelogging = false
 
+    var onSessionUpdated: ((String, String, String) -> Unit)? = null
     var onSessionExpired: (() -> Unit)? = null
 
     val isLoggedIn get() = !signToken.isNullOrEmpty()
@@ -380,6 +381,7 @@ class BydApiClient(
         storedUsername = username
         storedPassword = password
 
+        onSessionUpdated?.invoke(uid, sign2, encry)
         return uid
     }
 
