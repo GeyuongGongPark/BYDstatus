@@ -47,6 +47,8 @@ final class AppState {
     // MARK: - Init
 
     init() {
+        // 앱 재시작 시 시스템에 살아있는 Activity 복원
+        liveActivity = Activity<BydLiveActivityAttributes>.activities.first
         restoreSession()
     }
 
@@ -199,11 +201,12 @@ final class AppState {
                 }
             }
 
+            // soc=0은 API 미준비로 간주 — Live Activity 포함 UI 반영 및 세션 기록 건너뜀
+            guard status.batteryPercentage > 0 else { return }
+
             // Live Activity 상태 관리
             await updateLiveActivity(prev: currentStatus, next: status)
 
-            // soc=0은 API 미준비로 간주 — UI 반영 및 세션 기록 건너뜀 (이전 값 유지)
-            guard status.batteryPercentage > 0 else { return }
             currentStatus = status
             pollError = nil
             sessionDetector?.process(status: status, at: Date())
@@ -235,12 +238,14 @@ final class AppState {
         // 주행 시작
         if !wasDriving && nowDriving {
             await endLiveActivity()
-            startLiveActivity(type: .driving, startSoc: next.batteryPercentage, state: state)
+            try? await Task.sleep(for: .milliseconds(300))
+            await startLiveActivity(type: .driving, startSoc: next.batteryPercentage, state: state)
         }
         // 충전 시작
         else if !wasCharging && nowCharging {
             await endLiveActivity()
-            startLiveActivity(type: .charging, startSoc: next.batteryPercentage, state: state)
+            try? await Task.sleep(for: .milliseconds(300))
+            await startLiveActivity(type: .charging, startSoc: next.batteryPercentage, state: state)
         }
         // 세션 진행 중 — 업데이트
         else if (nowDriving || nowCharging) && liveActivity != nil {
@@ -254,18 +259,22 @@ final class AppState {
 
     private func startLiveActivity(type: BydLiveActivityAttributes.SessionType,
                                    startSoc: Int,
-                                   state: BydLiveActivityAttributes.ContentState) {
+                                   state: BydLiveActivityAttributes.ContentState) async {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
         let attrs = BydLiveActivityAttributes(
             sessionType: type,
             startSoc: startSoc,
             sessionStartDate: Date()
         )
-        liveActivity = try? Activity.request(
-            attributes: attrs,
-            content: .init(state: state, staleDate: nil),
-            pushType: nil
-        )
+        do {
+            liveActivity = try Activity.request(
+                attributes: attrs,
+                content: .init(state: state, staleDate: nil),
+                pushType: nil
+            )
+        } catch {
+            print("[LiveActivity] start failed: \(error)")
+        }
     }
 
     private func endLiveActivity() async {
@@ -296,4 +305,3 @@ final class AppState {
         WidgetDataStore.save(snapshot)
     }
 }
-

@@ -1,6 +1,7 @@
 import Foundation
 import BackgroundTasks
 import SwiftData
+@preconcurrency import ActivityKit
 
 enum BackgroundTaskManager {
     static let taskIdentifier = "com.ggpark.BydStats.refresh"
@@ -55,6 +56,13 @@ enum BackgroundTaskManager {
         )
         detector.process(status: status, at: Date())
         try? context.save()
+
+        // 주행/충전이 끝난 경우 Live Activity 종료
+        if !status.isDriving && !status.isCharging {
+            for activity in Activity<BydLiveActivityAttributes>.activities {
+                await activity.end(nil, dismissalPolicy: .immediate)
+            }
+        }
 
         // 위젯 스냅샷 업데이트
         let snapshot = WidgetSnapshot(

@@ -67,6 +67,8 @@ class BydApiClient(
     private val codec = BangcleCodec(tableData)
     private val json = Json { ignoreUnknownKeys = true }
 
+    fun close() = client.close()
+
     private val deviceProfile = mapOf(
         "ostype" to "and",
         "imei" to "BANGCLE01234",

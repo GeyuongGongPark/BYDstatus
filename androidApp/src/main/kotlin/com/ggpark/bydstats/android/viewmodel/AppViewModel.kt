@@ -136,6 +136,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun initApiClient(settings: AppSettings) {
+        apiClient?.close()
         val config = BydConfig.fromRegion(settings.region)
         val tableData = context.assets.open("bangcle_tables.bin").readBytes()
         val httpClient = HttpClient(Android) {
