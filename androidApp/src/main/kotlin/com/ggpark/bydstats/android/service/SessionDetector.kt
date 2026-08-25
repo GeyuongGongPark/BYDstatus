@@ -2,6 +2,7 @@ package com.ggpark.bydstats.android.service
 
 import android.util.Log
 import com.ggpark.bydstats.android.data.AppDatabase
+import com.ggpark.bydstats.android.service.AppLogger
 import com.ggpark.bydstats.android.data.entity.*
 import com.ggpark.bydstats.model.VehicleStatus
 
@@ -66,6 +67,7 @@ class SessionDetector(
                 )
                 val id = db.chargingSessionDao().insert(entity)
                 activeCharging = entity.copy(id = id)
+                AppLogger.log("charging session started: startSoc=${status.batteryPercentage}", TAG)
             } else {
                 val updated = activeCharging!!.copy(endSoc = status.batteryPercentage)
                 db.chargingSessionDao().update(updated)
@@ -87,13 +89,16 @@ class SessionDetector(
                     estimatedCostKrw = energy * rate,
                 )
                 db.chargingSessionDao().update(updated)
+                AppLogger.log("charging session ended: startSoc=${session.startSoc} endSoc=$finalSoc energy=${"%.2f".format(energy)}kWh duration=${duration}min", TAG)
                 activeCharging = null
             }
         }
     }
 
     private suspend fun handleDriving(status: VehicleStatus, timestamp: Long, gpsDistanceKm: Double = 0.0) {
-        Log.d(TAG, "handleDriving: isDriving=${status.isDriving} activeDriving=${activeDriving?.id} gpsKm=$gpsDistanceKm")
+        val drivingMsg = "handleDriving: isDriving=${status.isDriving} activeDriving=${activeDriving?.id} gpsKm=$gpsDistanceKm"
+        Log.d(TAG, drivingMsg)
+        AppLogger.log(drivingMsg, TAG)
         if (status.isDriving) {
             if (activeDriving == null) {
                 val entity = DrivingSessionEntity(
@@ -109,6 +114,7 @@ class SessionDetector(
                 )
                 val id = db.drivingSessionDao().insert(entity)
                 activeDriving = entity.copy(id = id)
+                AppLogger.log("driving session started: startSoc=${status.batteryPercentage}", TAG)
             } else {
                 val updated = activeDriving!!.copy(endSoc = status.batteryPercentage)
                 db.drivingSessionDao().update(updated)
@@ -117,9 +123,13 @@ class SessionDetector(
         } else {
             activeDriving?.let { session ->
                 val duration = timestamp - session.startTime
-                Log.d(TAG, "driving ended: durationMs=$duration gpsKm=$gpsDistanceKm odo=${status.totalMileage}")
+                val endMsg = "driving ended: durationMs=$duration gpsKm=$gpsDistanceKm odo=${status.totalMileage}"
+                Log.d(TAG, endMsg)
+                AppLogger.log(endMsg, TAG)
                 if (duration < 120_000) {
-                    Log.d(TAG, "driving session discarded: too short (${duration}ms < 120s)")
+                    val discardMsg = "driving session discarded: too short (${duration}ms < 120s)"
+                    Log.d(TAG, discardMsg)
+                    AppLogger.log(discardMsg, TAG)
                     db.drivingSessionDao().delete(session)
                     activeDriving = null
                     return
@@ -152,6 +162,7 @@ class SessionDetector(
                     endOdometer = endOdo,
                 )
                 db.drivingSessionDao().update(updated)
+                AppLogger.log("driving session ended: startSoc=${session.startSoc} endSoc=$finalSoc energy=${"%.2f".format(energy)}kWh dist=${distKm?.let { "%.1f".format(it) }}km", TAG)
                 activeDriving = null
             }
         }

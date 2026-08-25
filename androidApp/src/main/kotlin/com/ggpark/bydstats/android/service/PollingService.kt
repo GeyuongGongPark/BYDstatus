@@ -96,7 +96,8 @@ class PollingService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        when (intent?.action) {
+        // intent == null: START_STICKY 재시작 → ACTION_START로 처리
+        when (intent?.action ?: ACTION_START) {
             ACTION_START -> {
                 startForeground(NOTIF_ID, buildNotification(null, null))
                 dataCollector?.stop()
@@ -126,11 +127,12 @@ class PollingService : Service() {
 
     private fun startCollecting() {
         scope.launch {
+            AppLogger.log("PollingService 시작", "PollingService")
             // DataStore에서 설정 로드
             val prefs = applicationContext.appDataStore.data.first()
-            val username    = prefs[Keys.USERNAME]  ?: return@launch
-            val password    = prefs[Keys.PASSWORD]  ?: return@launch
-            val vin         = prefs[Keys.VIN]       ?: return@launch
+            val username    = prefs[Keys.USERNAME]  ?: run { AppLogger.log("username 없음 — 중단", "PollingService"); return@launch }
+            val password    = prefs[Keys.PASSWORD]  ?: run { AppLogger.log("password 없음 — 중단", "PollingService"); return@launch }
+            val vin         = prefs[Keys.VIN]       ?: run { AppLogger.log("VIN 없음 — 중단", "PollingService"); return@launch }
             val region      = prefs[Keys.REGION]    ?: "KR"
             val userId      = prefs[Keys.USER_ID]   ?: ""
             val signToken   = prefs[Keys.SIGN_TOKEN] ?: ""
@@ -178,6 +180,7 @@ class PollingService : Service() {
                 locationTracker       = LocationTracker(applicationContext),
             )
             dataCollector = collector
+            AppLogger.log("DataCollector 시작: vin=$vin region=$region interval=${intervalMin}min", "PollingService")
             collector.start(vin)
 
             // 상태 구독 → Application flow + 알림 + 위젯 갱신
