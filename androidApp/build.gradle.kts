@@ -21,8 +21,8 @@ android {
         applicationId = "com.ggpark.bydstats"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "0.4.0"
+        versionCode = 3
+        versionName = "0.6.1"
 
         buildConfigField("String", "PUSH_API_KEY", "\"${localProps["PUSH_API_KEY"] ?: ""}\"")
         buildConfigField("String", "PUSH_SERVER_URL", "\"https://bydstatus-production.up.railway.app\"")
