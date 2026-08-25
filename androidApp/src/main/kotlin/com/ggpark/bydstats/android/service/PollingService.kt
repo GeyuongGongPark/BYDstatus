@@ -49,6 +49,7 @@ class PollingService : Service() {
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var dataCollector: DataCollector? = null
+    private var collectingJob: Job? = null
 
     // MARK: - Companion
 
@@ -116,6 +117,7 @@ class PollingService : Service() {
     }
 
     override fun onDestroy() {
+        collectingJob?.cancel()
         dataCollector?.stop()
         scope.cancel()
         super.onDestroy()
@@ -126,7 +128,8 @@ class PollingService : Service() {
     // MARK: - 폴링 시작
 
     private fun startCollecting() {
-        scope.launch {
+        collectingJob?.cancel()
+        collectingJob = scope.launch {
             AppLogger.log("PollingService 시작", "PollingService")
             // DataStore에서 설정 로드
             val prefs = applicationContext.appDataStore.data.first()

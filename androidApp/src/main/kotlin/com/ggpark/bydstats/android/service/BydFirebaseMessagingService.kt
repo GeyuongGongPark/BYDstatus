@@ -6,11 +6,14 @@ import com.google.firebase.messaging.RemoteMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 class BydFirebaseMessagingService : FirebaseMessagingService() {
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+    override fun onDestroy() { scope.cancel(); super.onDestroy() }
 
     /** 토큰 갱신 시 서버에 재등록 */
     override fun onNewToken(token: String) {

@@ -12,8 +12,8 @@ class LocationTracker(private val context: Context) {
 
     private val client = LocationServices.getFusedLocationProviderClient(context)
     private var callback: LocationCallback? = null
-    private var lastLocation: Location? = null
-    private var accumulatedDistanceKm = 0.0
+    @Volatile private var lastLocation: Location? = null
+    @Volatile private var accumulatedDistanceKm = 0.0
 
     val hasPermission: Boolean
         get() = ContextCompat.checkSelfPermission(
