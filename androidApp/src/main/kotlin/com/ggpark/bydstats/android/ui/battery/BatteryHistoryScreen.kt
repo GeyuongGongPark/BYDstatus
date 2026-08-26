@@ -96,8 +96,8 @@ fun BatteryHistoryScreen(vm: AppViewModel) {
     }
     var customEnd by remember { mutableStateOf(LocalDateTime.now()) }
 
-    val now = remember { System.currentTimeMillis() }
-    val filteredPoints = remember(allPoints, selectedRange, now, customStart, customEnd) {
+    val filteredPoints = remember(allPoints, selectedRange, customStart, customEnd) {
+        val now = System.currentTimeMillis()
         val (raw, customDurMs) = when (selectedRange) {
             BattRange.CUSTOM -> {
                 val startMs = customStart.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
