@@ -37,6 +37,9 @@ fun DrivingSessionsScreen(vm: AppViewModel) {
         }
     val monthKeys = grouped.keys.sortedDescending()
     var selectedMonth by remember { mutableStateOf(monthKeys.firstOrNull() ?: "") }
+    LaunchedEffect(monthKeys) {
+        if (selectedMonth !in monthKeys) selectedMonth = monthKeys.firstOrNull() ?: ""
+    }
     var editingSession by remember { mutableStateOf<DrivingSessionEntity?>(null) }
 
     val monthSessions = grouped[selectedMonth] ?: emptyList()
