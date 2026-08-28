@@ -30,7 +30,6 @@ fun ChargingSessionsScreen(vm: AppViewModel) {
 
     val zoneId = ZoneId.systemDefault()
     val grouped = sessions
-        .filter { it.endTime != null }
         .groupBy { session ->
             val dt = Instant.ofEpochMilli(session.startTime).atZone(zoneId)
             "%04d-%02d".format(dt.year, dt.monthValue)
@@ -43,7 +42,9 @@ fun ChargingSessionsScreen(vm: AppViewModel) {
     }
     var editingSession by remember { mutableStateOf<ChargingSessionEntity?>(null) }
 
-    val monthSessions = grouped[selectedMonth] ?: emptyList()
+    val monthSessions = (grouped[selectedMonth] ?: emptyList())
+        .sortedWith(compareBy<ChargingSessionEntity> { it.endTime != null }.thenByDescending { it.startTime })
+    val completedSessions = monthSessions.filter { it.endTime != null }
     val monthLabel = selectedMonth.let { key ->
         if (key.length == 7) "${key.take(4)}년 ${key.drop(5).trimStart('0')}월" else key
     }
@@ -118,8 +119,10 @@ fun ChargingSessionsScreen(vm: AppViewModel) {
         LazyColumn(modifier = Modifier.padding(padding).padding(horizontal = 16.dp)) {
             item {
                 Spacer(Modifier.height(12.dp))
-                ChargingSummaryCard(monthSessions)
-                Spacer(Modifier.height(16.dp))
+                if (completedSessions.isNotEmpty()) {
+                    ChargingSummaryCard(completedSessions)
+                    Spacer(Modifier.height(16.dp))
+                }
             }
             item {
                 Text(
@@ -202,6 +205,10 @@ private fun ChargingSessionItem(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(startStr, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+                    if (session.endTime == null) {
+                        Spacer(Modifier.height(2.dp))
+                        Text("충전 중", style = MaterialTheme.typography.labelMedium, color = CHARGING_COLOR)
+                    }
                     Spacer(Modifier.height(2.dp))
                     Text(
                         "${session.startSoc}% → ${session.endSoc}%",

@@ -194,6 +194,26 @@ class SessionDetectorTest {
     }
 
     @Test
+    fun `charging session created when gl is zero but reportedCharging`() = runTest {
+        val t0 = System.currentTimeMillis()
+        detector.process(
+            VehicleStatus(
+                batteryPercentage = 40,
+                powerGear = 1,
+                speed = 0.0,
+                instantPowerW = 0.0,
+                reportedCharging = true,
+            ),
+            t0,
+        )
+
+        val sessions = db.chargingSessionDao().getAll()
+        assertEquals(1, sessions.size, "gl=0이어도 reportedCharging이면 세션이 열려야 함")
+        assertNull(sessions[0].endTime)
+        assertEquals(40, sessions[0].startSoc)
+    }
+
+    @Test
     fun `charging session ends with correct energy`() = runTest {
         val t0 = System.currentTimeMillis()
         val t1 = t0 + 3_600_000L   // 1시간 충전
@@ -255,17 +275,19 @@ class SessionDetectorTest {
     }
 
     @Test
-    fun `old orphan driving session is force-closed`() = runTest {
-        val t0 = System.currentTimeMillis() - 2 * 3_600_000L  // 2시간 전 시작
-        detector.process(driving(soc = 90), t0)
+    fun `old orphan charging session is force-closed with energy`() = runTest {
+        val t0 = System.currentTimeMillis() - 2 * 3_600_000L
+        detector.process(charging(soc = 60), t0)
+        detector.process(charging(soc = 80), t0 + 600_000L)
 
-        // 새 SessionDetector 생성
         val detector2 = SessionDetector(db, { rate }, capacity)
         detector2.recover()
 
-        val sessions = db.drivingSessionDao().getAll()
-        assertEquals(1, sessions.size)
-        assertNotNull(sessions[0].endTime, "2시간 전 세션은 강제 종료돼야 함")
+        val session = db.chargingSessionDao().getAll().first()
+        assertNotNull(session.endTime, "2시간 전 충전 세션은 강제 종료돼야 함")
+        val expectedEnergy = 20.0 * capacity / 100.0
+        assertEquals(expectedEnergy, session.energyKwh, 0.001)
+        assertEquals(expectedEnergy * rate, session.estimatedCostKrw, 0.1)
     }
 
     // ─── 헬퍼 ────────────────────────────────────────────────────────────────

@@ -213,4 +213,24 @@ class VehicleStatusParserTest {
         val s = parseVehicleStatus(json("soc" to num(50), "tempInCar" to num(200.0)))
         assertEquals(0.0, s.interiorTemperature)
     }
+
+    // ─── parseChargingStatus ─────────────────────────────────────────────────
+
+    @Test fun `chargingState 1 as number = isCharging`() {
+        val s = parseChargingStatus(json("chargingState" to num(1), "connectState" to num(1)))
+        assertTrue(s.isCharging)
+        assertTrue(s.isConnected)
+    }
+
+    @Test fun `chargingState 1 as string = isCharging`() {
+        val s = parseChargingStatus(json("chargingState" to str("1"), "connectState" to str("2")))
+        assertTrue(s.isCharging)
+        assertTrue(s.isConnected)
+    }
+
+    @Test fun `chargingState missing = not charging`() {
+        val s = parseChargingStatus(json("soc" to num(50)))
+        assertFalse(s.isCharging)
+        assertFalse(s.isConnected)
+    }
 }

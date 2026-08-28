@@ -24,7 +24,18 @@ class SessionDetector(
             if (now - session.startTime < oneHour) {
                 activeCharging = session
             } else {
-                db.chargingSessionDao().update(session.copy(endTime = now))
+                val socDelta = maxOf(0, session.endSoc - session.startSoc).toDouble()
+                val energy = socDelta * batteryCapacityKwh / 100.0
+                val duration = ((now - session.startTime) / 60_000).toInt()
+                val rate = getElectricityRateAt(session.startTime)
+                db.chargingSessionDao().update(
+                    session.copy(
+                        endTime = now,
+                        energyKwh = energy,
+                        durationMinutes = duration,
+                        estimatedCostKrw = energy * rate,
+                    )
+                )
             }
         }
 

@@ -57,6 +57,16 @@ class VehicleStatusTest {
         assertFalse(s.isCharging)
     }
 
+    @Test fun `isCharging when reportedCharging even if gl is zero`() {
+        val s = VehicleStatus(powerGear = 1, speed = 0.0, instantPowerW = 0.0, reportedCharging = true)
+        assertTrue(s.isCharging)
+    }
+
+    @Test fun `not isCharging when reportedCharging but driving`() {
+        val s = VehicleStatus(powerGear = 3, speed = 40.0, instantPowerW = 0.0, reportedCharging = true)
+        assertFalse(s.isCharging)
+    }
+
     @Test fun `not isCharging when power is negative`() {
         val s = VehicleStatus(powerGear = 1, speed = 0.0, instantPowerW = -100.0)
         assertFalse(s.isCharging)

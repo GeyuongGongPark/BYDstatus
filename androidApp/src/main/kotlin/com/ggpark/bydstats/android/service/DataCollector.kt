@@ -6,6 +6,7 @@ import com.ggpark.bydstats.android.service.AppLogger
 import com.ggpark.bydstats.api.BydApiClient
 import com.ggpark.bydstats.api.BydError
 import com.ggpark.bydstats.model.VehicleStatus
+import com.ggpark.bydstats.model.withChargingResolved
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -78,6 +79,18 @@ class DataCollector(
                 return
             }
 
+            // gl=0 야간 완속 대비: 주차 중이면 chargingState API로 충전 여부 보완
+            var apiCharging: Boolean? = null
+            if (!status.isDriving) {
+                try {
+                    apiCharging = apiClient.fetchChargingStatus(v).isCharging
+                } catch (e: Exception) {
+                    Log.w(TAG, "chargingStatus 조회 실패: ${e.message}")
+                    AppLogger.log("chargingStatus error: ${e::class.simpleName} ${e.message}", TAG)
+                }
+            }
+            status = status.withChargingResolved(_currentStatus.value, apiCharging)
+
             // totalMileage == 0이면 Energy API로 ODO 보완
             val wasOrIsDriving = (_currentStatus.value?.isDriving == true) || status.isDriving
             if (wasOrIsDriving && status.totalMileage == 0.0) {
@@ -94,7 +107,7 @@ class DataCollector(
             // GPS 트래킹 제어: 주행 시작/종료 감지
             val prevDriving = _currentStatus.value?.isDriving == true
             val nowDriving = status.isDriving
-            val pollMsg = "poll ok: soc=${status.batteryPercentage} isDriving=$nowDriving powerGear=${status.powerGear} speed=${status.speed} prevDriving=$prevDriving"
+            val pollMsg = "poll ok: soc=${status.batteryPercentage} isCharging=${status.isCharging} gl=${status.instantPowerW} apiCharging=$apiCharging isDriving=$nowDriving powerGear=${status.powerGear} speed=${status.speed} prevDriving=$prevDriving"
             Log.d(TAG, pollMsg)
             AppLogger.log(pollMsg, TAG)
             val gpsDistanceKm: Double = when {

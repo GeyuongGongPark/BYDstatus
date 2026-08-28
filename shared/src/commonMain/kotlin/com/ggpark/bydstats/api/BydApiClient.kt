@@ -30,6 +30,19 @@ internal fun JsonObject.jsonDouble(vararg keys: String): Double {
     return 0.0
 }
 
+internal fun parseChargingStatus(r: JsonObject): ChargingStatus {
+    val remainingH = r["fullHour"]?.jsonPrimitive?.let { it.intOrNull ?: it.content.toIntOrNull() } ?: -1
+    val remainingM = r["fullMinute"]?.jsonPrimitive?.let { it.intOrNull ?: it.content.toIntOrNull() } ?: -1
+    return ChargingStatus(
+        isCharging        = r.jsonInt("chargingState") == 1,
+        isConnected       = r.jsonInt("connectState") >= 1,
+        batteryPercentage = r.jsonInt("soc", "elecPercent"),
+        remainingHours    = remainingH,
+        remainingMinutes  = remainingM,
+        chargeRate        = r.jsonDouble("rate"),
+    )
+}
+
 internal fun parseVehicleStatus(r: JsonObject): VehicleStatus {
     val lf = r.jsonInt("leftFrontDoorLock")
     val rf = r.jsonInt("rightFrontDoorLock")
@@ -446,14 +459,7 @@ class BydApiClient(
 
     suspend fun fetchChargingStatus(vin: String): ChargingStatus {
         val r = postTokenSecure("/control/smartCharge/homePage", buildInnerBase(vin = vin), vin)
-        return ChargingStatus(
-            isCharging        = (r["chargingState"]?.jsonPrimitive?.intOrNull ?: 0) == 1,
-            isConnected       = (r["connectState"]?.jsonPrimitive?.intOrNull ?: 0) >= 1,
-            batteryPercentage = r["soc"]?.jsonPrimitive?.intOrNull ?: r["elecPercent"]?.jsonPrimitive?.intOrNull ?: 0,
-            remainingHours    = r["fullHour"]?.jsonPrimitive?.intOrNull ?: -1,
-            remainingMinutes  = r["fullMinute"]?.jsonPrimitive?.intOrNull ?: -1,
-            chargeRate        = r["rate"]?.jsonPrimitive?.doubleOrNull ?: 0.0,
-        )
+        return parseChargingStatus(r)
     }
 
     // MARK: - Energy Consumption

@@ -11,9 +11,11 @@ data class VehicleStatus(
     val speed: Double = 0.0,
     val instantPowerW: Double = 0.0,
     val totalMileage: Double = 0.0,
+    /** gl=0이어도 chargingState/SOC 보조 판정으로 충전 중일 때 true */
+    val reportedCharging: Boolean = false,
 ) {
     val isDriving: Boolean get() = powerGear == 3 || speed > 0.0
-    val isCharging: Boolean get() = instantPowerW > 0 && !isDriving
+    val isCharging: Boolean get() = !isDriving && (instantPowerW > 0 || reportedCharging)
     val instantPowerKw: Double get() = instantPowerW / 1000.0
 }
 
