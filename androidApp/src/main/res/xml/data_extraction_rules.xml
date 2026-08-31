@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    API 31+ (Android 12+) 백업 규칙
+    - Room DB (bydstats.db): 세션/배터리 이력 — 백업 포함
+    - DataStore (settings.preferences_pb): credentials 포함 — 백업 제외
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <include domain="database" path="bydstats.db" />
+        <exclude domain="file" path="datastore/" />
+    </cloud-backup>
+    <device-transfer>
+        <include domain="database" path="bydstats.db" />
+        <exclude domain="file" path="datastore/" />
+    </device-transfer>
+</data-extraction-rules>

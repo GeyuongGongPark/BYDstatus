@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    API 30 이하 백업 규칙
+    - Room DB (bydstats.db): 세션/배터리 이력 — 백업 포함
+    - DataStore (settings.preferences_pb): credentials 포함 — 백업 제외
+-->
+<full-backup-content>
+    <include domain="database" path="bydstats.db" />
+    <exclude domain="file" path="datastore/" />
+</full-backup-content>
