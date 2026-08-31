@@ -78,6 +78,8 @@ android {
     lint {
         // NonNullableMutableLiveDataDetector crashes due to Kotlin Analysis API incompatibility
         disable += "NullSafeMutableLiveData"
+        // False positive: activity-ktx is sufficiently recent
+        disable += "InvalidFragmentVersionForActivityResult"
     }
 }
 
