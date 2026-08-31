@@ -74,6 +74,11 @@ android {
             isIncludeAndroidResources = true
         }
     }
+
+    lint {
+        // NonNullableMutableLiveDataDetector crashes due to Kotlin Analysis API incompatibility
+        disable += "NullSafeMutableLiveData"
+    }
 }
 
 dependencies {
