@@ -28,6 +28,20 @@ android {
         buildConfigField("String", "PUSH_SERVER_URL", "\"https://bydstatus-production.up.railway.app\"")
     }
 
+    signingConfigs {
+        create("release") {
+            val keystoreB64 = System.getenv("KEYSTORE_BASE64")
+            if (keystoreB64 != null) {
+                val ksFile = rootProject.file("release.jks")
+                ksFile.writeBytes(java.util.Base64.getDecoder().decode(keystoreB64))
+                storeFile = ksFile
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"
@@ -36,6 +50,7 @@ android {
         release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 

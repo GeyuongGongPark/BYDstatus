@@ -29,10 +29,15 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build APK
-        run: ./gradlew :androidApp:assembleDebug
+        run: ./gradlew :androidApp:assembleRelease
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
       - name: Rename APK
-        run: cp androidApp/build/outputs/apk/debug/androidApp-debug.apk BYDStats-${{ github.ref_name }}.apk
+        run: cp androidApp/build/outputs/apk/release/androidApp-release.apk BYDStats-${{ github.ref_name }}.apk
 
       - name: Create or Update GitHub Release
         run: |
