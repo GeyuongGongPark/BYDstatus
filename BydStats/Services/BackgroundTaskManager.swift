@@ -38,6 +38,13 @@ enum BackgroundTaskManager {
             status.totalMileage = energy.lifetimeMileageKm
         }
 
+        // 주차 중: chargingState API로 gl=0 완속 충전 보완
+        // 백그라운드에서는 이전 상태를 모르므로 apiIsCharging만 활용
+        if !status.isDriving {
+            let apiIsCharging = try? await svc.fetchChargingStatus(vin: vin).isCharging
+            status = status.withChargingResolved(previous: nil, apiIsCharging: apiIsCharging)
+        }
+
         // UserDefaults에서 설정 읽기
         let defaults = UserDefaults.standard
         let ratePlanId  = defaults.string(forKey: "ratePlanId") ?? "kepco_low"

@@ -11,10 +11,53 @@ struct VehicleStatus {
     var speed: Double = 0.0
     var instantPowerW: Double = 0.0  // gl 필드 (W), 양수=충전, 음수=방전 추정 (실 검증 필요)
     var totalMileage: Double = 0.0   // 누적 주행거리 (km)
+    /// withChargingResolved()로 설정되는 보정 충전 상태. nil이면 gl 기반 fallback 사용.
+    var resolvedCharging: Bool? = nil
 
     var isDriving: Bool { powerGear == 3 || speed > 0.0 }
-    var isCharging: Bool { instantPowerW > 0 && !isDriving } // 주행 중(회생 제동)은 충전으로 미처리
+    /// gl > 0이거나 chargingState API/SOC 상승으로 보정된 충전 상태
+    var isCharging: Bool { resolvedCharging ?? (instantPowerW > 0 && !isDriving) }
     var instantPowerKw: Double { instantPowerW / 1000.0 }
+
+    // MARK: - 충전 상태 보정
+    //
+    // 우선순위:
+    // 1. 주행 중 → 충전 아님
+    // 2. gl > 0 → 충전
+    // 3. chargingState API == true → 충전
+    // 4. API false인데 SOC 상승 → 충전 (API 지연 대응)
+    // 5. API 실패(nil): SOC 상승이면 시작, 이전 충전 + SOC 비하락이면 유지
+    func withChargingResolved(previous: VehicleStatus?, apiIsCharging: Bool?) -> VehicleStatus {
+        var copy = self
+        copy.resolvedCharging = resolveIsCharging(
+            isDriving: isDriving,
+            instantPowerW: instantPowerW,
+            batteryPercentage: batteryPercentage,
+            previousCharging: previous?.isCharging ?? false,
+            previousSoc: previous?.batteryPercentage,
+            apiIsCharging: apiIsCharging
+        )
+        return copy
+    }
+}
+
+private func resolveIsCharging(
+    isDriving: Bool,
+    instantPowerW: Double,
+    batteryPercentage: Int,
+    previousCharging: Bool,
+    previousSoc: Int?,
+    apiIsCharging: Bool?
+) -> Bool {
+    if isDriving { return false }
+    if instantPowerW > 0 { return true }
+    if apiIsCharging == true { return true }
+    let socUp = previousSoc.map { batteryPercentage > $0 } ?? false
+    if apiIsCharging == false { return socUp }
+    // API 실패(nil)
+    if socUp { return true }
+    if previousCharging, let prev = previousSoc, batteryPercentage >= prev { return true }
+    return false
 }
 
 struct ChargingStatus {
