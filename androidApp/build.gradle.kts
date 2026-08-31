@@ -1,3 +1,4 @@
+import java.util.Base64
 import java.util.Properties
 
 val localProps = Properties().apply {
@@ -33,7 +34,7 @@ android {
             val keystoreB64 = System.getenv("KEYSTORE_BASE64")
             if (keystoreB64 != null) {
                 val ksFile = rootProject.file("release.jks")
-                ksFile.writeBytes(java.util.Base64.getDecoder().decode(keystoreB64))
+                ksFile.writeBytes(Base64.getDecoder().decode(keystoreB64))
                 storeFile = ksFile
                 storePassword = System.getenv("KEYSTORE_PASSWORD")
                 keyAlias = System.getenv("KEY_ALIAS")
