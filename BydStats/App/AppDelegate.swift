@@ -40,17 +40,17 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         didReceiveRemoteNotification userInfo: [AnyHashable: Any],
         fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
     ) {
-        guard let container = modelContainer,
-              let state     = appState,
-              state.isLoggedIn else {
+        guard let container = modelContainer else {
             completionHandler(.noData)
             return
         }
 
-        let context = ModelContext(container)
+        // AppState.pollNow() 대신 BackgroundTaskManager 경로를 사용:
+        // pollNow()는 startPolling()이 호출된 경우에만 sessionDetector가 있어
+        // 백그라운드 wake-up 시 sessionDetector == nil → 세션이 기록되지 않는 문제가 있음.
+        // handleRefresh()는 매번 자체 SessionDetector를 생성하므로 항상 정상 동작.
         Task {
-            await state.pollNow(modelContext: context)
-            try? context.save()
+            await BackgroundTaskManager.handleRefresh(modelContainer: container)
             completionHandler(.newData)
         }
     }
