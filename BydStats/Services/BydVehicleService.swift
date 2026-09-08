@@ -386,7 +386,12 @@ actor BydVehicleService {
                     endpoint: "/vehicleInfo/vehicle/vehicleRealTimeResult",
                     innerMap: pollInner, vin: vin
                 )
-                let socVal = pollResult["soc"] ?? pollResult["elecPercent"]
+                // NSNull(JSON null)은 미준비 응답으로 간주 — nil과 동일하게 처리
+                let socVal: Any? = {
+                    if let v = pollResult["soc"], !(v is NSNull) { return v }
+                    if let v = pollResult["elecPercent"], !(v is NSNull) { return v }
+                    return nil
+                }()
                 log("vehicleRealTimeResult (시도 \(attempt)): soc=\(socVal ?? "nil") mileageEV=\(pollResult["mileageEV"] ?? pollResult["enduranceMileage"] ?? "nil")")
                 // 유효한 차량 데이터가 없으면 재시도 (데이터 준비 중)
                 guard socVal != nil else {
