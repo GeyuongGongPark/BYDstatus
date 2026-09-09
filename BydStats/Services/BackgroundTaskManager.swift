@@ -28,6 +28,17 @@ enum BackgroundTaskManager {
         await svc.restoreSession(userId: userId, signToken: signToken, encryToken: encryToken)
         await svc.setCredentials(username: username, password: password)
 
+        // UserDefaults에서 설정 읽기
+        let defaults = UserDefaults.standard
+        let ratePlanId  = defaults.string(forKey: "ratePlanId") ?? "kepco_low"
+        let customRate  = defaults.double(forKey: "electricityRate").nonZero ?? 180.0
+        let modelRaw    = defaults.string(forKey: "vehicleModel") ?? VehicleModel.atto3.rawValue
+        let capacity    = VehicleModel(rawValue: modelRaw)?.batteryCapacityKwh ?? 60.48
+        let plan        = ratePlan(id: ratePlanId, customRate: customRate)
+
+        // SwiftData context를 먼저 생성 (DataPoint 조회에도 사용)
+        let context = ModelContext(modelContainer)
+
         guard var status = try? await svc.fetchVehicleStatus(vin: vin) else { return }
         guard status.batteryPercentage > 0 else { return }
 
@@ -38,23 +49,20 @@ enum BackgroundTaskManager {
             status.totalMileage = energy.lifetimeMileageKm
         }
 
-        // 주차 중: chargingState API로 gl=0 완속 충전 보완
-        // 백그라운드에서는 이전 상태를 모르므로 apiIsCharging만 활용
+        // 주차 중: 직전 DataPoint의 SOC·충전상태로 gl=0 완속 충전 보완
+        // API 추가 호출 없이 SOC delta + 이전 충전 플래그로 판단
         if !status.isDriving {
-            let apiIsCharging = try? await svc.fetchChargingStatus(vin: vin).isCharging
-            status = status.withChargingResolved(previous: nil, apiIsCharging: apiIsCharging)
+            var descriptor = FetchDescriptor<DataPoint>(
+                sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+            )
+            descriptor.fetchLimit = 1
+            if let last = try? context.fetch(descriptor).first {
+                var prev = VehicleStatus()
+                prev.batteryPercentage = last.batteryPercent
+                prev.resolvedCharging = last.isCharging
+                status = status.withChargingResolved(previous: prev, apiIsCharging: nil)
+            }
         }
-
-        // UserDefaults에서 설정 읽기
-        let defaults = UserDefaults.standard
-        let ratePlanId  = defaults.string(forKey: "ratePlanId") ?? "kepco_low"
-        let customRate  = defaults.double(forKey: "electricityRate").nonZero ?? 180.0
-        let modelRaw    = defaults.string(forKey: "vehicleModel") ?? VehicleModel.atto3.rawValue
-        let capacity    = VehicleModel(rawValue: modelRaw)?.batteryCapacityKwh ?? 60.48
-        let plan        = ratePlan(id: ratePlanId, customRate: customRate)
-
-        // SwiftData에 DataPoint 저장 + 세션 감지
-        let context = ModelContext(modelContainer)
         let detector = SessionDetector(
             modelContext: context,
             getRateAt: { date in plan.rate(at: date) },
