@@ -36,6 +36,7 @@ private val TABS = listOf(Tab.Dashboard, Tab.Battery, Tab.Charging, Tab.Driving,
 @Composable
 fun MainNavHost(vm: AppViewModel = viewModel()) {
     val uiState by vm.uiState.collectAsState()
+    val updateState by vm.updateState.collectAsState()
 
     if (uiState.isLoading) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -46,6 +47,14 @@ fun MainNavHost(vm: AppViewModel = viewModel()) {
 
     val startDestination = Tab.Dashboard.route
     val navController = rememberNavController()
+
+    if (updateState.showDialog) {
+        AppUpdateDialog(
+            state = updateState,
+            onDownload = { vm.startUpdateDownload() },
+            onDismiss = { vm.dismissUpdate() },
+        )
+    }
 
     Scaffold(
         bottomBar = {

@@ -6,12 +6,15 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.ggpark.bydstats.android.BuildConfig
 import com.ggpark.bydstats.android.BydStatsApp
 import com.ggpark.bydstats.android.appDataStore
 import com.ggpark.bydstats.android.data.AppDatabase
 import com.ggpark.bydstats.android.data.entity.ChargingSessionEntity
 import com.ggpark.bydstats.android.data.entity.DataPointEntity
 import com.ggpark.bydstats.android.data.entity.DrivingSessionEntity
+import com.ggpark.bydstats.android.service.AppRelease
+import com.ggpark.bydstats.android.service.AppUpdate
 import com.ggpark.bydstats.android.service.PollingService
 import com.ggpark.bydstats.android.service.PushRegistrar
 import com.google.firebase.messaging.FirebaseMessaging
@@ -24,6 +27,7 @@ import io.ktor.client.*
 import io.ktor.client.engine.android.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -42,6 +46,8 @@ private object PrefKeys {
     val ENCRY_TOKEN      = stringPreferencesKey("encry_token")
     val RATE_PLAN_ID     = stringPreferencesKey("rate_plan_id")
     val CUSTOM_RATE      = stringPreferencesKey("custom_rate")
+    val LAST_UPDATE_CHECK = stringPreferencesKey("last_update_check")
+    val SKIPPED_UPDATE    = stringPreferencesKey("skipped_update_version")
 }
 
 data class AppSettings(
@@ -66,6 +72,16 @@ data class AppUiState(
     val vehicles: List<VehicleListItem> = emptyList(),
 )
 
+data class UpdateUiState(
+    val release: AppRelease? = null,
+    val showDialog: Boolean = false,
+    val checking: Boolean = false,
+    val downloading: Boolean = false,
+    val progress: Float = 0f,
+    val error: String? = null,
+    val alreadyLatest: Boolean = false,
+)
+
 class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     private val context = application.applicationContext
@@ -82,9 +98,16 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     val chargingSessions: Flow<List<ChargingSessionEntity>> = db.chargingSessionDao().allFlow()
     val drivingSessions: Flow<List<DrivingSessionEntity>> = db.drivingSessionDao().allFlow()
 
+    private val _updateState = MutableStateFlow(UpdateUiState())
+    val updateState: StateFlow<UpdateUiState> = _updateState.asStateFlow()
+    private var downloadJob: Job? = null
+
     init {
         observeServiceStatus()
-        viewModelScope.launch { loadSettings() }
+        viewModelScope.launch {
+            loadSettings()
+            checkForUpdate(force = false)
+        }
     }
 
     // MARK: - 서비스 상태 구독
@@ -195,6 +218,82 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
             updateSettings { it.copy(vin = vin) }
             PollingService.restart(context)
         }
+    }
+
+    // MARK: - App update
+
+    fun checkForUpdate(force: Boolean) {
+        viewModelScope.launch {
+            _updateState.update { it.copy(checking = true, error = null, alreadyLatest = false) }
+            try {
+                val prefs = context.appDataStore.data.first()
+                if (!force) {
+                    val last = prefs[PrefKeys.LAST_UPDATE_CHECK]?.toLongOrNull() ?: 0L
+                    if (System.currentTimeMillis() - last < 6 * 3600_000L) {
+                        _updateState.update { it.copy(checking = false) }
+                        return@launch
+                    }
+                }
+                val latest = AppUpdate.fetchLatest()
+                saveSetting(PrefKeys.LAST_UPDATE_CHECK, System.currentTimeMillis().toString())
+                if (latest == null || !AppUpdate.isNewer(latest.version, BuildConfig.VERSION_NAME)) {
+                    _updateState.update {
+                        it.copy(checking = false, release = null, showDialog = false, alreadyLatest = force)
+                    }
+                    return@launch
+                }
+                val skipped = prefs[PrefKeys.SKIPPED_UPDATE]
+                val show = force || skipped != latest.version
+                _updateState.update {
+                    it.copy(checking = false, release = latest, showDialog = show, alreadyLatest = false)
+                }
+            } catch (e: Exception) {
+                _updateState.update {
+                    it.copy(
+                        checking = false,
+                        error = if (force) "확인 실패: ${e.message}" else null,
+                    )
+                }
+            }
+        }
+    }
+
+    fun startUpdateDownload() {
+        val release = _updateState.value.release ?: return
+        if (!AppUpdate.canInstall(context)) {
+            AppUpdate.requestInstallPermission(context)
+            _updateState.update { it.copy(error = "이 앱의 설치를 허용한 뒤 다시 눌러 주세요.") }
+            return
+        }
+        downloadJob?.cancel()
+        downloadJob = viewModelScope.launch {
+            _updateState.update { it.copy(downloading = true, progress = 0f, error = null) }
+            try {
+                val dest = AppUpdate.apkFile(context)
+                AppUpdate.downloadApk(release.apkUrl, dest) { p ->
+                    _updateState.update { it.copy(progress = p) }
+                }
+                _updateState.update { it.copy(downloading = false, showDialog = false) }
+                AppUpdate.installApk(context, dest)
+            } catch (e: Exception) {
+                _updateState.update {
+                    it.copy(downloading = false, error = e.message ?: "다운로드 실패")
+                }
+            }
+        }
+    }
+
+    fun dismissUpdate() {
+        downloadJob?.cancel()
+        val version = _updateState.value.release?.version
+        _updateState.update { it.copy(showDialog = false, downloading = false) }
+        if (version != null) {
+            viewModelScope.launch { saveSetting(PrefKeys.SKIPPED_UPDATE, version) }
+        }
+    }
+
+    fun clearAlreadyLatest() {
+        _updateState.update { it.copy(alreadyLatest = false, error = null) }
     }
 
     // MARK: - Settings Update
