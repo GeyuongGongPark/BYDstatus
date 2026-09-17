@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" data-lang="ko">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BYD Stats — BYD 차량 통계 앱</title>
-  <meta name="description" content="BYD 공식 앱에 없는 배터리 이력, 충전 세션, 주행 효율, 비용 분석을 제공하는 iOS · Android 앱" />
+  <title>BYD Stats — BYD Vehicle Analytics App</title>
+  <meta name="description" content="Battery history, charging sessions, driving efficiency, and cost analysis for BYD vehicles. iOS &amp; Android." />
   <style>
     :root {
       --bg: #0a0a0f;
@@ -28,6 +28,21 @@
       line-height: 1.6;
       overflow-x: hidden;
     }
+
+    /* ─── LANG TOGGLE ─── */
+    [data-lang="en"] .ko { display: none !important; }
+    [data-lang="ko"] .en { display: none !important; }
+
+    .lang-switch { display: flex; gap: 4px; }
+    .lang-btn {
+      border: 1px solid rgba(255,255,255,0.15);
+      background: transparent; color: var(--muted);
+      font-size: 12px; font-weight: 600;
+      cursor: pointer; padding: 4px 10px; border-radius: 12px;
+      transition: all 0.15s;
+    }
+    .lang-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .lang-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
 
     /* ─── NAV ─── */
     nav {
@@ -53,301 +68,257 @@
     .nav-links { display: flex; gap: 32px; list-style: none; }
     .nav-links a { color: var(--muted); text-decoration: none; font-size: 14px; transition: color 0.2s; }
     .nav-links a:hover { color: var(--text); }
+    .nav-right { display: flex; align-items: center; gap: 16px; }
     .nav-cta {
-      background: var(--accent); color: #fff; border: none;
-      padding: 8px 20px; border-radius: 20px; font-size: 14px; font-weight: 600;
-      cursor: pointer; text-decoration: none; transition: opacity 0.2s;
+      background: var(--accent); color: #fff; text-decoration: none;
+      padding: 8px 18px; border-radius: 20px; font-size: 14px; font-weight: 600;
+      transition: opacity 0.2s;
     }
     .nav-cta:hover { opacity: 0.85; }
 
     /* ─── HERO ─── */
     .hero {
-      min-height: 100vh;
-      display: flex; flex-direction: column;
+      min-height: 100vh; display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      text-align: center;
-      padding: 140px 24px 80px;
+      text-align: center; padding: 120px 24px 80px;
       position: relative; overflow: hidden;
     }
     .hero::before {
-      content: ''; position: absolute; top: -200px; left: 50%;
-      transform: translateX(-50%);
+      content: ''; position: absolute; top: -200px; left: 50%; transform: translateX(-50%);
       width: 800px; height: 800px;
       background: radial-gradient(circle, rgba(61,127,255,0.12) 0%, transparent 70%);
       pointer-events: none;
     }
     .hero::after {
-      content: ''; position: absolute; bottom: -100px; right: -100px;
-      width: 500px; height: 500px;
-      background: radial-gradient(circle, rgba(46,204,113,0.08) 0%, transparent 70%);
-      pointer-events: none;
+      content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 600px; height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(61,127,255,0.4), transparent);
     }
     .hero-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: rgba(61,127,255,0.15); border: 1px solid rgba(61,127,255,0.3);
-      color: #7aaeff; padding: 6px 14px; border-radius: 20px;
-      font-size: 13px; font-weight: 500; margin-bottom: 28px;
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(61,127,255,0.12); border: 1px solid rgba(61,127,255,0.25);
+      border-radius: 20px; padding: 6px 16px; font-size: 13px; color: var(--accent);
+      margin-bottom: 32px; font-weight: 500;
     }
     .hero-badge .dot {
-      width: 6px; height: 6px; border-radius: 50%; background: #3d7fff;
-      animation: pulse 2s infinite;
+      width: 6px; height: 6px; background: var(--accent-green);
+      border-radius: 50%; animation: pulse 2s infinite;
     }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-
+    @keyframes pulse {
+      0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
+    }
     .hero h1 {
-      font-size: clamp(40px, 7vw, 76px); font-weight: 800;
-      letter-spacing: -2px; line-height: 1.05; margin-bottom: 24px;
+      font-size: clamp(40px, 6vw, 72px); font-weight: 900;
+      letter-spacing: -2px; line-height: 1.05; margin-bottom: 20px;
     }
     .hero h1 .gradient {
-      background: linear-gradient(135deg, #3d7fff 0%, #2ecc71 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      background: linear-gradient(135deg, #3d7fff, #2ecc71);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
     .hero-desc {
-      font-size: clamp(16px, 2.5vw, 19px); color: var(--muted);
-      max-width: 560px; margin-bottom: 48px; line-height: 1.7;
+      font-size: clamp(16px, 2vw, 20px); color: var(--muted);
+      max-width: 560px; margin-bottom: 40px;
     }
     .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
-
-    .btn-primary {
-      display: inline-flex; align-items: center; gap: 8px;
-      background: var(--accent); color: #fff; text-decoration: none;
-      padding: 14px 28px; border-radius: 12px; font-size: 16px; font-weight: 600;
-      transition: transform 0.2s, box-shadow 0.2s;
-      box-shadow: 0 4px 24px rgba(61,127,255,0.35);
-    }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(61,127,255,0.45); }
-    .btn-secondary {
-      display: inline-flex; align-items: center; gap: 8px;
-      background: var(--bg-card); color: var(--text); text-decoration: none;
-      padding: 14px 28px; border-radius: 12px; font-size: 16px; font-weight: 600;
-      border: 1px solid var(--border); transition: border-color 0.2s, background 0.2s;
-    }
-    .btn-secondary:hover { border-color: rgba(255,255,255,0.2); background: var(--bg-card-hover); }
     .btn-android {
       display: inline-flex; align-items: center; gap: 8px;
-      background: #1e8c4e; color: #fff; text-decoration: none;
-      padding: 14px 28px; border-radius: 12px; font-size: 16px; font-weight: 600;
-      transition: transform 0.2s, box-shadow 0.2s;
-      box-shadow: 0 4px 24px rgba(61,220,132,0.25);
+      background: linear-gradient(135deg, #2ecc71, #27ae60);
+      color: #fff; text-decoration: none;
+      padding: 14px 28px; border-radius: 14px;
+      font-size: 16px; font-weight: 700; transition: opacity 0.2s;
     }
-    .btn-android:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(61,220,132,0.35); }
-    .platform-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 600;
+    .btn-android:hover { opacity: 0.88; }
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 8px;
+      border: 1px solid rgba(255,255,255,0.15); color: var(--text);
+      text-decoration: none; padding: 14px 28px; border-radius: 14px;
+      font-size: 16px; font-weight: 600; transition: border-color 0.2s;
     }
-    .platform-badge.ios { background: rgba(61,127,255,0.15); color: #7aaeff; border: 1px solid rgba(61,127,255,0.25); }
-    .platform-badge.android { background: rgba(61,220,132,0.15); color: #3ddc84; border: 1px solid rgba(61,220,132,0.25); }
+    .btn-secondary:hover { border-color: rgba(255,255,255,0.35); }
 
     /* ─── STATS BAR ─── */
     .stats-bar {
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 48px 40px;
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 32px; text-align: center;
-      max-width: 1100px; margin: 0 auto;
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 1px; background: var(--border);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      overflow: hidden; max-width: 800px; margin: 0 auto;
     }
     .stat-item-val {
-      font-size: 40px; font-weight: 800; letter-spacing: -2px;
-      background: linear-gradient(135deg, #3d7fff, #2ecc71);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      font-size: 36px; font-weight: 900; letter-spacing: -1px;
+      background: linear-gradient(135deg, #fff, #aaa);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
-    .stat-item-label { font-size: 14px; color: var(--muted); margin-top: 6px; }
+    .stat-item-label { font-size: 13px; color: var(--muted); margin-top: 4px; }
+    .stats-bar > div {
+      background: var(--bg-card); padding: 28px 24px; text-align: center;
+    }
+
+    /* ─── DIVIDER ─── */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+      max-width: 1100px; margin: 0 auto;
+    }
 
     /* ─── SECTIONS ─── */
     .section-wrap { max-width: 1100px; margin: 0 auto; padding: 100px 24px; }
     .section-label {
-      font-size: 12px; font-weight: 600; text-transform: uppercase;
-      letter-spacing: 1.5px; color: var(--accent); margin-bottom: 14px;
+      font-size: 13px; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--accent); margin-bottom: 12px;
     }
     .section-title { font-size: clamp(28px, 4vw, 42px); font-weight: 800; letter-spacing: -1px; margin-bottom: 14px; }
     .section-desc { font-size: 17px; color: var(--muted); max-width: 520px; }
 
-    .divider { height: 1px; background: var(--border); max-width: 1100px; margin: 0 auto; }
-
-    /* ─── FEATURE SHOWCASE (image + text side by side) ─── */
+    /* ─── SHOWCASE ─── */
     .showcase {
       display: grid; grid-template-columns: 1fr 1fr;
       gap: 64px; align-items: center;
     }
     .showcase.reverse { direction: rtl; }
     .showcase.reverse > * { direction: ltr; }
-
-    .showcase-text h3 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 14px; }
-    .showcase-text p { font-size: 16px; color: var(--muted); line-height: 1.7; margin-bottom: 12px; }
-    .showcase-text ul { padding-left: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .showcase-text h3 {
+      font-size: clamp(28px, 3vw, 40px); font-weight: 800;
+      letter-spacing: -1px; margin-bottom: 16px; line-height: 1.1;
+    }
+    .showcase-text p { font-size: 16px; color: var(--muted); margin-bottom: 24px; }
+    .showcase-text ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
     .showcase-text li {
       display: flex; align-items: flex-start; gap: 10px;
       font-size: 15px; color: var(--muted);
     }
-    .showcase-text li .check {
-      flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%;
-      background: rgba(46,204,113,0.15); color: #2ecc71;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 11px; font-weight: 700; margin-top: 1px;
-    }
+    .check { color: var(--accent-green); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
 
-    /* ─── PHONE MOCKUP BASE ─── */
+    /* ─── PHONE MOCK ─── */
     .phone-wrap { display: flex; justify-content: center; }
     .phone {
-      width: 280px;
-      background: #1a1a26;
-      border-radius: 44px;
-      border: 1px solid rgba(255,255,255,0.12);
-      padding: 18px;
-      box-shadow: 0 40px 120px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.05);
-      flex-shrink: 0;
+      width: 240px; background: #0d0d14;
+      border: 1.5px solid rgba(255,255,255,0.12);
+      border-radius: 36px; padding: 16px;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);
     }
-    .phone-screen {
-      background: #0d0d18; border-radius: 28px;
-      padding: 20px 14px; overflow: hidden;
-      min-height: 500px;
-    }
+    .phone-screen { min-height: 380px; }
     .phone-status {
       display: flex; justify-content: space-between;
-      font-size: 10px; color: var(--muted); margin-bottom: 16px;
+      font-size: 9px; color: var(--muted); margin-bottom: 14px; padding: 0 4px;
     }
-    .phone-title {
-      font-size: 20px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 16px;
-    }
+    .phone-title { font-size: 16px; font-weight: 800; margin-bottom: 14px; }
 
-    /* shared phone ui */
+    /* Phone UI components */
     .p-card {
       background: var(--bg-card); border-radius: 12px;
-      padding: 14px; margin-bottom: 10px;
+      padding: 12px 14px; margin-bottom: 10px;
     }
-    .p-label { font-size: 10px; color: var(--muted); margin-bottom: 3px; }
-    .p-val { font-size: 16px; font-weight: 700; }
-    .p-row { display: flex; gap: 8px; margin-bottom: 10px; }
-    .p-row .p-card { flex: 1; margin-bottom: 0; }
-
-    /* ── DASHBOARD SCREEN ── */
-    .dash-pct {
-      font-size: 52px; font-weight: 800; letter-spacing: -2px;
-      background: linear-gradient(135deg, #3d7fff, #2ecc71);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    .p-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 10px; }
+    .p-label { font-size: 9px; color: var(--muted); margin-bottom: 4px; }
+    .p-val { font-size: 16px; font-weight: 800; }
+    .dash-pct { font-size: 36px; font-weight: 900; letter-spacing: -2px; line-height: 1; }
+    .dash-badge {
+      font-size: 9px; font-weight: 700; padding: 3px 8px;
+      background: rgba(46,204,113,0.15); color: #2ecc71; border-radius: 8px;
     }
     .dash-bar-bg {
-      background: rgba(255,255,255,0.07); border-radius: 6px; height: 8px;
-      margin: 10px 0 6px; overflow: hidden;
+      height: 4px; background: rgba(255,255,255,0.08);
+      border-radius: 2px; margin: 10px 0 6px;
     }
-    .dash-bar-fill {
-      height: 100%; border-radius: 6px;
-      background: linear-gradient(90deg, #3d7fff, #2ecc71);
-    }
-    .dash-badge {
-      display: inline-flex; align-items: center; gap: 4px;
-      background: rgba(46,204,113,0.15); border: 1px solid rgba(46,204,113,0.3);
-      color: #2ecc71; padding: 3px 8px; border-radius: 20px;
-      font-size: 10px; font-weight: 600;
-    }
+    .dash-bar-fill { height: 100%; background: #2ecc71; border-radius: 2px; }
 
-    /* ── CHART SCREEN ── */
+    /* Chart */
     .chart-area {
-      background: var(--bg-card); border-radius: 12px;
-      padding: 14px; margin-bottom: 10px;
-      position: relative; height: 120px; overflow: hidden;
+      position: relative; height: 90px; margin-bottom: 8px;
+      background: rgba(255,255,255,0.02); border-radius: 8px; overflow: hidden;
     }
-    .chart-svg { width: 100%; height: 100%; }
+    .chart-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
 
-    /* ── SESSIONS LIST SCREEN ── */
+    /* Sessions */
     .session-item {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 10px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 0;
     }
-    .session-item:last-child { border-bottom: none; }
+    .session-item:not(:last-child) { border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .session-left { display: flex; align-items: center; gap: 8px; }
     .session-icon {
-      width: 32px; height: 32px; border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 14px; flex-shrink: 0; margin-right: 10px;
+      width: 28px; height: 28px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center; font-size: 12px;
     }
-    .session-left { display: flex; align-items: center; }
-    .session-info .s-title { font-size: 12px; font-weight: 600; }
-    .session-info .s-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+    .session-info .s-title { font-size: 10px; font-weight: 700; }
+    .session-info .s-sub { font-size: 9px; color: var(--muted); }
     .session-right { text-align: right; }
-    .session-right .s-val { font-size: 13px; font-weight: 700; }
-    .session-right .s-sub2 { font-size: 10px; color: var(--muted); margin-top: 2px; }
+    .s-val { font-size: 11px; font-weight: 700; }
+    .s-sub2 { font-size: 9px; color: var(--muted); }
 
-    /* ── WIDGET MOCKUP ── */
-    .widget-row { display: flex; gap: 12px; margin-top: 8px; }
+    /* Widget mocks */
     .widget-small {
-      background: #1c1c2e; border-radius: 20px; padding: 16px;
-      width: 120px; height: 120px;
+      width: 120px; height: 120px; background: var(--bg-card);
+      border-radius: 20px; padding: 12px;
       display: flex; flex-direction: column; justify-content: space-between;
-      border: 1px solid rgba(255,255,255,0.08);
-      flex-shrink: 0;
+      border: 1px solid rgba(255,255,255,0.06);
     }
     .widget-medium {
-      background: #1c1c2e; border-radius: 20px; padding: 16px;
-      flex: 1; height: 120px;
-      display: flex; gap: 12px; align-items: center;
-      border: 1px solid rgba(255,255,255,0.08);
+      background: var(--bg-card); border-radius: 20px; padding: 16px;
+      display: flex; align-items: center; gap: 16px;
+      border: 1px solid rgba(255,255,255,0.06);
     }
-    .widget-medium-divider {
-      width: 1px; background: rgba(255,255,255,0.08); align-self: stretch; margin: 4px 0;
-    }
+    .widget-medium-divider { width: 1px; height: 60px; background: var(--border); flex-shrink: 0; }
     .widget-medium-right { display: flex; flex-direction: column; gap: 8px; flex: 1; }
     .wstat { display: flex; align-items: center; gap: 6px; }
-    .wstat-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-    .wstat-text .wv { font-size: 12px; font-weight: 700; }
+    .wstat-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .wstat-text .wv { font-size: 11px; font-weight: 700; }
     .wstat-text .wl { font-size: 9px; color: var(--muted); }
 
-    /* ── DRIVING SCREEN ── */
-    .driving-chart {
-      background: var(--bg-card); border-radius: 12px;
-      padding: 14px; margin-bottom: 10px; height: 90px;
-      display: flex; align-items: flex-end; gap: 6px; overflow: hidden;
+    /* ─── VEHICLES ─── */
+    .vehicles-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
     }
-    .bar-col { flex: 1; border-radius: 4px 4px 0 0; }
-
-    /* ─── VEHICLES GRID ─── */
-    .vehicles-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; }
     .vehicle-card {
       background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 24px 20px; text-align: center;
-      transition: border-color 0.2s, transform 0.2s;
+      border-radius: var(--radius); padding: 24px;
+      transition: border-color 0.2s, background 0.2s;
     }
-    .vehicle-card:hover { border-color: rgba(61,127,255,0.3); transform: translateY(-4px); }
-    .vehicle-emoji { font-size: 30px; margin-bottom: 10px; }
-    .vehicle-name { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
-    .vehicle-battery { font-size: 13px; color: var(--accent-green); font-weight: 600; }
+    .vehicle-card:hover { background: var(--bg-card-hover); border-color: rgba(61,127,255,0.3); }
+    .vehicle-emoji { font-size: 36px; margin-bottom: 12px; }
+    .vehicle-name { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+    .vehicle-battery { font-size: 14px; color: var(--accent); font-weight: 600; }
 
-    /* ─── HOW IT WORKS ─── */
-    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; }
+    /* ─── HOW ─── */
+    .steps { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
     .step {
       background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 28px;
+      border-radius: var(--radius); padding: 24px;
     }
     .step-num {
-      width: 36px; height: 36px; border-radius: 50%;
-      background: rgba(61,127,255,0.15); border: 1px solid rgba(61,127,255,0.3);
-      color: var(--accent); font-weight: 700; font-size: 15px;
-      display: flex; align-items: center; justify-content: center;
-      margin-bottom: 16px;
+      width: 32px; height: 32px; background: var(--accent);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 800; margin-bottom: 12px;
     }
     .step h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
-    .step p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+    .step p { font-size: 14px; color: var(--muted); }
+    .platform-badge {
+      display: inline-block; font-size: 11px; font-weight: 600;
+      padding: 2px 8px; border-radius: 6px; margin-top: 4px;
+    }
+    .platform-badge.ios { background: rgba(61,127,255,0.15); color: var(--accent); }
+    .platform-badge.android { background: rgba(46,204,113,0.15); color: var(--accent-green); }
 
     /* ─── CTA ─── */
     .cta-section {
       text-align: center; padding: 100px 24px;
-      max-width: 700px; margin: 0 auto;
+      background: radial-gradient(ellipse at center, rgba(61,127,255,0.08) 0%, transparent 70%);
     }
     .cta-section h2 {
-      font-size: clamp(32px, 5vw, 52px); font-weight: 800;
-      letter-spacing: -1.5px; margin-bottom: 20px;
+      font-size: clamp(36px, 5vw, 60px); font-weight: 900;
+      letter-spacing: -2px; margin-bottom: 16px;
     }
     .cta-gradient {
       background: linear-gradient(135deg, #3d7fff, #2ecc71);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
     .cta-section p { font-size: 17px; color: var(--muted); margin-bottom: 40px; }
-    .cta-note { margin-top: 28px; font-size: 13px; color: var(--muted); }
+    .cta-note { font-size: 13px; color: var(--muted); margin-top: 20px; margin-bottom: 0; }
 
     /* ─── FOOTER ─── */
     footer {
+      text-align: center; padding: 40px 24px;
       border-top: 1px solid var(--border);
-      padding: 40px; text-align: center;
       color: var(--muted); font-size: 13px;
     }
     footer a { color: var(--muted); text-decoration: none; transition: color 0.2s; }
@@ -358,12 +329,12 @@
     @media (max-width: 768px) {
       nav { padding: 14px 20px; }
       .nav-links { display: none; }
-      .showcase { grid-template-columns: 1fr; gap: 40px; }
-      .showcase.reverse { direction: ltr; }
-      .stats-bar { padding: 32px 20px; }
       .section-wrap { padding: 64px 20px; }
       #how .section-wrap > div:first-of-type,
-      div[style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }
+      .showcase { grid-template-columns: 1fr; gap: 40px; }
+      .showcase.reverse { direction: ltr; }
+      .vehicles-grid { grid-template-columns: repeat(2, 1fr); }
+      .steps { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -376,35 +347,47 @@
     BYD Stats
   </a>
   <ul class="nav-links">
-    <li><a href="#features">기능</a></li>
-    <li><a href="#vehicles">지원 차종</a></li>
-    <li><a href="#how">시작하기</a></li>
+    <li><a href="#features"><span class="ko">기능</span><span class="en">Features</span></a></li>
+    <li><a href="#vehicles"><span class="ko">지원 차종</span><span class="en">Models</span></a></li>
+    <li><a href="#how"><span class="ko">시작하기</span><span class="en">Get Started</span></a></li>
   </ul>
-  <a href="https://github.com/GeyuongGongPark/BYDstatus" class="nav-cta" target="_blank">GitHub ↗</a>
+  <div class="nav-right">
+    <div class="lang-switch">
+      <button onclick="setLang('ko')" id="btn-ko" class="lang-btn active">한국어</button>
+      <button onclick="setLang('en')" id="btn-en" class="lang-btn">EN</button>
+    </div>
+    <a href="https://github.com/GeyuongGongPark/BYDstatus" class="nav-cta" target="_blank">GitHub ↗</a>
+  </div>
 </nav>
 
 <!-- HERO -->
 <section class="hero">
   <div class="hero-badge">
     <span class="dot"></span>
-    iOS · Android · 오픈 소스 · v0.6.2
+    iOS · Android · <span class="ko">오픈 소스</span><span class="en">Open Source</span>
   </div>
-  <h1>BYD 차량의 모든 데이터를<br /><span class="gradient">한눈에</span></h1>
+  <h1>
+    <span class="ko">BYD 차량의 모든 데이터를<br /><span class="gradient">한눈에</span></span>
+    <span class="en">All your BYD data,<br /><span class="gradient">at a glance</span></span>
+  </h1>
   <p class="hero-desc">
-    공식 앱이 보여주지 않는 배터리 이력, 충전 세션, 주행 효율, 월별 전기 비용을
-    자동으로 수집하고 분석해드립니다.
+    <span class="ko">공식 앱이 보여주지 않는 배터리 이력, 충전 세션, 주행 효율, 월별 전기 비용을 자동으로 수집하고 분석해드립니다.</span>
+    <span class="en">Automatically collect and analyze battery history, charging sessions, driving efficiency, and monthly electricity costs that the official app doesn't show.</span>
   </p>
   <div class="hero-actions">
     <a id="android-download" href="https://github.com/GeyuongGongPark/BYDstatus/releases/latest" class="btn-android" target="_blank">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.523 15.341 14.87 10.8A3.003 3.003 0 0 0 12 9.25c-1.117 0-2.093.613-2.613 1.52l-2.714 4.571A8.96 8.96 0 0 1 3 9.25C3 4.7 7.026 1 12 1s9 3.7 9 8.25c0 2.37-.93 4.52-2.477 6.091zM12 23l-4.5-7.795h9L12 23z"/></svg>
-      Android APK 다운로드
+      <span class="ko">Android APK 다운로드</span><span class="en">Download Android APK</span>
       <span id="android-version" style="opacity:.7;font-size:13px;"></span>
     </a>
     <a href="https://github.com/GeyuongGongPark/BYDstatus" class="btn-secondary" target="_blank">
       GitHub →
     </a>
   </div>
-  <p style="margin-top:16px;font-size:13px;color:var(--muted);">iOS는 Xcode로 직접 빌드 · <a href="#how" style="color:var(--accent);text-decoration:none;">시작하기 ↓</a></p>
+  <p style="margin-top:16px;font-size:13px;color:var(--muted);">
+    <span class="ko">iOS는 Xcode로 직접 빌드 · <a href="#how" style="color:var(--accent);text-decoration:none;">시작하기 ↓</a></span>
+    <span class="en">iOS: build from source with Xcode · <a href="#how" style="color:var(--accent);text-decoration:none;">Get started ↓</a></span>
+  </p>
 </section>
 
 <!-- STATS BAR -->
@@ -412,19 +395,19 @@
   <div class="stats-bar">
     <div>
       <div class="stat-item-val">6</div>
-      <div class="stat-item-label">지원 차종</div>
+      <div class="stat-item-label"><span class="ko">지원 차종</span><span class="en">Supported Models</span></div>
     </div>
     <div>
-      <div class="stat-item-val">5분</div>
-      <div class="stat-item-label">자동 폴링 간격</div>
+      <div class="stat-item-val">5<span style="font-size:20px;opacity:.6"><span class="ko">분</span><span class="en">min</span></span></div>
+      <div class="stat-item-label"><span class="ko">자동 폴링 간격</span><span class="en">Auto-polling Interval</span></div>
     </div>
     <div>
       <div class="stat-item-val" style="font-size:28px;">iOS·Android</div>
-      <div class="stat-item-label">지원 플랫폼</div>
+      <div class="stat-item-label"><span class="ko">지원 플랫폼</span><span class="en">Platforms</span></div>
     </div>
     <div>
-      <div class="stat-item-val">무료</div>
-      <div class="stat-item-label">완전 오픈 소스</div>
+      <div class="stat-item-val"><span class="ko">무료</span><span class="en">Free</span></div>
+      <div class="stat-item-label"><span class="ko">완전 오픈 소스</span><span class="en">Fully Open Source</span></div>
     </div>
   </div>
 </div>
@@ -434,48 +417,48 @@
 <!-- FEATURES -->
 <div id="features">
 
-  <!-- 1. 대시보드 -->
+  <!-- 1. 대시보드 / Dashboard -->
   <div class="section-wrap">
     <div class="showcase">
       <div class="phone-wrap">
         <div class="phone">
           <div class="phone-screen">
             <div class="phone-status"><span>9:41</span><span>●●● 100%</span></div>
-            <div class="phone-title">대시보드</div>
+            <div class="phone-title"><span class="ko">대시보드</span><span class="en">Dashboard</span></div>
 
             <div class="p-card">
               <div style="display:flex;align-items:flex-start;justify-content:space-between;">
                 <div>
                   <div class="dash-pct">72<span style="font-size:24px;opacity:.6">%</span></div>
-                  <div style="font-size:10px;color:var(--muted);margin-top:2px;">주행가능 182 km</div>
+                  <div style="font-size:10px;color:var(--muted);margin-top:2px;"><span class="ko">주행가능 182 km</span><span class="en">Range 182 km</span></div>
                 </div>
-                <div class="dash-badge">⚡ 충전 중</div>
+                <div class="dash-badge"><span class="ko">⚡ 충전 중</span><span class="en">⚡ Charging</span></div>
               </div>
               <div class="dash-bar-bg"><div class="dash-bar-fill" style="width:72%"></div></div>
-              <div style="font-size:10px;color:#2ecc71;">7.4 kW 충전 중</div>
+              <div style="font-size:10px;color:#2ecc71;"><span class="ko">7.4 kW 충전 중</span><span class="en">7.4 kW charging</span></div>
             </div>
 
-            <div style="font-size:11px;font-weight:700;margin-bottom:8px;color:var(--muted);">오늘</div>
+            <div style="font-size:11px;font-weight:700;margin-bottom:8px;color:var(--muted);"><span class="ko">오늘</span><span class="en">Today</span></div>
             <div class="p-row">
               <div class="p-card">
-                <div class="p-label">충전량</div>
+                <div class="p-label"><span class="ko">충전량</span><span class="en">Charged</span></div>
                 <div class="p-val" style="color:#3d7fff;font-size:14px;">18.4 <span style="font-size:10px;opacity:.7">kWh</span></div>
               </div>
               <div class="p-card">
-                <div class="p-label">주행거리</div>
+                <div class="p-label"><span class="ko">주행거리</span><span class="en">Distance</span></div>
                 <div class="p-val" style="color:var(--text);font-size:14px;">42 <span style="font-size:10px;opacity:.7">km</span></div>
               </div>
               <div class="p-card">
-                <div class="p-label">소비</div>
+                <div class="p-label"><span class="ko">소비</span><span class="en">Used</span></div>
                 <div class="p-val" style="color:var(--accent-orange);font-size:14px;">7.1 <span style="font-size:10px;opacity:.7">kWh</span></div>
               </div>
             </div>
 
-            <div style="font-size:11px;font-weight:700;margin-bottom:8px;color:var(--muted);">이번 달 충전 비용</div>
+            <div style="font-size:11px;font-weight:700;margin-bottom:8px;color:var(--muted);"><span class="ko">이번 달 충전 비용</span><span class="en">Monthly Charging Cost</span></div>
             <div class="p-card" style="display:flex;justify-content:space-between;align-items:center;">
               <div>
                 <div style="font-size:18px;font-weight:800;">₩ 14,832</div>
-                <div style="font-size:10px;color:var(--muted);">7회 충전</div>
+                <div style="font-size:10px;color:var(--muted);"><span class="ko">7회 충전</span><span class="en">7 sessions</span></div>
               </div>
               <div style="font-size:28px;opacity:.4;">₩</div>
             </div>
@@ -483,15 +466,18 @@
         </div>
       </div>
       <div class="showcase-text">
-        <div class="section-label">대시보드</div>
-        <h3>지금 차량 상태를<br />한눈에 확인</h3>
-        <p>앱을 열면 현재 배터리 잔량, 충전 상태, 오늘의 충전·주행 요약이 바로 표시됩니다. 새로고침 한 번으로 실시간 차량 데이터를 불러옵니다.</p>
+        <div class="section-label"><span class="ko">대시보드</span><span class="en">Dashboard</span></div>
+        <h3><span class="ko">지금 차량 상태를<br />한눈에 확인</span><span class="en">Real-time vehicle<br />status at a glance</span></h3>
+        <p>
+          <span class="ko">앱을 열면 현재 배터리 잔량, 충전 상태, 오늘의 충전·주행 요약이 바로 표시됩니다. 새로고침 한 번으로 실시간 차량 데이터를 불러옵니다.</span>
+          <span class="en">Open the app to instantly see battery level, charging status, and today's charging and driving summary. One tap refreshes all real-time vehicle data.</span>
+        </p>
         <ul>
-          <li><span class="check">✓</span>배터리 % 및 주행가능거리 실시간 표시</li>
-          <li><span class="check">✓</span>충전 중 전력(kW) 즉시 확인</li>
-          <li><span class="check">✓</span>오늘 충전량 / 주행거리 / 소비 요약 타일</li>
-          <li><span class="check">✓</span>이번 달 충전 비용 / 충전량 / 주행거리 / 소비 타일</li>
-          <li><span class="check">✓</span>최근 충전 세션 목록</li>
+          <li><span class="check">✓</span><span class="ko">배터리 % 및 주행가능거리 실시간 표시</span><span class="en">Live battery % and driving range</span></li>
+          <li><span class="check">✓</span><span class="ko">충전 중 전력(kW) 즉시 확인</span><span class="en">Instant charging power (kW) readout</span></li>
+          <li><span class="check">✓</span><span class="ko">오늘 충전량 / 주행거리 / 소비 요약 타일</span><span class="en">Today's charged / distance / consumed summary tiles</span></li>
+          <li><span class="check">✓</span><span class="ko">이번 달 충전 비용 / 충전량 / 주행거리 요약</span><span class="en">Monthly charging cost, energy, and distance summary</span></li>
+          <li><span class="check">✓</span><span class="ko">최근 충전 세션 목록</span><span class="en">Recent charging session list</span></li>
         </ul>
       </div>
     </div>
@@ -499,29 +485,25 @@
 
   <div class="divider"></div>
 
-  <!-- 2. 배터리 이력 -->
+  <!-- 2. 배터리 이력 / Battery History -->
   <div class="section-wrap">
     <div class="showcase reverse">
       <div class="phone-wrap">
         <div class="phone">
           <div class="phone-screen">
             <div class="phone-status"><span>9:41</span><span>●●● 100%</span></div>
-            <div class="phone-title">배터리 이력</div>
+            <div class="phone-title"><span class="ko">배터리 이력</span><span class="en">Battery History</span></div>
 
-            <!-- time range pills -->
             <div style="display:flex;gap:6px;margin-bottom:12px;">
-              <span style="background:#3d7fff;color:#fff;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:600;">24시간</span>
-              <span style="background:var(--bg-card);color:var(--muted);padding:3px 10px;border-radius:12px;font-size:10px;">7일</span>
-              <span style="background:var(--bg-card);color:var(--muted);padding:3px 10px;border-radius:12px;font-size:10px;">30일</span>
+              <span style="background:#3d7fff;color:#fff;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:600;"><span class="ko">24시간</span><span class="en">24h</span></span>
+              <span style="background:var(--bg-card);color:var(--muted);padding:3px 10px;border-radius:12px;font-size:10px;"><span class="ko">7일</span><span class="en">7d</span></span>
+              <span style="background:var(--bg-card);color:var(--muted);padding:3px 10px;border-radius:12px;font-size:10px;"><span class="ko">30일</span><span class="en">30d</span></span>
             </div>
 
-            <!-- chart -->
             <div class="chart-area">
-              <!-- charging zone background -->
               <div style="position:absolute;left:8%;top:0;width:22%;height:100%;background:rgba(46,204,113,0.07);border-radius:4px;"></div>
               <div style="position:absolute;right:12%;top:0;width:18%;height:100%;background:rgba(61,127,255,0.07);border-radius:4px;"></div>
               <svg class="chart-svg" viewBox="0 0 240 100" preserveAspectRatio="none">
-                <!-- area fill -->
                 <defs>
                   <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stop-color="#3d7fff" stop-opacity="0.3"/>
@@ -530,34 +512,31 @@
                 </defs>
                 <path d="M0,75 C20,72 30,45 50,40 C70,35 80,20 100,22 C120,24 130,55 150,58 C170,61 180,40 200,35 C215,31 230,38 240,36 L240,100 L0,100 Z" fill="url(#grad)"/>
                 <path d="M0,75 C20,72 30,45 50,40 C70,35 80,20 100,22 C120,24 130,55 150,58 C170,61 180,40 200,35 C215,31 230,38 240,36" fill="none" stroke="#3d7fff" stroke-width="2" stroke-linecap="round"/>
-                <!-- dot at latest -->
                 <circle cx="240" cy="36" r="3" fill="#3d7fff"/>
               </svg>
-              <div style="position:absolute;bottom:6px;right:8px;font-size:9px;color:var(--muted);">지금 72%</div>
+              <div style="position:absolute;bottom:6px;right:8px;font-size:9px;color:var(--muted);"><span class="ko">지금 72%</span><span class="en">Now 72%</span></div>
             </div>
 
-            <!-- legend -->
             <div style="display:flex;gap:12px;margin-bottom:10px;">
               <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);">
-                <div style="width:8px;height:8px;background:rgba(46,204,113,0.4);border-radius:2px;"></div>충전
+                <div style="width:8px;height:8px;background:rgba(46,204,113,0.4);border-radius:2px;"></div><span class="ko">충전</span><span class="en">Charge</span>
               </div>
               <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);">
-                <div style="width:8px;height:8px;background:rgba(61,127,255,0.4);border-radius:2px;"></div>주행
+                <div style="width:8px;height:8px;background:rgba(61,127,255,0.4);border-radius:2px;"></div><span class="ko">주행</span><span class="en">Drive</span>
               </div>
             </div>
 
-            <!-- summary cards -->
             <div class="p-row">
               <div class="p-card">
-                <div class="p-label">최고</div>
+                <div class="p-label"><span class="ko">최고</span><span class="en">Max</span></div>
                 <div class="p-val" style="color:#2ecc71;font-size:15px;">95%</div>
               </div>
               <div class="p-card">
-                <div class="p-label">최저</div>
+                <div class="p-label"><span class="ko">최저</span><span class="en">Min</span></div>
                 <div class="p-val" style="color:#f5a623;font-size:15px;">38%</div>
               </div>
               <div class="p-card">
-                <div class="p-label">평균</div>
+                <div class="p-label"><span class="ko">평균</span><span class="en">Avg</span></div>
                 <div class="p-val" style="color:var(--text);font-size:15px;">67%</div>
               </div>
             </div>
@@ -565,14 +544,17 @@
         </div>
       </div>
       <div class="showcase-text">
-        <div class="section-label">배터리 이력</div>
-        <h3>배터리 변화를<br />그래프로 추적</h3>
-        <p>시간대별 배터리 % 변화를 Swift Charts로 시각화합니다. 충전 구간과 주행 구간을 배경색으로 구분해 언제 무슨 일이 있었는지 직관적으로 파악할 수 있습니다.</p>
+        <div class="section-label"><span class="ko">배터리 이력</span><span class="en">Battery History</span></div>
+        <h3><span class="ko">배터리 변화를<br />그래프로 추적</span><span class="en">Track battery changes<br />on a graph</span></h3>
+        <p>
+          <span class="ko">시간대별 배터리 % 변화를 차트로 시각화합니다. 충전 구간과 주행 구간을 배경색으로 구분해 언제 무슨 일이 있었는지 직관적으로 파악할 수 있습니다.</span>
+          <span class="en">Visualize battery percentage changes over time with interactive charts. Charging and driving periods are highlighted in the background for instant insight.</span>
+        </p>
         <ul>
-          <li><span class="check">✓</span>24시간 / 7일 / 30일 / 날짜 직접 선택</li>
-          <li><span class="check">✓</span>충전·주행 구간 배경 색상 표시</li>
-          <li><span class="check">✓</span>그래프 터치로 특정 시점 수치 확인</li>
-          <li><span class="check">✓</span>최고·최저·평균 배터리 통계 타일</li>
+          <li><span class="check">✓</span><span class="ko">24시간 / 7일 / 30일 / 날짜 직접 선택</span><span class="en">24h / 7d / 30d / custom date range</span></li>
+          <li><span class="check">✓</span><span class="ko">충전·주행 구간 배경 색상 표시</span><span class="en">Charging and driving zones highlighted</span></li>
+          <li><span class="check">✓</span><span class="ko">그래프 터치로 특정 시점 수치 확인</span><span class="en">Tap the chart to inspect any data point</span></li>
+          <li><span class="check">✓</span><span class="ko">최고·최저·평균 배터리 통계 타일</span><span class="en">Max / min / average battery stat tiles</span></li>
         </ul>
       </div>
     </div>
@@ -580,22 +562,21 @@
 
   <div class="divider"></div>
 
-  <!-- 3. 충전 세션 -->
+  <!-- 3. 충전 세션 / Charging Sessions -->
   <div class="section-wrap">
     <div class="showcase">
       <div class="phone-wrap">
         <div class="phone">
           <div class="phone-screen">
             <div class="phone-status"><span>9:41</span><span>●●● 100%</span></div>
-            <div class="phone-title">충전 세션</div>
+            <div class="phone-title"><span class="ko">충전 세션</span><span class="en">Charging Sessions</span></div>
 
-            <!-- monthly summary -->
             <div class="p-card" style="margin-bottom:14px;">
               <div style="display:flex;justify-content:space-between;align-items:center;">
                 <div>
-                  <div style="font-size:10px;color:var(--muted);margin-bottom:2px;">2026년 8월</div>
+                  <div style="font-size:10px;color:var(--muted);margin-bottom:2px;"><span class="ko">2026년 8월</span><span class="en">August 2026</span></div>
                   <div style="font-size:16px;font-weight:800;color:#2ecc71;">87.3 kWh</div>
-                  <div style="font-size:10px;color:var(--muted);">7회 · ₩15,714</div>
+                  <div style="font-size:10px;color:var(--muted);"><span class="ko">7회 · ₩15,714</span><span class="en">7 sessions · ₩15,714</span></div>
                 </div>
                 <div style="font-size:10px;color:var(--muted);text-align:right;">
                   <div style="font-size:18px;font-weight:800;color:var(--text);">₩180</div>
@@ -609,8 +590,8 @@
                 <div class="session-left">
                   <div class="session-icon" style="background:rgba(46,204,113,0.15);">⚡</div>
                   <div class="session-info">
-                    <div class="s-title">8월 13일</div>
-                    <div class="s-sub">38% → 95%  ·  65분</div>
+                    <div class="s-title"><span class="ko">8월 13일</span><span class="en">Aug 13</span></div>
+                    <div class="s-sub">38% → 95% · <span class="ko">65분</span><span class="en">65 min</span></div>
                   </div>
                 </div>
                 <div class="session-right">
@@ -622,8 +603,8 @@
                 <div class="session-left">
                   <div class="session-icon" style="background:rgba(46,204,113,0.15);">⚡</div>
                   <div class="session-info">
-                    <div class="s-title">8월 10일</div>
-                    <div class="s-sub">55% → 80%  ·  28분</div>
+                    <div class="s-title"><span class="ko">8월 10일</span><span class="en">Aug 10</span></div>
+                    <div class="s-sub">55% → 80% · <span class="ko">28분</span><span class="en">28 min</span></div>
                   </div>
                 </div>
                 <div class="session-right">
@@ -635,8 +616,8 @@
                 <div class="session-left">
                   <div class="session-icon" style="background:rgba(46,204,113,0.15);">⚡</div>
                   <div class="session-info">
-                    <div class="s-title">8월 7일</div>
-                    <div class="s-sub">20% → 90%  ·  95분</div>
+                    <div class="s-title"><span class="ko">8월 7일</span><span class="en">Aug 7</span></div>
+                    <div class="s-sub">20% → 90% · <span class="ko">95분</span><span class="en">95 min</span></div>
                   </div>
                 </div>
                 <div class="session-right">
@@ -649,15 +630,18 @@
         </div>
       </div>
       <div class="showcase-text">
-        <div class="section-label">충전 세션</div>
-        <h3>충전할 때마다<br />자동으로 기록</h3>
-        <p>충전 시작과 종료를 자동 감지해 세션별로 저장합니다. SOC 변화, 충전량, 충전 시간, 추정 비용을 월별로 정리해 보여줍니다.</p>
+        <div class="section-label"><span class="ko">충전 세션</span><span class="en">Charging Sessions</span></div>
+        <h3><span class="ko">충전할 때마다<br />자동으로 기록</span><span class="en">Automatically logged<br />with every charge</span></h3>
+        <p>
+          <span class="ko">충전 시작과 종료를 자동 감지해 세션별로 저장합니다. SOC 변화, 충전량, 충전 시간, 추정 비용을 월별로 정리해 보여줍니다.</span>
+          <span class="en">Automatically detects the start and end of each charging session. SOC change, energy charged, duration, and estimated cost are summarized by month.</span>
+        </p>
         <ul>
-          <li><span class="check">✓</span>충전 시작·종료 자동 감지</li>
-          <li><span class="check">✓</span>SOC 변화(시작% → 종료%) 기록</li>
-          <li><span class="check">✓</span>충전량(kWh) 및 추정 전기 비용 자동 계산</li>
-          <li><span class="check">✓</span>월간 필터 + 충전 비용·충전량·횟수 요약 카드</li>
-          <li><span class="check">✓</span>충전 위치 기록 (위치 권한 허용 시)</li>
+          <li><span class="check">✓</span><span class="ko">충전 시작·종료 자동 감지</span><span class="en">Automatic start / end detection</span></li>
+          <li><span class="check">✓</span><span class="ko">SOC 변화(시작% → 종료%) 기록</span><span class="en">SOC delta recorded (start% → end%)</span></li>
+          <li><span class="check">✓</span><span class="ko">충전량(kWh) 및 추정 전기 비용 자동 계산</span><span class="en">Charged energy (kWh) and estimated cost auto-calculated</span></li>
+          <li><span class="check">✓</span><span class="ko">월간 필터 + 충전 비용·충전량·횟수 요약 카드</span><span class="en">Monthly filter with cost / energy / session count summary</span></li>
+          <li><span class="check">✓</span><span class="ko">충전 위치 기록 (위치 권한 허용 시)</span><span class="en">Charging location logged (when location permission granted)</span></li>
         </ul>
       </div>
     </div>
@@ -665,18 +649,17 @@
 
   <div class="divider"></div>
 
-  <!-- 4. 주행 세션 -->
+  <!-- 4. 주행 세션 / Driving Sessions -->
   <div class="section-wrap">
     <div class="showcase reverse">
       <div class="phone-wrap">
         <div class="phone">
           <div class="phone-screen">
             <div class="phone-status"><span>9:41</span><span>●●● 100%</span></div>
-            <div class="phone-title">주행 세션</div>
+            <div class="phone-title"><span class="ko">주행 세션</span><span class="en">Driving Sessions</span></div>
 
-            <!-- bar chart -->
             <div class="p-card" style="margin-bottom:10px;">
-              <div style="font-size:10px;color:var(--muted);margin-bottom:8px;">이번 달 일별 주행거리</div>
+              <div style="font-size:10px;color:var(--muted);margin-bottom:8px;"><span class="ko">이번 달 일별 주행거리</span><span class="en">Daily Distance This Month</span></div>
               <div style="display:flex;align-items:flex-end;gap:4px;height:50px;">
                 <div style="flex:1;height:40%;background:rgba(61,127,255,0.4);border-radius:3px 3px 0 0;"></div>
                 <div style="flex:1;height:65%;background:rgba(61,127,255,0.4);border-radius:3px 3px 0 0;"></div>
@@ -690,11 +673,11 @@
 
             <div class="p-row" style="margin-bottom:12px;">
               <div class="p-card">
-                <div class="p-label">이번 달</div>
+                <div class="p-label"><span class="ko">이번 달</span><span class="en">This Month</span></div>
                 <div class="p-val" style="color:#3d7fff;font-size:14px;">312 <span style="font-size:10px;">km</span></div>
               </div>
               <div class="p-card">
-                <div class="p-label">평균 전비</div>
+                <div class="p-label"><span class="ko">평균 전비</span><span class="en">Avg Efficiency</span></div>
                 <div class="p-val" style="color:#2ecc71;font-size:14px;">6.2 <span style="font-size:10px;">km/kWh</span></div>
               </div>
             </div>
@@ -704,26 +687,26 @@
                 <div class="session-left">
                   <div class="session-icon" style="background:rgba(61,127,255,0.15);">🚗</div>
                   <div class="session-info">
-                    <div class="s-title">8월 13일</div>
-                    <div class="s-sub">42 km · 38분</div>
+                    <div class="s-title"><span class="ko">8월 13일</span><span class="en">Aug 13</span></div>
+                    <div class="s-sub">42 km · <span class="ko">38분</span><span class="en">38 min</span></div>
                   </div>
                 </div>
                 <div class="session-right">
                   <div class="s-val" style="color:#3d7fff;">6.8 km/kWh</div>
-                  <div class="s-sub2">6.2 kWh 소비</div>
+                  <div class="s-sub2">6.2 kWh</div>
                 </div>
               </div>
               <div class="session-item">
                 <div class="session-left">
                   <div class="session-icon" style="background:rgba(61,127,255,0.15);">🚗</div>
                   <div class="session-info">
-                    <div class="s-title">8월 11일</div>
-                    <div class="s-sub">78 km · 62분</div>
+                    <div class="s-title"><span class="ko">8월 11일</span><span class="en">Aug 11</span></div>
+                    <div class="s-sub">78 km · <span class="ko">62분</span><span class="en">62 min</span></div>
                   </div>
                 </div>
                 <div class="session-right">
                   <div class="s-val" style="color:#3d7fff;">5.9 km/kWh</div>
-                  <div class="s-sub2">13.2 kWh 소비</div>
+                  <div class="s-sub2">13.2 kWh</div>
                 </div>
               </div>
             </div>
@@ -731,15 +714,18 @@
         </div>
       </div>
       <div class="showcase-text">
-        <div class="section-label">주행 세션</div>
-        <h3>주행할 때마다<br />전비를 분석</h3>
-        <p>주행 시작과 종료를 자동 감지해 세션별 주행거리와 소비 전력을 기록합니다. 실제 전비(km/kWh)를 계산해 연비 효율을 파악할 수 있습니다.</p>
+        <div class="section-label"><span class="ko">주행 세션</span><span class="en">Driving Sessions</span></div>
+        <h3><span class="ko">주행할 때마다<br />전비를 분석</span><span class="en">Analyze efficiency<br />with every drive</span></h3>
+        <p>
+          <span class="ko">주행 시작과 종료를 자동 감지해 세션별 주행거리와 소비 전력을 기록합니다. 실제 전비(km/kWh)를 계산해 효율을 파악할 수 있습니다.</span>
+          <span class="en">Automatically detects trip start and end to log distance and energy consumed per session. Real-world efficiency (km/kWh) is calculated automatically.</span>
+        </p>
         <ul>
-          <li><span class="check">✓</span>주행 시작·종료 자동 감지 (2분 미만 자동 삭제)</li>
-          <li><span class="check">✓</span>SOC 기반 소비(kWh) + GPS / ODO 기반 거리</li>
-          <li><span class="check">✓</span>세션별 전비(km/kWh) 자동 계산</li>
-          <li><span class="check">✓</span>월간 필터 + 총 주행거리·평균 전비 요약 카드</li>
-          <li><span class="check">✓</span>일별 주행거리 바 차트</li>
+          <li><span class="check">✓</span><span class="ko">주행 시작·종료 자동 감지 (2분 미만 자동 삭제)</span><span class="en">Auto start / end detection (trips under 2 min auto-removed)</span></li>
+          <li><span class="check">✓</span><span class="ko">SOC 기반 소비(kWh) + GPS / ODO 기반 거리</span><span class="en">SOC-based energy consumption + GPS / ODO distance</span></li>
+          <li><span class="check">✓</span><span class="ko">세션별 전비(km/kWh) 자동 계산</span><span class="en">Per-session efficiency (km/kWh) auto-calculated</span></li>
+          <li><span class="check">✓</span><span class="ko">월간 필터 + 총 주행거리·평균 전비 요약 카드</span><span class="en">Monthly filter with total distance and average efficiency</span></li>
+          <li><span class="check">✓</span><span class="ko">일별 주행거리 바 차트</span><span class="en">Daily distance bar chart</span></li>
         </ul>
       </div>
     </div>
@@ -747,12 +733,11 @@
 
   <div class="divider"></div>
 
-  <!-- 5. 위젯 -->
+  <!-- 5. 위젯 / Widgets -->
   <div class="section-wrap">
     <div class="showcase">
       <div class="phone-wrap">
         <div style="display:flex;flex-direction:column;gap:16px;align-items:center;">
-          <!-- Small widget -->
           <div style="display:flex;gap:12px;">
             <div class="widget-small">
               <div style="display:flex;align-items:center;gap:4px;">
@@ -762,13 +747,13 @@
               <div>
                 <div style="font-size:34px;font-weight:800;letter-spacing:-1px;line-height:1;">72<span style="font-size:14px;opacity:.5">%</span></div>
                 <div style="display:flex;align-items:center;gap:3px;margin-top:4px;">
-                  <span style="font-size:8px;color:#2ecc71;">⚡ 충전 중</span>
+                  <span style="font-size:8px;color:#2ecc71;">⚡ <span class="ko">충전 중</span><span class="en">Charging</span></span>
                 </div>
                 <div style="display:flex;align-items:center;gap:3px;margin-top:2px;">
                   <span style="font-size:8px;color:var(--muted);">🛣 182 km</span>
                 </div>
               </div>
-              <div style="font-size:8px;color:var(--muted);">3분 전</div>
+              <div style="font-size:8px;color:var(--muted);"><span class="ko">3분 전</span><span class="en">3 min ago</span></div>
             </div>
             <div class="widget-small" style="background:#151520;">
               <div style="display:flex;align-items:center;gap:4px;">
@@ -778,14 +763,13 @@
               <div>
                 <div style="font-size:34px;font-weight:800;letter-spacing:-1px;line-height:1;color:#ccc;">45<span style="font-size:14px;opacity:.5">%</span></div>
                 <div style="display:flex;align-items:center;gap:3px;margin-top:4px;">
-                  <span style="font-size:8px;color:#888;">P 주차 중</span>
+                  <span style="font-size:8px;color:#888;">P <span class="ko">주차 중</span><span class="en">Parked</span></span>
                 </div>
               </div>
-              <div style="font-size:8px;color:var(--muted);">1시간 전</div>
+              <div style="font-size:8px;color:var(--muted);"><span class="ko">1시간 전</span><span class="en">1 hr ago</span></div>
             </div>
           </div>
 
-          <!-- Medium widget -->
           <div class="widget-medium" style="width:252px;">
             <div style="flex-shrink:0;">
               <div style="display:flex;align-items:center;gap:4px;margin-bottom:8px;">
@@ -793,37 +777,40 @@
                 <span style="font-size:9px;color:var(--muted);font-weight:600;">BYD Stats</span>
               </div>
               <div style="font-size:36px;font-weight:800;letter-spacing:-1px;line-height:1;">72<span style="font-size:14px;opacity:.5">%</span></div>
-              <div style="font-size:9px;color:#2ecc71;margin-top:4px;">⚡ 충전 중</div>
-              <div style="font-size:8px;color:var(--muted);margin-top:2px;">3분 전</div>
+              <div style="font-size:9px;color:#2ecc71;margin-top:4px;">⚡ <span class="ko">충전 중</span><span class="en">Charging</span></div>
+              <div style="font-size:8px;color:var(--muted);margin-top:2px;"><span class="ko">3분 전</span><span class="en">3 min ago</span></div>
             </div>
             <div class="widget-medium-divider"></div>
             <div class="widget-medium-right">
               <div class="wstat">
                 <div class="wstat-dot" style="background:#3d7fff;"></div>
-                <div class="wstat-text"><div class="wv">182 km</div><div class="wl">주행가능</div></div>
+                <div class="wstat-text"><div class="wv">182 km</div><div class="wl"><span class="ko">주행가능</span><span class="en">Range</span></div></div>
               </div>
               <div class="wstat">
                 <div class="wstat-dot" style="background:#2ecc71;"></div>
-                <div class="wstat-text"><div class="wv">7.4 kW</div><div class="wl">충전 중</div></div>
+                <div class="wstat-text"><div class="wv">7.4 kW</div><div class="wl"><span class="ko">충전 중</span><span class="en">Charging</span></div></div>
               </div>
               <div class="wstat">
                 <div class="wstat-dot" style="background:#f5a623;"></div>
-                <div class="wstat-text"><div class="wv">₩14,832</div><div class="wl">이번 달</div></div>
+                <div class="wstat-text"><div class="wv">₩14,832</div><div class="wl"><span class="ko">이번 달</span><span class="en">Monthly</span></div></div>
               </div>
             </div>
           </div>
         </div>
       </div>
       <div class="showcase-text">
-        <div class="section-label">위젯 & 라이브 액티비티</div>
-        <h3>앱을 열지 않고도<br />실시간 상태 확인</h3>
-        <p>홈 화면 위젯과 Dynamic Island 라이브 액티비티로 언제 어디서든 차량 상태를 확인하세요.</p>
+        <div class="section-label"><span class="ko">위젯 &amp; 라이브 액티비티</span><span class="en">Widgets &amp; Live Activity</span></div>
+        <h3><span class="ko">앱을 열지 않고도<br />실시간 상태 확인</span><span class="en">Monitor status<br />without opening the app</span></h3>
+        <p>
+          <span class="ko">홈 화면 위젯과 Dynamic Island 라이브 액티비티로 언제 어디서든 차량 상태를 확인하세요.</span>
+          <span class="en">Check vehicle status anytime with home screen widgets and Dynamic Island Live Activity — no need to open the app.</span>
+        </p>
         <ul>
-          <li><span class="check">✓</span>Small / Medium 위젯 — 배터리 · 충전 전력 · 이번 달 비용 (iOS · Android)</li>
-          <li><span class="check">✓</span>라이브 액티비티 — 주행·충전 중 Dynamic Island 실시간 표시 (iOS)</li>
-          <li><span class="check">✓</span>잠금화면 — 배터리 진행바 · kW · 주행가능거리 · 경과 시간 (iOS)</li>
-          <li><span class="check">✓</span>백그라운드 수집 — iOS: Silent Push + BGAppRefresh / Android: FCM + Foreground Service</li>
-          <li><span class="check">✓</span>다크 모드 완벽 지원</li>
+          <li><span class="check">✓</span><span class="ko">Small / Medium 위젯 — 배터리 · 충전 전력 · 이번 달 비용 (iOS · Android)</span><span class="en">Small / Medium widgets — battery, charging power, monthly cost (iOS · Android)</span></li>
+          <li><span class="check">✓</span><span class="ko">라이브 액티비티 — 주행·충전 중 Dynamic Island 실시간 표시 (iOS)</span><span class="en">Live Activity — real-time Dynamic Island display while driving or charging (iOS)</span></li>
+          <li><span class="check">✓</span><span class="ko">잠금화면 — 배터리 진행바 · kW · 주행가능거리 · 경과 시간 (iOS)</span><span class="en">Lock screen — battery bar, kW, range, elapsed time (iOS)</span></li>
+          <li><span class="check">✓</span><span class="ko">백그라운드 수집 — iOS: Silent Push + BGAppRefresh / Android: FCM + Foreground Service</span><span class="en">Background collection — iOS: Silent Push + BGAppRefresh / Android: FCM + Foreground Service</span></li>
+          <li><span class="check">✓</span><span class="ko">다크 모드 완벽 지원</span><span class="en">Full dark mode support</span></li>
         </ul>
       </div>
     </div>
@@ -835,39 +822,42 @@
 
 <!-- VEHICLES -->
 <div id="vehicles" class="section-wrap">
-  <div class="section-label">지원 차종</div>
-  <h2 class="section-title">한국 출시 BYD 전 차종 지원</h2>
-  <p class="section-desc" style="margin-bottom:40px;">차종별 배터리 용량을 자동 설정해 정확한 kWh와 전비를 계산합니다.</p>
+  <div class="section-label"><span class="ko">지원 차종</span><span class="en">Supported Models</span></div>
+  <h2 class="section-title"><span class="ko">한국 출시 BYD 전 차종 지원</span><span class="en">All BYD Models Available in Korea</span></h2>
+  <p class="section-desc" style="margin-bottom:40px;">
+    <span class="ko">차종별 배터리 용량을 자동 설정해 정확한 kWh와 전비를 계산합니다.</span>
+    <span class="en">Battery capacity is automatically configured by model for precise kWh and efficiency calculations.</span>
+  </p>
 
   <div class="vehicles-grid">
     <div class="vehicle-card">
       <div class="vehicle-emoji">🚙</div>
-      <div class="vehicle-name">아토 3</div>
+      <div class="vehicle-name"><span class="ko">아토 3</span><span class="en">Atto 3</span></div>
       <div class="vehicle-battery">60.48 kWh</div>
     </div>
     <div class="vehicle-card">
       <div class="vehicle-emoji">🐬</div>
-      <div class="vehicle-name">돌핀 Standard</div>
+      <div class="vehicle-name"><span class="ko">돌핀 Standard</span><span class="en">Dolphin Standard</span></div>
       <div class="vehicle-battery">44.9 kWh</div>
     </div>
     <div class="vehicle-card">
       <div class="vehicle-emoji">🐬</div>
-      <div class="vehicle-name">돌핀 Extended</div>
+      <div class="vehicle-name"><span class="ko">돌핀 Extended</span><span class="en">Dolphin Extended</span></div>
       <div class="vehicle-battery">60.4 kWh</div>
     </div>
     <div class="vehicle-card">
       <div class="vehicle-emoji">🦭</div>
-      <div class="vehicle-name">씰</div>
+      <div class="vehicle-name"><span class="ko">씰</span><span class="en">Seal</span></div>
       <div class="vehicle-battery">82.56 kWh</div>
     </div>
     <div class="vehicle-card">
       <div class="vehicle-emoji">🦁</div>
-      <div class="vehicle-name">씨라이언 7</div>
+      <div class="vehicle-name"><span class="ko">씨라이언 7</span><span class="en">Sea Lion 7</span></div>
       <div class="vehicle-battery">82.56 kWh</div>
     </div>
     <div class="vehicle-card">
       <div class="vehicle-emoji">🦁</div>
-      <div class="vehicle-name">씨라이언 6</div>
+      <div class="vehicle-name"><span class="ko">씨라이언 6</span><span class="en">Sea Lion 6</span></div>
       <div class="vehicle-battery">87.23 kWh</div>
     </div>
   </div>
@@ -877,9 +867,12 @@
 
 <!-- HOW IT WORKS -->
 <div id="how" class="section-wrap">
-  <div class="section-label">시작하기</div>
-  <h2 class="section-title">플랫폼을 선택하세요</h2>
-  <p class="section-desc" style="margin-bottom:48px;">iOS와 Android 모두 동일한 기능을 제공합니다.</p>
+  <div class="section-label"><span class="ko">시작하기</span><span class="en">Get Started</span></div>
+  <h2 class="section-title"><span class="ko">플랫폼을 선택하세요</span><span class="en">Choose your platform</span></h2>
+  <p class="section-desc" style="margin-bottom:48px;">
+    <span class="ko">iOS와 Android 모두 동일한 기능을 제공합니다.</span>
+    <span class="en">Both iOS and Android offer the same features.</span>
+  </p>
 
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:48px;">
 
@@ -895,21 +888,21 @@
       <div class="steps" style="grid-template-columns:1fr;gap:16px;">
         <div class="step">
           <div class="step-num">1</div>
-          <h3>소스 클론</h3>
-          <p>GitHub에서 소스를 받아 Xcode로 빌드 후 iPhone에 설치합니다.</p>
+          <h3><span class="ko">소스 클론</span><span class="en">Clone the Source</span></h3>
+          <p><span class="ko">GitHub에서 소스를 받아 Xcode로 빌드 후 iPhone에 설치합니다.</span><span class="en">Clone from GitHub, build with Xcode, and install on your iPhone.</span></p>
         </div>
         <div class="step">
           <div class="step-num">2</div>
-          <h3>BYD 계정 로그인</h3>
-          <p>설정 탭에서 BYD 공식 앱 계정(이메일·비밀번호)을 입력합니다.</p>
+          <h3><span class="ko">BYD 계정 로그인</span><span class="en">Sign In with BYD Account</span></h3>
+          <p><span class="ko">설정 탭에서 BYD 공식 앱 계정(이메일·비밀번호)을 입력합니다.</span><span class="en">Enter your BYD app credentials (email &amp; password) in the Settings tab.</span></p>
         </div>
         <div class="step">
           <div class="step-num">3</div>
-          <h3>자동 수집 시작</h3>
-          <p>차종·요금 설정 후 5분마다 차량 데이터를 자동 수집합니다.</p>
+          <h3><span class="ko">자동 수집 시작</span><span class="en">Automatic Data Collection</span></h3>
+          <p><span class="ko">차종·요금 설정 후 5분마다 차량 데이터를 자동 수집합니다.</span><span class="en">After setting up your vehicle and rate plan, data is collected automatically every 5 minutes.</span></p>
         </div>
       </div>
-      <a href="https://github.com/GeyuongGongPark/BYDstatus" class="btn-secondary" target="_blank" style="margin-top:24px;width:100%;justify-content:center;">GitHub에서 소스 받기 →</a>
+      <a href="https://github.com/GeyuongGongPark/BYDstatus" class="btn-secondary" target="_blank" style="margin-top:24px;width:100%;justify-content:center;"><span class="ko">GitHub에서 소스 받기 →</span><span class="en">Get Source from GitHub →</span></a>
     </div>
 
     <!-- Android -->
@@ -924,22 +917,22 @@
       <div class="steps" style="grid-template-columns:1fr;gap:16px;">
         <div class="step">
           <div class="step-num">1</div>
-          <h3>APK 다운로드</h3>
-          <p>아래 버튼으로 최신 APK를 받고, 알 수 없는 앱 설치를 허용한 뒤 실행합니다.</p>
+          <h3><span class="ko">APK 다운로드</span><span class="en">Download APK</span></h3>
+          <p><span class="ko">아래 버튼으로 최신 APK를 받고, 알 수 없는 앱 설치를 허용한 뒤 실행합니다. 이후 앱 내 업데이트로 자동 갱신됩니다.</span><span class="en">Download the latest APK below and allow installation from unknown sources. Future updates are handled in-app automatically.</span></p>
         </div>
         <div class="step">
           <div class="step-num">2</div>
-          <h3>BYD 계정 로그인</h3>
-          <p>설정 탭에서 BYD 공식 앱 계정(이메일·비밀번호)을 입력합니다.</p>
+          <h3><span class="ko">BYD 계정 로그인</span><span class="en">Sign In with BYD Account</span></h3>
+          <p><span class="ko">설정 탭에서 BYD 공식 앱 계정(이메일·비밀번호)을 입력합니다.</span><span class="en">Enter your BYD app credentials (email &amp; password) in the Settings tab.</span></p>
         </div>
         <div class="step">
           <div class="step-num">3</div>
-          <h3>자동 수집 시작</h3>
-          <p>차종·요금 설정 후 5분마다 차량 데이터를 자동 수집합니다.</p>
+          <h3><span class="ko">자동 수집 시작</span><span class="en">Automatic Data Collection</span></h3>
+          <p><span class="ko">차종·요금 설정 후 5분마다 차량 데이터를 자동 수집합니다.</span><span class="en">After setting up your vehicle and rate plan, data is collected automatically every 5 minutes.</span></p>
         </div>
       </div>
       <a id="android-download-how" href="https://github.com/GeyuongGongPark/BYDstatus/releases/latest" class="btn-android" target="_blank" style="margin-top:24px;width:100%;justify-content:center;">
-        APK 다운로드
+        <span class="ko">APK 다운로드</span><span class="en">Download APK</span>
         <span id="android-version-how" style="opacity:.7;font-size:13px;"></span>
       </a>
     </div>
@@ -950,13 +943,13 @@
     <div class="steps">
       <div class="step" style="background:transparent;border:none;padding:0;">
         <div class="step-num">4</div>
-        <h3>차종·요금 설정</h3>
-        <p>보유 차종과 전기요금(원/kWh)을 입력하면 정확한 충전 비용과 전비가 계산됩니다.</p>
+        <h3><span class="ko">차종·요금 설정</span><span class="en">Configure Vehicle &amp; Rate</span></h3>
+        <p><span class="ko">보유 차종과 전기요금(원/kWh)을 입력하면 정확한 충전 비용과 전비가 계산됩니다.</span><span class="en">Enter your vehicle model and electricity rate (₩/kWh) for accurate charging cost and efficiency calculations.</span></p>
       </div>
       <div class="step" style="background:transparent;border:none;padding:0;">
         <div class="step-num">5</div>
-        <h3>충전·주행 자동 기록</h3>
-        <p>충전과 주행 시작·종료를 자동 감지해 세션별로 이력에 기록됩니다.</p>
+        <h3><span class="ko">충전·주행 자동 기록</span><span class="en">Automatic Session Recording</span></h3>
+        <p><span class="ko">충전과 주행 시작·종료를 자동 감지해 세션별로 이력에 기록됩니다.</span><span class="en">Charging and driving sessions are automatically detected and recorded in your history.</span></p>
       </div>
     </div>
   </div>
@@ -966,32 +959,55 @@
 
 <!-- CTA -->
 <div class="cta-section">
-  <h2>지금 바로<br /><span class="cta-gradient">시작해보세요</span></h2>
-  <p>완전 오픈 소스입니다. 코드를 직접 확인하고 수정해서 사용할 수 있습니다.</p>
+  <h2>
+    <span class="ko">지금 바로<br /><span class="cta-gradient">시작해보세요</span></span>
+    <span class="en">Get started<br /><span class="cta-gradient">today</span></span>
+  </h2>
+  <p>
+    <span class="ko">완전 오픈 소스입니다. 코드를 직접 확인하고 수정해서 사용할 수 있습니다.</span>
+    <span class="en">Fully open source. Inspect the code, fork it, or modify it to suit your needs.</span>
+  </p>
   <div class="hero-actions" style="justify-content:center;">
     <a id="android-download-cta" href="https://github.com/GeyuongGongPark/BYDstatus/releases/latest" class="btn-android" target="_blank">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.523 15.341 14.87 10.8A3.003 3.003 0 0 0 12 9.25c-1.117 0-2.093.613-2.613 1.52l-2.714 4.571A8.96 8.96 0 0 1 3 9.25C3 4.7 7.026 1 12 1s9 3.7 9 8.25c0 2.37-.93 4.52-2.477 6.091zM12 23l-4.5-7.795h9L12 23z"/></svg>
-      Android APK 다운로드
+      <span class="ko">Android APK 다운로드</span><span class="en">Download Android APK</span>
     </a>
     <a href="https://github.com/GeyuongGongPark/BYDstatus" class="btn-secondary" target="_blank">
       GitHub →
     </a>
   </div>
-  <p class="cta-note">iOS 17+ · Android 8.0+ · BYD 한국 계정 필요 · 완전 무료</p>
+  <p class="cta-note">
+    <span class="ko">iOS 17+ · Android 8.0+ · BYD 한국 계정 필요 · 완전 무료</span>
+    <span class="en">iOS 17+ · Android 8.0+ · BYD account required · Completely free</span>
+  </p>
 </div>
 
 <!-- FOOTER -->
 <footer>
   <div class="footer-links">
     <a href="https://github.com/GeyuongGongPark/BYDstatus" target="_blank">GitHub</a>
-    <a href="https://github.com/GeyuongGongPark/BYDstatus/issues" target="_blank">버그 제보</a>
-    <a href="privacy.html">개인정보 처리방침</a>
+    <a href="https://github.com/GeyuongGongPark/BYDstatus/issues" target="_blank"><span class="ko">버그 제보</span><span class="en">Report a Bug</span></a>
+    <a href="privacy.html"><span class="ko">개인정보 처리방침</span><span class="en">Privacy Policy</span></a>
   </div>
-  <div>BYDstatus · iOS &amp; Android · 오픈 소스 프로젝트 · BYD 공식 제품 아님</div>
+  <div>
+    <span class="ko">BYDstatus · iOS &amp; Android · 오픈 소스 프로젝트 · BYD 공식 제품 아님</span>
+    <span class="en">BYDstatus · iOS &amp; Android · Open Source · Not affiliated with BYD</span>
+  </div>
 </footer>
 
 <script>
-  // GitHub 최신 릴리즈에서 APK URL 자동 연결
+  // Language toggle
+  function setLang(l) {
+    document.documentElement.setAttribute('data-lang', l);
+    document.documentElement.setAttribute('lang', l === 'ko' ? 'ko' : 'en');
+    document.getElementById('btn-ko').classList.toggle('active', l === 'ko');
+    document.getElementById('btn-en').classList.toggle('active', l === 'en');
+    localStorage.setItem('bydstats-lang', l);
+  }
+  const savedLang = localStorage.getItem('bydstats-lang');
+  if (savedLang && savedLang !== 'ko') setLang(savedLang);
+
+  // GitHub latest release — APK URL & version
   fetch('https://api.github.com/repos/GeyuongGongPark/BYDstatus/releases/latest')
     .then(r => r.json())
     .then(data => {
