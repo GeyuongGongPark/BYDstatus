@@ -39,6 +39,17 @@ jobs:
       - name: Rename APK
         run: cp androidApp/build/outputs/apk/release/androidApp-release.apk BYDStats-${{ github.ref_name }}.apk
 
+      - name: Extract release notes from RELEASE_NOTES.md
+        run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+          awk "BEGIN{f=0} /^# v${VERSION}/{f=1; next} f && /^---$/{exit} f && /^# v[0-9]/{exit} f{print}" \
+            RELEASE_NOTES.md > release_body.md
+          # 내용이 없으면 태그 이름을 fallback으로
+          if [ ! -s release_body.md ]; then
+            echo "BYD Stats ${{ github.ref_name }}" > release_body.md
+          fi
+
       - name: Create or Update GitHub Release
         run: |
           if gh release view "${{ github.ref_name }}" > /dev/null 2>&1; then
@@ -46,8 +57,8 @@ jobs:
               "BYDStats-${{ github.ref_name }}.apk" --clobber
           else
             gh release create "${{ github.ref_name }}" \
-              --generate-notes \
               --title "BYD Stats ${{ github.ref_name }}" \
+              --notes-file release_body.md \
               "BYDStats-${{ github.ref_name }}.apk"
           fi
         env:
