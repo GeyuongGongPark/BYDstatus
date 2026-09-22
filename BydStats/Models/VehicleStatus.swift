@@ -25,8 +25,9 @@ struct VehicleStatus {
     // 1. 주행 중 → 충전 아님
     // 2. gl > 0 → 충전
     // 3. chargingState API == true → 충전
-    // 4. API false인데 SOC 상승 → 충전 (API 지연 대응)
-    // 5. API 실패(nil): SOC 상승이면 시작, 이전 충전 + SOC 비하락이면 유지
+    // 4. SOC 상승 → 충전 (API 지연 / 버그 대응)
+    // 5. 이전 충전 중이었고 SOC 비하락 → 충전 유지
+    //    (API false 포함: 완속 충전 시 API가 false를 반환하는 경우 대응)
     func withChargingResolved(previous: VehicleStatus?, apiIsCharging: Bool?) -> VehicleStatus {
         var copy = self
         copy.resolvedCharging = resolveIsCharging(
@@ -53,8 +54,6 @@ private func resolveIsCharging(
     if instantPowerW > 0 { return true }
     if apiIsCharging == true { return true }
     let socUp = previousSoc.map { batteryPercentage > $0 } ?? false
-    if apiIsCharging == false { return socUp }
-    // API 실패(nil)
     if socUp { return true }
     if previousCharging, let prev = previousSoc, batteryPercentage >= prev { return true }
     return false

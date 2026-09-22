@@ -5,10 +5,11 @@ package com.ggpark.bydstats.model
  *
  * 우선순위:
  * 1. 주행 중이면 충전 아님 (회생제동)
- * 2. gl(instantPowerW) > 0
- * 3. chargingState API == true
- * 4. API가 false여도 SOC가 올랐으면 1회 지연으로 충전 (API 지연)
- * 5. API 실패(null) 시: SOC 상승으로 시작, 이전 충전 + SOC 비하락으로 유지
+ * 2. gl(instantPowerW) > 0 → 충전
+ * 3. chargingState API == true → 충전
+ * 4. SOC 상승 → 충전 (API 지연 / 버그 대응)
+ * 5. 이전 충전 중이었고 SOC 비하락 → 충전 유지
+ *    (API false 포함: 완속 충전 시 API가 false를 반환하는 경우 대응)
  */
 fun resolveIsCharging(
     isDriving: Boolean,
@@ -23,8 +24,6 @@ fun resolveIsCharging(
     if (apiIsCharging == true) return true
 
     val socUp = previousSoc != null && batteryPercentage > previousSoc
-    if (apiIsCharging == false) return socUp
-
     if (socUp) return true
     if (previousCharging && previousSoc != null && batteryPercentage >= previousSoc) return true
     return false
