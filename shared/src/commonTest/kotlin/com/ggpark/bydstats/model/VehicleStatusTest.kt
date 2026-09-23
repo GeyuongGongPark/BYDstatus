@@ -39,6 +39,25 @@ class VehicleStatusTest {
         assertFalse(s.isDriving)
     }
 
+    @Test fun `not isDriving when powerGear 3 but charging (speed=0, instantPowerW positive)`() {
+        // BYD가 충전 중에도 powerGear=3을 유지하는 케이스 - 정차 + 충전기 연결이므로 주행 아님
+        val s = VehicleStatus(powerGear = 3, speed = 0.0, instantPowerW = 5_000.0)
+        assertFalse(s.isDriving)
+        assertTrue(s.isCharging)
+    }
+
+    @Test fun `not isDriving when DC fast charging with powerGear 3`() {
+        val s = VehicleStatus(powerGear = 3, speed = 0.0, instantPowerW = 25_000.0)
+        assertFalse(s.isDriving)
+        assertTrue(s.isCharging)
+    }
+
+    @Test fun `isDriving when powerGear 3 and speed 0 but no charging (D단 신호 대기)`() {
+        val s = VehicleStatus(powerGear = 3, speed = 0.0, instantPowerW = -700.0)
+        assertTrue(s.isDriving)
+        assertFalse(s.isCharging)
+    }
+
     // ─── isCharging ──────────────────────────────────────────────────────────
 
     @Test fun `isCharging when power positive and not driving`() {

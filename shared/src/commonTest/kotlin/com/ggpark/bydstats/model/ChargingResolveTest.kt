@@ -45,13 +45,28 @@ class ChargingResolveTest {
         )
     }
 
-    @Test fun `api false and soc unchanged is not charging`() {
-        assertFalse(
+    @Test fun `api false but previously charging and soc flat keeps charging`() {
+        // API false = "불확실"로 취급: 이전 충전 중 + SOC 비하락이면 충전 유지
+        assertTrue(
             resolveIsCharging(
                 isDriving = false,
                 instantPowerW = 0.0,
                 batteryPercentage = 50,
                 previousCharging = true,
+                previousSoc = 50,
+                apiIsCharging = false,
+            )
+        )
+    }
+
+    @Test fun `api false and not previously charging and soc flat is not charging`() {
+        // 이전에 충전 중이 아니었고 SOC 변화도 없으면 충전 아님
+        assertFalse(
+            resolveIsCharging(
+                isDriving = false,
+                instantPowerW = 0.0,
+                batteryPercentage = 50,
+                previousCharging = false,
                 previousSoc = 50,
                 apiIsCharging = false,
             )

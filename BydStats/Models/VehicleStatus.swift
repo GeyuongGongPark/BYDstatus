@@ -14,7 +14,11 @@ struct VehicleStatus {
     /// withChargingResolved()로 설정되는 보정 충전 상태. nil이면 gl 기반 fallback 사용.
     var resolvedCharging: Bool? = nil
 
-    var isDriving: Bool { powerGear == 3 || speed > 0.0 }
+    var isDriving: Bool {
+        if speed > 0 { return true }          // 이동 중
+        if instantPowerW > 0 { return false } // 정차 + 충전기 연결 (powerGear=3이어도 충전 중)
+        return powerGear == 3                  // D단 신호 대기 등
+    }
     /// gl > 0이거나 chargingState API/SOC 상승으로 보정된 충전 상태
     var isCharging: Bool { resolvedCharging ?? (instantPowerW > 0 && !isDriving) }
     var instantPowerKw: Double { instantPowerW / 1000.0 }

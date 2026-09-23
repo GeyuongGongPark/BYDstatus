@@ -11,5 +11,11 @@
 - 수정: `apiIsCharging` 값에 무관하게 SOC 상승 → 충전 시작, 이전 충전 중 + SOC 비하락 → 충전 유지로 통일.
 - API false는 "불확실"로 취급하고 SOC 패턴으로만 판단. API true/gl>0만 확실한 양성 신호.
 
+## 충전 중 powerGear=3이어도 isDriving=true로 판정하지 말 것
+- BYD 차량은 완속·급속충전 중에도 powerGear=3을 유지한다.
+- `isDriving = powerGear == 3 || speed > 0`이면 충전기에 꽂혀 있어도 isDriving=true → 충전 세션 생성 불가.
+- 올바른 우선순위: speed>0 → 주행, instantPowerW>0 → 충전(isDriving=false), 나머지 → powerGear==3 판단.
+- 이 패턴은 iOS·Android 공통 적용 필요.
+
 ## AOS 충전 목록은 진행 중 세션을 숨기지 말 것
 - `endTime == null` 필터는 “기록이 없다”와 구분되지 않는다. iOS는 미완료를 보여 준다.
