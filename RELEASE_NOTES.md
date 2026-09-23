@@ -1,3 +1,17 @@
+# v0.6.7 릴리즈 노트
+
+## iOS · Android
+
+### 버그 수정
+
+#### 충전 중 주행 세션으로 오기록되는 문제 수정
+- 완속·급속충전기에 꽂혀 있어도 BYD API가 `powerGear=3`을 유지해 `isDriving=true`로 잘못 판정되던 문제 수정
+- **원인**: `isDriving = powerGear == 3 || speed > 0` 로직에서 충전기 연결 상태를 구분하지 못함
+- **영향**: 충전 중 `isDriving=true` → `isCharging=false` → 충전 세션 생성 불가, 충전 기록 누락
+- **수정**: `speed > 0` → 주행, `instantPowerW > 0` → 충전(isDriving=false), 나머지 → powerGear로 판단
+
+---
+
 # v0.6.6 릴리즈 노트 (Android)
 
 ## 버그 수정
