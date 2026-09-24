@@ -7,6 +7,7 @@ import com.ggpark.bydstats.api.BydApiClient
 import com.ggpark.bydstats.api.BydError
 import com.ggpark.bydstats.model.VehicleStatus
 import com.ggpark.bydstats.model.withChargingResolved
+import com.ggpark.bydstats.model.withDrivingResolved
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -78,6 +79,9 @@ class DataCollector(
                 AppLogger.log("poll skip: soc=0", TAG)
                 return
             }
+
+            // 회생제동 보정: withChargingResolved 이전에 isDriving 재판정
+            status = status.withDrivingResolved(_currentStatus.value)
 
             // gl=0 야간 완속 대비: 주차 중이면 chargingState API로 충전 여부 보완
             var apiCharging: Boolean? = null

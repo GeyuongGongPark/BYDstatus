@@ -204,6 +204,9 @@ final class AppState {
             // soc=0은 API 미준비로 간주 — Live Activity 포함 UI 반영 및 세션 기록 건너뜀
             guard status.batteryPercentage > 0 else { return }
 
+            // 회생제동 보정: withChargingResolved 이전에 isDriving 재판정
+            status = status.withDrivingResolved(previous: currentStatus)
+
             // 주차 중: chargingState API로 gl=0 완속 충전 보완
             var apiIsCharging: Bool? = nil
             if !status.isDriving {

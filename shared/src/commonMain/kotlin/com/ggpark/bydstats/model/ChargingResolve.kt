@@ -29,6 +29,18 @@ fun resolveIsCharging(
     return false
 }
 
+/**
+ * 회생제동 판별: 이전 폴링에서 주행 중이었고 현재 speed=0 + gl>0이면
+ * 충전기 연결이 아닌 회생제동으로 판단 → isDriving=true 유지.
+ * withChargingResolved() 이전에 호출할 것.
+ */
+fun VehicleStatus.withDrivingResolved(previous: VehicleStatus?): VehicleStatus {
+    val isRegenerativeBraking = previous?.isDriving == true &&
+        speed == 0.0 &&
+        instantPowerW > 0
+    return if (isRegenerativeBraking) copy(reportedDriving = true) else this
+}
+
 fun VehicleStatus.withChargingResolved(
     previous: VehicleStatus?,
     apiIsCharging: Boolean?,

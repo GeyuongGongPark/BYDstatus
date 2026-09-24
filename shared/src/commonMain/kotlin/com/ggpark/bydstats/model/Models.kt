@@ -13,8 +13,10 @@ data class VehicleStatus(
     val totalMileage: Double = 0.0,
     /** gl=0이어도 chargingState/SOC 보조 판정으로 충전 중일 때 true */
     val reportedCharging: Boolean = false,
+    /** withDrivingResolved()로 설정. null이면 computed 사용 */
+    val reportedDriving: Boolean? = null,
 ) {
-    val isDriving: Boolean get() = when {
+    val isDriving: Boolean get() = reportedDriving ?: when {
         speed > 0.0        -> true   // 이동 중
         instantPowerW > 0  -> false  // 정차 + 충전기 연결 (powerGear=3이어도 충전 중)
         else               -> powerGear == 3  // D단 신호 대기 등
