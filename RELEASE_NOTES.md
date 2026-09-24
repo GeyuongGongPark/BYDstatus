@@ -10,6 +10,11 @@
 - **영향**: 충전 중 `isDriving=true` → `isCharging=false` → 충전 세션 생성 불가, 충전 기록 누락
 - **수정**: `speed > 0` → 주행, `instantPowerW > 0` → 충전(isDriving=false), 나머지 → powerGear로 판단
 
+#### 회생제동 중 충전 세션으로 오기록되는 문제 수정
+- 주행 중 감속하면서 speed=0이 되는 순간 `gl`이 양수(회생제동)이면 충전기 연결로 오판 → 충전 세션이 잠깐 기록되던 버그 수정
+- **원인**: `instantPowerW > 0 → isDriving=false` 로직이 충전기 연결과 회생제동을 구분하지 못함
+- **수정**: 이전 폴링에서 주행 중이었고 `speed=0` + `gl>0`이면 회생제동으로 판단 → `isDriving=true` 유지
+
 ---
 
 # v0.6.6 릴리즈 노트 (Android)

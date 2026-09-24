@@ -11,6 +11,12 @@
 - 수정: `apiIsCharging` 값에 무관하게 SOC 상승 → 충전 시작, 이전 충전 중 + SOC 비하락 → 충전 유지로 통일.
 - API false는 "불확실"로 취급하고 SOC 패턴으로만 판단. API true/gl>0만 확실한 양성 신호.
 
+## instantPowerW>0 → isDriving=false는 회생제동 케이스도 잡는다
+- 충전기 연결 판정을 위해 `instantPowerW > 0 → isDriving=false`를 추가하면, 주행 중 감속 시 speed=0이 되는 순간 gl이 양수(회생제동)이어도 isDriving=false → 충전 세션 오기록.
+- 충전기 연결과 회생제동 구분: "이전 폴링에서 주행 중 + speed=0 + gl>0"이면 회생제동.
+- 수정: `withDrivingResolved(previous)` 함수로 isDriving을 withChargingResolved 이전에 보정.
+- withDrivingResolved는 withChargingResolved 반드시 이전에 호출해야 한다. 순서가 바뀌면 효과 없음.
+
 ## 충전 중 powerGear=3이어도 isDriving=true로 판정하지 말 것
 - BYD 차량은 완속·급속충전 중에도 powerGear=3을 유지한다.
 - `isDriving = powerGear == 3 || speed > 0`이면 충전기에 꽂혀 있어도 isDriving=true → 충전 세션 생성 불가.
