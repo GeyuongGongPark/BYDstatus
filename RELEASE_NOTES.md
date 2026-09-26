@@ -1,3 +1,17 @@
+# v0.6.9 릴리즈 노트
+
+## iOS
+
+### 버그 수정
+
+#### 주행 세션이 7분 단위로 쪼개지는 문제 수정
+- 앱 백그라운드→포그라운드 전환 시 `startPolling`이 중복 호출되면서 복수의 폴링 Task가 동시 실행되던 버그 수정
+- **원인**: `DashboardView`의 `.task(id:)` modifier가 앱이 포그라운드로 복귀할 때마다 재실행 → `startPolling` 재호출 → 새 `SessionDetector` 생성 → 기존 주행 세션 컨텍스트 단절
+- **영향**: 로그에서 `vehicleRealTimeRequest`가 쌍으로 발생, 폴링 간격이 5분으로 유지(주행 중 1분이어야 함), 주행 세션이 ~7분 단위로 분리 기록됨
+- **수정**: `startPolling`에서 이미 폴링 중이면 skip, `SessionDetector` 재사용. VIN 변경 시에만 `stopPolling` 후 재시작
+
+---
+
 # v0.6.8 릴리즈 노트
 
 ## iOS · Android

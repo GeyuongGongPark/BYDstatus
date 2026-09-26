@@ -119,6 +119,8 @@ final class AppState {
     // MARK: - 차량 선택
 
     func selectVin(_ vin: String) {
+        // VIN 변경 시 기존 폴링 중단 (startPolling 중복 방지 guard 우회)
+        stopPolling()
         selectedVin = vin
         KeychainHelper.save(vin, forKey: Keys.vin)
     }
@@ -148,15 +150,18 @@ final class AppState {
                       getRateAt: @escaping (Date) -> Double,
                       batteryCapacityKwh: Double, gpsEnabled: Bool = true) {
         guard let svc = service, let vin = selectedVin else { return }
-        // 기존 폴링이 있으면 취소 후 재시작 (VIN 변경 등)
-        pollingTask?.cancel()
-        pollingTask = nil
+        // 이미 폴링 중이면 중복 시작 방지 (앱 foreground 복귀 시 재호출 대응)
+        guard pollingTask == nil else { return }
 
-        sessionDetector = SessionDetector(modelContext: modelContext,
-                                          getRateAt: getRateAt,
-                                          batteryCapacityKwh: batteryCapacityKwh,
-                                          gpsEnabled: gpsEnabled)
+        // SessionDetector는 세션 컨텍스트 유지를 위해 재사용
+        if sessionDetector == nil {
+            sessionDetector = SessionDetector(modelContext: modelContext,
+                                              getRateAt: getRateAt,
+                                              batteryCapacityKwh: batteryCapacityKwh,
+                                              gpsEnabled: gpsEnabled)
+        }
         pollingTask = Task {
+            defer { pollingTask = nil }
             // 시작 즉시 1회 폴링
             await doPoll(service: svc, vin: vin, modelContext: modelContext)
             while !Task.isCancelled {

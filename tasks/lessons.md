@@ -23,5 +23,12 @@
 - 올바른 우선순위: speed>0 → 주행, instantPowerW>0 → 충전(isDriving=false), 나머지 → powerGear==3 판단.
 - 이 패턴은 iOS·Android 공통 적용 필요.
 
+## startPolling 중복 호출은 세션을 쪼갠다
+- SwiftUI `.task(id:)` modifier는 앱 백그라운드→포그라운드 복귀 시마다 재실행된다.
+- `startPolling`이 재호출될 때마다 새 `SessionDetector`가 생성 → 기존 열린 세션 컨텍스트 단절 → 세션 분리.
+- 방어: `startPolling`에서 `pollingTask`가 이미 존재하면 skip. `SessionDetector`는 `??` 연산자로 재사용.
+- VIN 변경 시에만 `stopPolling()` 후 `startPolling()` 순서로 명시적 재시작.
+- iOS 로그에서 `vehicleRealTimeRequest`가 쌍으로 보이면 polling Task가 복수 실행 중이라는 신호.
+
 ## AOS 충전 목록은 진행 중 세션을 숨기지 말 것
 - `endTime == null` 필터는 “기록이 없다”와 구분되지 않는다. iOS는 미완료를 보여 준다.
