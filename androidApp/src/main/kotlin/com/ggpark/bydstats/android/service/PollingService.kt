@@ -55,6 +55,7 @@ class PollingService : Service() {
 
     companion object {
         private const val ACTION_START    = "com.ggpark.bydstats.START"
+        private const val ACTION_RESTART  = "com.ggpark.bydstats.RESTART"
         private const val ACTION_STOP     = "com.ggpark.bydstats.STOP"
         private const val ACTION_POLL_NOW = "com.ggpark.bydstats.POLL_NOW"
         private const val CHANNEL_ID    = "byd_polling"
@@ -74,11 +75,10 @@ class PollingService : Service() {
         }
 
         fun restart(context: Context) {
-            // stop+start 분리 시 타이밍 이슈 → ACTION_START 하나만 전송
-            // onStartCommand에서 기존 collector 정리 후 재시작
+            // 설정 변경 등 의도적 재시작 → ACTION_RESTART (중복 방지 guard 우회)
             ContextCompat.startForegroundService(
                 context,
-                Intent(context, PollingService::class.java).apply { action = ACTION_START }
+                Intent(context, PollingService::class.java).apply { action = ACTION_RESTART }
             )
         }
 
@@ -100,6 +100,15 @@ class PollingService : Service() {
         // intent == null: START_STICKY 재시작 → ACTION_START로 처리
         when (intent?.action ?: ACTION_START) {
             ACTION_START -> {
+                startForeground(NOTIF_ID, buildNotification(null, null))
+                // 이미 실행 중이면 중복 시작 방지 (앱 재시작·시스템 재시작 시 재호출 대응)
+                if (collectingJob?.isActive == true) return START_STICKY
+                dataCollector?.stop()
+                dataCollector = null
+                startCollecting()
+            }
+            ACTION_RESTART -> {
+                // 설정 변경 등 의도적 재시작 — guard 없이 무조건 재시작
                 startForeground(NOTIF_ID, buildNotification(null, null))
                 dataCollector?.stop()
                 dataCollector = null

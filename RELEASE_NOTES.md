@@ -1,14 +1,15 @@
 # v0.6.9 릴리즈 노트
 
-## iOS
+## iOS · Android
 
 ### 버그 수정
 
-#### 주행 세션이 7분 단위로 쪼개지는 문제 수정
-- 앱 백그라운드→포그라운드 전환 시 `startPolling`이 중복 호출되면서 복수의 폴링 Task가 동시 실행되던 버그 수정
-- **원인**: `DashboardView`의 `.task(id:)` modifier가 앱이 포그라운드로 복귀할 때마다 재실행 → `startPolling` 재호출 → 새 `SessionDetector` 생성 → 기존 주행 세션 컨텍스트 단절
-- **영향**: 로그에서 `vehicleRealTimeRequest`가 쌍으로 발생, 폴링 간격이 5분으로 유지(주행 중 1분이어야 함), 주행 세션이 ~7분 단위로 분리 기록됨
-- **수정**: `startPolling`에서 이미 폴링 중이면 skip, `SessionDetector` 재사용. VIN 변경 시에만 `stopPolling` 후 재시작
+#### 폴링 중복 실행으로 세션이 쪼개지거나 삭제되는 문제 수정
+- 앱 재시작 시 폴링이 중복 실행되면서 복수의 SessionDetector가 동시에 세션을 처리하던 버그 수정
+- **iOS 원인**: `DashboardView`의 `.task(id:)` modifier가 포그라운드 복귀 시마다 재실행 → `startPolling` 중복 호출 → 새 `SessionDetector` 생성 → 기존 세션 컨텍스트 단절 → 주행 세션이 ~7분 단위로 분리
+- **Android 원인**: `PollingService.onStartCommand(ACTION_START)`가 앱 초기화 중 수차례 호출 → `startCollecting()`이 비동기(DataStore 로드)라 guard 없이 여러 DataCollector 동시 생성 → 직전 주행 세션이 2분 미만이면 삭제
+- **iOS 수정**: `startPolling`에서 `pollingTask`가 이미 존재하면 skip, `SessionDetector` 재사용
+- **Android 수정**: `ACTION_START`에서 `collectingJob.isActive`이면 skip. 설정 변경용 `ACTION_RESTART` 분리 (guard 없이 무조건 재시작)
 
 ---
 
