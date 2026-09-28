@@ -1,15 +1,33 @@
-# v0.6.9 릴리즈 노트
+# v0.6.10 릴리즈 노트
 
 ## iOS · Android
 
 ### 버그 수정
 
 #### 폴링 중복 실행으로 세션이 쪼개지거나 삭제되는 문제 수정
-- 앱 재시작 시 폴링이 중복 실행되면서 복수의 SessionDetector가 동시에 세션을 처리하던 버그 수정
-- **iOS 원인**: `DashboardView`의 `.task(id:)` modifier가 포그라운드 복귀 시마다 재실행 → `startPolling` 중복 호출 → 새 `SessionDetector` 생성 → 기존 세션 컨텍스트 단절 → 주행 세션이 ~7분 단위로 분리
-- **Android 원인**: `PollingService.onStartCommand(ACTION_START)`가 앱 초기화 중 수차례 호출 → `startCollecting()`이 비동기(DataStore 로드)라 guard 없이 여러 DataCollector 동시 생성 → 직전 주행 세션이 2분 미만이면 삭제
-- **iOS 수정**: `startPolling`에서 `pollingTask`가 이미 존재하면 skip, `SessionDetector` 재사용
-- **Android 수정**: `ACTION_START`에서 `collectingJob.isActive`이면 skip. 설정 변경용 `ACTION_RESTART` 분리 (guard 없이 무조건 재시작)
+- 앱 재시작 시 폴링이 중복 실행되면서 복수의 `SessionDetector`가 동시에 세션을 처리하던 버그 수정
+
+**iOS**
+- **원인 1**: `DashboardView`의 `.task(id:)` modifier가 포그라운드 복귀 시마다 재실행 → `startPolling` 중복 호출 → 새 `SessionDetector` 생성 → 기존 세션 컨텍스트 단절 → 주행 세션이 ~7분 단위로 분리
+- **원인 2**: 포그라운드 폴링 Task + BGAppRefresh가 거의 동시에 깨어나면 두 `SessionDetector` 인스턴스가 같은 DB에 동시 기록 → 중복 DataPoint·DrivingSession 삽입
+- **수정 1**: `startPolling`에서 `pollingTask`가 이미 존재하면 skip, `SessionDetector` 재사용
+- **수정 2**: 포그라운드 폴링 성공 시 `lastForegroundPollDate` 기록 → BGAppRefresh에서 5분 이내면 세션 처리 skip
+
+**Android**
+- **원인**: `PollingService.onStartCommand(ACTION_START)`가 앱 초기화 중 수차례 호출 → `startCollecting()`이 비동기(DataStore 로드)라 guard 없이 여러 `DataCollector` 동시 생성 → 직전 주행 세션이 2분 미만이면 삭제
+- **수정**: `ACTION_START`에서 `collectingJob.isActive`이면 skip. 설정 변경용 `ACTION_RESTART` 분리 (guard 없이 무조건 재시작)
+
+---
+
+# v0.6.9 릴리즈 노트
+
+## iOS
+
+### 버그 수정
+
+#### 폴링 중복 실행으로 주행 세션이 쪼개지는 문제 수정 (iOS 선행 배포)
+- `DashboardView`의 `.task(id:)` modifier가 포그라운드 복귀 시마다 재실행 → `startPolling` 중복 호출 → 새 `SessionDetector` 생성 → 기존 세션 컨텍스트 단절 → 주행 세션이 ~7분 단위로 분리
+- **수정**: `startPolling`에서 `pollingTask`가 이미 존재하면 skip, `SessionDetector` 재사용
 
 ---
 

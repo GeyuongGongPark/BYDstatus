@@ -1,3 +1,20 @@
+# fix(bgrefresh): BGAppRefresh + 포그라운드 폴링 동시 실행 세션 중복 방지 ✅ v0.6.10
+
+## 문제
+v0.6.9에서 `guard pollingTask == nil` 으로 포그라운드 Task 중복은 막았지만,
+BGAppRefresh(`BackgroundTaskManager.handleRefresh`)는 별개 코드 경로라 guard 없이 독립 실행됨.
+포그라운드 폴링 Task + BGAppRefresh가 거의 동시에 깨어나면 두 `SessionDetector` 인스턴스가
+같은 SwiftData 컨텍스트에 동시 DataPoint 삽입 → 중복 DrivingSession 생성.
+
+## 체크리스트
+- [x] `AppState.doPoll`: 성공 시 `UserDefaults["lastForegroundPollDate"] = Date()` 기록
+- [x] `BackgroundTaskManager.handleRefresh`: lastForegroundPollDate < 5분이면 세션 처리 skip
+- [x] RELEASE_NOTES.md v0.6.10 추가
+- [x] `androidApp/build.gradle.kts`: versionCode 10→11, versionName "0.6.9"→"0.6.10"
+- [x] iOS Info.plist 버전 bump (v0.6.9→v0.6.10, CFBundleVersion 14→15)
+
+---
+
 # fix(polling): 폴링 중복 실행으로 세션 쪼개짐/삭제 수정 ✅ v0.6.9
 
 ## 체크리스트 (Android 추가)

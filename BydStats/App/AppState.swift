@@ -224,6 +224,7 @@ final class AppState {
 
             currentStatus = status
             pollError = nil
+            UserDefaults.standard.set(Date(), forKey: "lastForegroundPollDate")
             sessionDetector?.process(status: status, at: Date())
             try? modelContext.save()
             saveWidgetSnapshot(status: status, modelContext: modelContext)

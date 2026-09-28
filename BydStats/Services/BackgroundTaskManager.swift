@@ -63,14 +63,21 @@ enum BackgroundTaskManager {
                 status = status.withChargingResolved(previous: prev, apiIsCharging: nil)
             }
         }
-        let detector = SessionDetector(
-            modelContext: context,
-            getRateAt: { date in plan.rate(at: date) },
-            batteryCapacityKwh: capacity,
-            gpsEnabled: false   // 백그라운드에서 GPS 비활성화
-        )
-        detector.process(status: status, at: Date())
-        try? context.save()
+        // 포그라운드 폴링이 최근 5분 이내에 실행됐으면 세션 처리 skip
+        // (두 SessionDetector 인스턴스가 동시에 세션을 기록하는 중복 방지)
+        let lastFg = UserDefaults.standard.object(forKey: "lastForegroundPollDate") as? Date
+        let skipSession = lastFg.map { Date().timeIntervalSince($0) < 5 * 60 } ?? false
+
+        if !skipSession {
+            let detector = SessionDetector(
+                modelContext: context,
+                getRateAt: { date in plan.rate(at: date) },
+                batteryCapacityKwh: capacity,
+                gpsEnabled: false   // 백그라운드에서 GPS 비활성화
+            )
+            detector.process(status: status, at: Date())
+            try? context.save()
+        }
 
         // 주행/충전이 끝난 경우 Live Activity 종료
         if !status.isDriving && !status.isCharging {
