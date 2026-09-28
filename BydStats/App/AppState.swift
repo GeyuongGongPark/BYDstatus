@@ -29,7 +29,20 @@ final class AppState {
         isLoggedIn = false
         selectedVin = nil
         currentStatus = nil
+        cafeMemberStatus = .notChecked
         stopPolling()
+    }
+
+    // MARK: - 카페 회원 검증
+
+    var cafeMemberStatus: CafeMemberStatus = .notChecked
+
+    func restoreCafeMemberStatus() {
+        cafeMemberStatus = CafeMemberService.cachedStatus() ?? .notChecked
+    }
+
+    func applyCafeVerifyResult(_ status: CafeMemberStatus) {
+        cafeMemberStatus = status
     }
 
     // MARK: - 차량
@@ -69,6 +82,7 @@ final class AppState {
         // 앱 재시작 시 시스템에 살아있는 Activity 복원
         liveActivity = Activity<BydLiveActivityAttributes>.activities.first
         restoreSession()
+        restoreCafeMemberStatus()
     }
 
     // MARK: - 세션 복원
@@ -154,6 +168,8 @@ final class AppState {
         selectedVin = nil
         loginError = nil
         currentStatus = nil
+        cafeMemberStatus = .notChecked
+        CafeMemberService.clearCache()
 
         KeychainHelper.delete(forKey: Keys.userId)
         KeychainHelper.delete(forKey: Keys.signToken)

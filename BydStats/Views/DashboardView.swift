@@ -42,6 +42,8 @@ struct DashboardView: View {
             Group {
                 if !appState.isLoggedIn {
                     notLoggedInView
+                } else if !appState.isDemoMode && appState.cafeMemberStatus == .notChecked {
+                    CafeMemberVerifyView()
                 } else if appState.selectedVin == nil {
                     noVinView
                 } else {
@@ -116,6 +118,19 @@ struct DashboardView: View {
     private var dashboardContent: some View {
         ScrollView {
             VStack(spacing: 16) {
+                if case .unqualified(let grade) = appState.cafeMemberStatus {
+                    HStack(spacing: 8) {
+                        Image(systemName: "person.crop.circle.badge.exclamationmark")
+                            .foregroundStyle(.orange)
+                        Text("카페 등급 미달 (\(grade)) — 정회원 이상만 정식 지원됩니다.")
+                            .font(.caption)
+                            .foregroundStyle(.primary)
+                        Spacer()
+                    }
+                    .padding(12)
+                    .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+                }
+
                 if let err = appState.pollError {
                     HStack(spacing: 8) {
                         Image(systemName: "exclamationmark.triangle.fill")

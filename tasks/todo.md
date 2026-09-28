@@ -1,3 +1,36 @@
+# feat(cafe): 카페 회원 검증 플로우 추가
+
+## 브랜치: feat/cafe-member-verify
+
+## 설계 결정
+- 닉네임 입력: 지역 / 닉네임 / 차종 3개 필드 분리 입력 → `지역ll닉네임ll차종` 합산
+- 검증 실패 처리: 경고 배너 표시 + 사용 허용 (카페 룰 확정 후 앱 잠금으로 전환 가능하게 설계)
+- 캐싱: UserDefaults에 닉네임·등급·검증시각 저장, 24시간 경과 시 재검증
+- 데모 모드: 카페 검증 화면 미노출 (건너뜀)
+- X-Cafe-Key: 공용 키 상수로 관리 (추후 Info.plist 이전 가능)
+
+## 체크리스트
+- [x] `BydStats/Services/CafeMemberService.swift`: API 호출 + 24h 캐싱 로직
+- [x] `AppState.swift`: `cafeMemberStatus` 상태 추가 (notChecked / verified / unqualified)
+- [x] `BydStats/Views/CafeMemberVerifyView.swift`: 지역·닉네임·차종 3개 필드 입력 + 결과 표시
+- [x] 로그인 성공 후 → 카페 검증 화면 흐름 연결 (DashboardView)
+- [x] 데모 모드 시 카페 검증 건너뜀 처리
+- [x] unqualified 시 대시보드 상단 경고 배너 표시
+- [ ] Xcode 빌드 검증
+- [ ] 커밋
+
+---
+
+# feat(report): 로그 뷰에서 제보 직접 제출 기능
+
+## 체크리스트
+- [x] `BydStats/Views/ReportSheetView.swift`: 제보 시트 (제목, 차종 선택, 본문 자동채움, API 호출)
+- [x] `BydStats/Views/LogView.swift`: 툴바에 "제보하기" 버튼 추가 + sheet 연결
+- [ ] Xcode 빌드 검증
+- [ ] 커밋
+
+---
+
 # chore(ios): bump iOS to v0.6.11, 커밋 & 푸시
 
 ## 체크리스트
