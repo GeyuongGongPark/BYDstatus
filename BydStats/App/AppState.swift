@@ -13,6 +13,25 @@ final class AppState {
     var isLoggingIn = false
     var loginError: String?
 
+    // MARK: - 데모 모드
+
+    var isDemoMode = false
+
+    func enterDemoMode() {
+        isDemoMode = true
+        isLoggedIn = true
+        selectedVin = "DEMO"
+        currentStatus = .demo
+    }
+
+    func exitDemoMode() {
+        isDemoMode = false
+        isLoggedIn = false
+        selectedVin = nil
+        currentStatus = nil
+        stopPolling()
+    }
+
     // MARK: - 차량
 
     var vehicles: [VehicleListItem] = []

@@ -67,7 +67,7 @@ struct DashboardView: View {
             }
         }
         .task(id: appState.selectedVin) {
-            guard appState.isLoggedIn, appState.selectedVin != nil else { return }
+            guard appState.isLoggedIn, appState.selectedVin != nil, !appState.isDemoMode else { return }
             let plan = currentRatePlan
             appState.startPolling(
                 modelContext: modelContext,
@@ -82,10 +82,22 @@ struct DashboardView: View {
     // MARK: - 비로그인
 
     private var notLoggedInView: some View {
-        ContentUnavailableView {
-            Label("로그인 필요", systemImage: "person.crop.circle.badge.exclamationmark")
-        } description: {
-            Text("설정에서 BYD 계정으로 로그인하세요.")
+        VStack(spacing: 24) {
+            Spacer()
+            ContentUnavailableView {
+                Label("로그인 필요", systemImage: "person.crop.circle.badge.exclamationmark")
+            } description: {
+                Text("설정에서 BYD 계정으로 로그인하세요.")
+            }
+            Button {
+                appState.enterDemoMode()
+            } label: {
+                Label("데모로 보기", systemImage: "eye")
+                    .frame(maxWidth: 240)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.secondary)
+            Spacer()
         }
     }
 
@@ -119,7 +131,9 @@ struct DashboardView: View {
                 batteryCard
                 todaySummaryCard
                 monthlyCard
-                if !recentCharging.isEmpty {
+                if appState.isDemoMode {
+                    demoRecentChargingCard
+                } else if !recentCharging.isEmpty {
                     recentChargingCard
                 }
             }
@@ -221,35 +235,20 @@ struct DashboardView: View {
     // MARK: - 오늘 요약 카드
 
     private var todaySummaryCard: some View {
-        CardView {
+        let chargeKwh = appState.isDemoMode ? 15.2 : todayCharging.reduce(0) { $0 + $1.energyKwh }
+        let driveKm   = appState.isDemoMode ? 48.0 : todayDriving.compactMap(\.distanceKm).reduce(0, +)
+        let driveKwh  = appState.isDemoMode ?  8.3 : todayDriving.reduce(0) { $0 + $1.energyKwh }
+        return CardView {
             VStack(alignment: .leading, spacing: 12) {
                 Text("오늘")
                     .font(.headline)
 
                 HStack(spacing: 0) {
-                    todayStat(
-                        value: String(format: "%.1f", todayCharging.reduce(0) { $0 + $1.energyKwh }),
-                        unit: "kWh",
-                        label: "충전량",
-                        icon: "bolt.fill",
-                        color: .green
-                    )
+                    todayStat(value: String(format: "%.1f", chargeKwh), unit: "kWh", label: "충전량",   icon: "bolt.fill",  color: .green)
                     Divider().frame(height: 40)
-                    todayStat(
-                        value: String(format: "%.0f", todayDriving.compactMap(\.distanceKm).reduce(0, +)),
-                        unit: "km",
-                        label: "주행거리",
-                        icon: "road.lanes",
-                        color: .blue
-                    )
+                    todayStat(value: String(format: "%.0f", driveKm),   unit: "km",  label: "주행거리", icon: "road.lanes", color: .blue)
                     Divider().frame(height: 40)
-                    todayStat(
-                        value: String(format: "%.1f", todayDriving.reduce(0) { $0 + $1.energyKwh }),
-                        unit: "kWh",
-                        label: "소비",
-                        icon: "flame.fill",
-                        color: .orange
-                    )
+                    todayStat(value: String(format: "%.1f", driveKwh),  unit: "kWh", label: "소비",     icon: "flame.fill", color: .orange)
                 }
             }
         }
@@ -270,7 +269,11 @@ struct DashboardView: View {
     // MARK: - 이번 달 카드
 
     private var monthlyCard: some View {
-        CardView {
+        let cost      = appState.isDemoMode ? 32_450.0 : thisMonthCharging.reduce(0) { $0 + $1.estimatedCostKrw }
+        let chargeKwh = appState.isDemoMode ?   145.6  : thisMonthCharging.reduce(0) { $0 + $1.energyKwh }
+        let driveKm   = appState.isDemoMode ? 1_240.0  : thisMonthDriving.compactMap(\.distanceKm).reduce(0, +)
+        let driveKwh  = appState.isDemoMode ?    98.2  : thisMonthDriving.reduce(0) { $0 + $1.energyKwh }
+        return CardView {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Text("이번 달")
@@ -280,10 +283,6 @@ struct DashboardView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                let cost      = thisMonthCharging.reduce(0) { $0 + $1.estimatedCostKrw }
-                let chargeKwh = thisMonthCharging.reduce(0) { $0 + $1.energyKwh }
-                let driveKm   = thisMonthDriving.compactMap(\.distanceKm).reduce(0, +)
-                let driveKwh  = thisMonthDriving.reduce(0) { $0 + $1.energyKwh }
                 HStack(spacing: 0) {
                     todayStat(value: String(format: "₩%.0f", cost),    unit: "",    label: "충전 비용", icon: "wonsign",    color: .green)
                     Divider().frame(height: 40)
@@ -292,6 +291,47 @@ struct DashboardView: View {
                     todayStat(value: String(format: "%.0f", driveKm),   unit: "km",  label: "주행거리", icon: "road.lanes", color: .blue)
                     Divider().frame(height: 40)
                     todayStat(value: String(format: "%.1f", driveKwh),  unit: "kWh", label: "소비",     icon: "flame.fill", color: .orange)
+                }
+            }
+        }
+    }
+
+    // MARK: - 데모 최근 충전 카드
+
+    private struct DemoChargingRow {
+        let daysAgo: Int; let startSoc: Int; let endSoc: Int
+        let energyKwh: Double; let costKrw: Double; let durationMin: Int
+    }
+
+    private let demoCharging: [DemoChargingRow] = [
+        DemoChargingRow(daysAgo: 1,  startSoc: 20, endSoc: 80, energyKwh: 36.4, costKrw: 7_280, durationMin: 96),
+        DemoChargingRow(daysAgo: 3,  startSoc: 35, endSoc: 90, energyKwh: 33.3, costKrw: 6_660, durationMin: 88),
+        DemoChargingRow(daysAgo: 5,  startSoc: 10, endSoc: 100, energyKwh: 54.5, costKrw: 10_900, durationMin: 144),
+    ]
+
+    private var demoRecentChargingCard: some View {
+        CardView {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("최근 충전")
+                    .font(.headline)
+                ForEach(Array(demoCharging.enumerated()), id: \.offset) { idx, row in
+                    let date = Calendar.current.date(byAdding: .day, value: -row.daysAgo, to: Date()) ?? Date()
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(date.formatted(.dateTime.locale(Locale(identifier: "ko_KR")).month().day()))
+                                .font(.subheadline)
+                            Text("\(row.startSoc)% → \(row.endSoc)%  •  \(String(format: "%.1f kWh", row.energyKwh))")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        VStack(alignment: .trailing, spacing: 2) {
+                            Text(String(format: "₩%.0f", row.costKrw))
+                                .font(.subheadline).bold()
+                            Text("\(row.durationMin)분")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                    if idx < demoCharging.count - 1 { Divider() }
                 }
             }
         }

@@ -48,7 +48,15 @@ struct SettingsView: View {
 
     @ViewBuilder
     private var accountSection: some View {
-        if appState.isLoggedIn {
+        if appState.isDemoMode {
+            Section("데모 모드") {
+                Button(role: .destructive) {
+                    appState.exitDemoMode()
+                } label: {
+                    Text("데모 종료")
+                }
+            }
+        } else if appState.isLoggedIn {
             Section("BYD 계정") {
                 if let vin = appState.selectedVin {
                     LabeledContent("VIN", value: vin)

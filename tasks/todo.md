@@ -1,3 +1,33 @@
+# chore(ios): bump iOS to v0.6.11, 커밋 & 푸시
+
+## 체크리스트
+- [x] `BydStats/Resources/Info.plist`: 0.6.10 → 0.6.11, CFBundleVersion 15 → 16
+- [x] `BydStatsWidget/Info.plist`: 동일
+- [x] `RELEASE_NOTES.md`: v0.6.11 섹션 추가 (데모 모드)
+- [ ] 커밋
+- [ ] 푸시
+
+---
+
+# feat(demo): 목업 데모 모드 추가 (App Store 심사 대응)
+
+## 목적
+로그인 없이 앱 UI·기능을 체험할 수 있는 데모 모드.
+App Store 심사관이 BYD 계정 없이 앱을 검토할 수 있도록.
+
+## 체크리스트
+- [x] `VehicleStatus.swift`: `static var demo` 추가 (배터리 72%, 충전 중 7.2 kW)
+- [x] `AppState.swift`: `isDemoMode`, `enterDemoMode()`, `exitDemoMode()` 추가
+- [x] `DashboardView.swift`: "데모로 보기" 버튼 (비로그인 화면)
+- [x] `DashboardView.swift`: 데모 모드 시 폴링 skip
+- [x] `DashboardView.swift`: 오늘/이달 카드 가짜 수치 오버라이드
+- [x] `DashboardView.swift`: 가짜 최근 충전 3개 카드
+- [x] `SettingsView.swift`: 데모 모드 시 "데모 종료" 버튼
+- [ ] 빌드 검증 (Xcode)
+- [ ] 커밋
+
+---
+
 # fix(bgrefresh): BGAppRefresh + 포그라운드 폴링 동시 실행 세션 중복 방지 ✅ v0.6.10
 
 ## 문제

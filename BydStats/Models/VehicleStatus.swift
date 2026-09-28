@@ -114,3 +114,18 @@ struct VehicleListItem: Identifiable, Sendable {
     let vin: String
     let modelName: String
 }
+
+// MARK: - 데모 데이터
+
+extension VehicleStatus {
+    static var demo: VehicleStatus {
+        var s = VehicleStatus()
+        s.batteryPercentage = 72
+        s.drivingRange = 350
+        s.resolvedCharging = true
+        s.instantPowerW = 7200   // 7.2 kW 완속 충전 중
+        s.resolvedDriving = false
+        s.totalMileage = 12_480
+        return s
+    }
+}
