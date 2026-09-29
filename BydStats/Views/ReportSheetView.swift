@@ -122,10 +122,14 @@ struct ReportSheetView: View {
 
         do {
             let (_, response) = try await URLSession.shared.data(for: req)
-            if let http = response as? HTTPURLResponse, http.statusCode == 201 {
-                didSubmit = true
+            if let http = response as? HTTPURLResponse {
+                if http.statusCode == 201 {
+                    didSubmit = true
+                } else {
+                    submitError = "제출에 실패했습니다. (HTTP \(http.statusCode))"
+                }
             } else {
-                submitError = "제출에 실패했습니다. 잠시 후 다시 시도해주세요."
+                submitError = "제출에 실패했습니다. (응답 없음)"
             }
         } catch {
             submitError = "네트워크 오류: \(error.localizedDescription)"
