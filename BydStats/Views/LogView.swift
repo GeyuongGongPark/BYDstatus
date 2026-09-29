@@ -5,6 +5,8 @@ struct LogView: View {
     @Environment(LogManager.self) private var logManager
     @Environment(\.dismiss) private var dismiss
 
+    @State private var showReportSheet = false
+
     var body: some View {
         NavigationStack {
             Group {
@@ -25,6 +27,9 @@ struct LogView: View {
                     Button("닫기") { dismiss() }
                 }
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
+                    Button { showReportSheet = true } label: {
+                        Image(systemName: "exclamationmark.bubble")
+                    }
                     Button { shareLog() } label: {
                         Image(systemName: "square.and.arrow.up")
                     }
@@ -34,6 +39,10 @@ struct LogView: View {
                         Image(systemName: "trash")
                     }
                 }
+            }
+            .sheet(isPresented: $showReportSheet) {
+                ReportSheetView()
+                    .environment(logManager)
             }
         }
     }
