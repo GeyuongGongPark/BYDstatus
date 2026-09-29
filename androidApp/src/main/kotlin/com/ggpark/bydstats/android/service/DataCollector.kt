@@ -77,6 +77,7 @@ class DataCollector(
             if (status.batteryPercentage == 0) {
                 Log.d(TAG, "poll skip: soc=0")
                 AppLogger.log("poll skip: soc=0", TAG)
+                if (_currentStatus.value == null) _error.value = "차량 데이터 준비 중…"
                 return
             }
 

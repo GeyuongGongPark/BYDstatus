@@ -213,6 +213,7 @@ final class AppState {
 
     private func doPoll(service: BydVehicleService, vin: String, modelContext: ModelContext) async {
         isPolling = true
+        defer { isPolling = false }
         do {
             var status = try await service.fetchVehicleStatus(vin: vin)
             // 주행 중이거나 직전 폴링에서 주행 중이었을 때 totalMileage == 0이면
@@ -250,7 +251,6 @@ final class AppState {
         } catch {
             pollError = error.localizedDescription
         }
-        isPolling = false
     }
 
     // MARK: - Live Activity
