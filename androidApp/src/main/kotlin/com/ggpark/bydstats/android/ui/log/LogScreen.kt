@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,6 +26,12 @@ fun LogScreen(onBack: () -> Unit) {
     val entries by AppLogger.entries.collectAsState()
     val listState = rememberLazyListState()
     val context = LocalContext.current
+    var showReport by remember { mutableStateOf(false) }
+    val appVersion = remember {
+        val pm = context.packageManager
+        val info = pm.getPackageInfo(context.packageName, 0)
+        info.versionName ?: ""
+    }
 
     LaunchedEffect(entries.size) {
         if (entries.isNotEmpty()) listState.animateScrollToItem(entries.lastIndex)
@@ -50,6 +57,9 @@ fun LogScreen(onBack: () -> Unit) {
                     }
                 },
                 actions = {
+                    IconButton(onClick = { showReport = true }) {
+                        Icon(Icons.Outlined.BugReport, "제보")
+                    }
                     IconButton(onClick = ::shareLog, enabled = entries.isNotEmpty()) {
                         Icon(Icons.Default.Share, "공유")
                     }
@@ -89,5 +99,12 @@ fun LogScreen(onBack: () -> Unit) {
                 }
             }
         }
+    }
+
+    if (showReport) {
+        ReportSheet(
+            appVersion = appVersion,
+            onDismiss = { showReport = false },
+        )
     }
 }
