@@ -1,6 +1,6 @@
 import SwiftUI
 
-private let portalURL = "https://bydstatus-production.up.railway.app/api/reports"
+private let portalURL = "https://geyuonggongpark-production.up.railway.app/api/reports"
 
 private let carOptions = ["BYD Atto 3", "BYD Seal", "BYD Dolphin", "BYD Sealion 7", "기타"]
 

@@ -16,7 +16,7 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
-private const val REPORT_URL = "https://bydstatus-production.up.railway.app/api/reports"
+private const val REPORT_URL = "https://geyuonggongpark-production.up.railway.app/api/reports"
 private val CAR_OPTIONS = listOf("BYD Atto 3", "BYD Seal", "BYD Dolphin", "BYD Sealion 7", "기타")
 
 @OptIn(ExperimentalMaterial3Api::class)
