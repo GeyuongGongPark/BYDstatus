@@ -105,7 +105,7 @@ struct ReportSheetView: View {
             "app":       "BYD Status",
             "platform":  "iOS",
             "car":       car,
-            "body":      bodyText.trimmingCharacters(in: .whitespaces),
+            "body":      bodyText.trimmingCharacters(in: .whitespaces).isEmpty ? "-" : bodyText.trimmingCharacters(in: .whitespaces),
             "file_name": fileData != nil ? "bydstats.log" : nil,
             "file_type": fileData != nil ? "text/plain" : nil,
             "file_data": fileData,

@@ -127,7 +127,7 @@ fun ReportSheet(
                         val ok = submitReport(
                             title = title.trim(),
                             car = car,
-                            body = body.trim(),
+                            body = body.trim().ifEmpty { "-" },
                         )
                         isSubmitting = false
                         if (ok) didSubmit = true
