@@ -1,3 +1,14 @@
+# chore: bump version to 0.6.12 (iOS·Android)
+
+## 체크리스트
+- [x] `BydStats/Resources/Info.plist`: 0.6.11 → 0.6.12, CFBundleVersion 16 → 17
+- [x] `BydStatsWidget/Info.plist`: 동일
+- [x] `androidApp/build.gradle.kts`: versionName "0.6.10" → "0.6.12", versionCode 11 → 12
+- [x] `RELEASE_NOTES.md`: v0.6.12 섹션 추가
+- [ ] 커밋 & 푸시
+
+---
+
 # fix(android): PUSH_API_KEY CI 누락 수정 + 세션 복원 시 토큰 등록
 
 ## 문제
@@ -9,7 +20,7 @@
 - [x] `release.yml`: Build APK step에 `PUSH_API_KEY: ${{ secrets.PUSH_API_KEY }}` 추가
 - [x] `androidApp/build.gradle.kts`: `PUSH_API_KEY` 환경변수 폴백 추가
 - [x] `AppViewModel.loadSettings()`: 세션 복원 완료 후 `registerFcmToken()` 호출
-- [ ] 커밋 & 푸시
+- [x] 커밋 & 푸시
 
 ---
 
