@@ -5,7 +5,7 @@
 - [x] `BydStatsWidget/Info.plist`: 동일
 - [x] `androidApp/build.gradle.kts`: versionName "0.6.10" → "0.6.12", versionCode 11 → 12
 - [x] `RELEASE_NOTES.md`: v0.6.12 섹션 추가
-- [ ] 커밋 & 푸시
+- [x] 커밋 & 푸시
 
 ---
 
