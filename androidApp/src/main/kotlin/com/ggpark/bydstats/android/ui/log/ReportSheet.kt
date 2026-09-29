@@ -9,6 +9,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import android.util.Base64
 import com.ggpark.bydstats.android.service.AppLogger
 import kotlinx.coroutines.launch
 import org.json.JSONObject
@@ -159,12 +160,21 @@ fun ReportSheet(
 
 private fun submitReport(title: String, car: String, body: String): Boolean {
     return try {
+        val fileData = AppLogger.logFile
+            ?.takeIf { it.exists() }
+            ?.let { "data:text/plain;base64," + Base64.encodeToString(it.readBytes(), Base64.NO_WRAP) }
+
         val payload = JSONObject().apply {
             put("title", title)
             put("app", "BYD Status")
             put("platform", "Android")
             put("car", car)
             put("body", body)
+            if (fileData != null) {
+                put("file_name", "bydstats.log")
+                put("file_type", "text/plain")
+                put("file_data", fileData)
+            }
         }
         val conn = (URL(REPORT_URL).openConnection() as HttpURLConnection).apply {
             requestMethod = "POST"
