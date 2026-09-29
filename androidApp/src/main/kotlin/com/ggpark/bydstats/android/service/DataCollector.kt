@@ -33,6 +33,8 @@ class DataCollector(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
 
+    private var socZeroCount = 0
+
     private var vin: String? = null
 
     fun start(vin: String) {
@@ -77,9 +79,15 @@ class DataCollector(
             if (status.batteryPercentage == 0) {
                 Log.d(TAG, "poll skip: soc=0")
                 AppLogger.log("poll skip: soc=0", TAG)
-                if (_currentStatus.value == null) _error.value = "차량 데이터 준비 중…"
+                socZeroCount++
+                if (socZeroCount >= 3) {
+                    _error.value = "차량이 응답하지 않습니다. 절전 모드이거나 통신 상태가 좋지 않을 수 있습니다."
+                } else if (_currentStatus.value == null) {
+                    _error.value = "차량 데이터 준비 중…"
+                }
                 return
             }
+            socZeroCount = 0
 
             // 회생제동 보정: withChargingResolved 이전에 isDriving 재판정
             status = status.withDrivingResolved(_currentStatus.value)

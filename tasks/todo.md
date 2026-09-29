@@ -9,6 +9,18 @@
 
 ---
 
+# fix(polling): soc=0 연속 발생 시 에러 메시지 표시 (iOS·Android)
+
+## 문제
+soc=0이 연속으로 발생하면 조용히 skip되어 사용자가 원인을 알 수 없음.
+
+## 체크리스트
+- [x] `AppState.swift`: `socZeroCount` 카운터 추가, 3회 연속 시 `pollError` 설정, 정상 응답 시 리셋
+- [x] `DataCollector.kt`: 동일하게 카운터 추가, 3회 연속 시 `_error` 설정, 정상 응답 시 리셋
+- [ ] 커밋 & 푸시
+
+---
+
 # fix(android): PUSH_API_KEY CI 누락 수정 + 세션 복원 시 토큰 등록
 
 ## 문제

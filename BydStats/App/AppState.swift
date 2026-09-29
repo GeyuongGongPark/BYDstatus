@@ -50,6 +50,7 @@ final class AppState {
     private var pollingTask: Task<Void, Never>?
     private var sessionDetector: SessionDetector?
     private var liveActivity: Activity<BydLiveActivityAttributes>?
+    private var socZeroCount = 0
 
     // MARK: - Keychain 키
 
@@ -227,7 +228,14 @@ final class AppState {
             }
 
             // soc=0은 API 미준비로 간주 — Live Activity 포함 UI 반영 및 세션 기록 건너뜀
-            guard status.batteryPercentage > 0 else { return }
+            guard status.batteryPercentage > 0 else {
+                socZeroCount += 1
+                if socZeroCount >= 3 {
+                    pollError = "차량이 응답하지 않습니다. 절전 모드이거나 통신 상태가 좋지 않을 수 있습니다."
+                }
+                return
+            }
+            socZeroCount = 0
 
             // 회생제동 보정: withChargingResolved 이전에 isDriving 재판정
             status = status.withDrivingResolved(previous: currentStatus)
