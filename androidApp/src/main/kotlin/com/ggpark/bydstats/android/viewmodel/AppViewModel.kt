@@ -155,6 +155,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
         _uiState.value = AppUiState(isLoading = false, isLoggedIn = true)
 
+        registerFcmToken()
         if (s.vin.isNotEmpty()) PollingService.start(context)
     }
 

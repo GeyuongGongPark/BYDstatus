@@ -1,3 +1,18 @@
+# fix(android): PUSH_API_KEY CI 누락 수정 + 세션 복원 시 토큰 등록
+
+## 문제
+- `release.yml` Build APK step에 `PUSH_API_KEY` 환경변수가 누락 → CI 빌드 APK에 빈 문자열 → 서버 401 → 조용히 실패
+- `build.gradle.kts`가 `local.properties`만 참조, 환경변수 미지원
+- `loadSettings()` 세션 복원 시 `registerFcmToken()` 미호출 → 앱 재시작 후 토큰 갱신 안됨
+
+## 체크리스트
+- [x] `release.yml`: Build APK step에 `PUSH_API_KEY: ${{ secrets.PUSH_API_KEY }}` 추가
+- [x] `androidApp/build.gradle.kts`: `PUSH_API_KEY` 환경변수 폴백 추가
+- [x] `AppViewModel.loadSettings()`: 세션 복원 완료 후 `registerFcmToken()` 호출
+- [ ] 커밋 & 푸시
+
+---
+
 # chore(ios): bump iOS to v0.6.11, 커밋 & 푸시
 
 ## 체크리스트

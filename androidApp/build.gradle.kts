@@ -25,7 +25,7 @@ android {
         versionCode = 11
         versionName = "0.6.10"
 
-        buildConfigField("String", "PUSH_API_KEY", "\"${localProps["PUSH_API_KEY"] ?: ""}\"")
+        buildConfigField("String", "PUSH_API_KEY", "\"${localProps["PUSH_API_KEY"] ?: System.getenv("PUSH_API_KEY") ?: ""}\"")
         buildConfigField("String", "PUSH_SERVER_URL", "\"https://bydstatus-production.up.railway.app\"")
     }
 

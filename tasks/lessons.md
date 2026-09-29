@@ -38,3 +38,9 @@
 - 반복적으로 어기는 패턴: 구현을 먼저 시작하고 todo.md를 나중에(또는 사용자 지적 후) 업데이트
 - 올바른 순서: (1) tasks/todo.md에 체크리스트 작성 → (2) 계획 검토 → (3) 구현 → (4) 각 항목 완료 즉시 `[x]` 표시
 - Auto mode여도 예외 없음. 코드 수정 전 반드시 todo.md 먼저.
+
+## 앱 코드와 CI(release.yml)는 항상 함께 업데이트할 것
+- 새 환경변수(BuildConfig 필드, Info.plist 키 등)를 앱에 추가할 때 `.github/workflows/release.yml`에도 해당 secret 주입을 반드시 같은 커밋에 추가해야 한다.
+- 누락되면 CI 빌드 APK에 빈 값이 들어가 조용히 실패함 — 사용자도, 서버도 오류를 인식하지 못함.
+- 실제 사례: `PushRegistrar.kt` 추가 시 `PUSH_API_KEY`를 `release.yml`에 누락 → 모든 CI 빌드 APK의 토큰 등록이 8월부터 전부 실패.
+- todo.md 체크리스트에 항상 포함: `[ ] release.yml에 관련 secret 추가`
