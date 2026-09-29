@@ -39,6 +39,13 @@
 - 올바른 순서: (1) tasks/todo.md에 체크리스트 작성 → (2) 계획 검토 → (3) 구현 → (4) 각 항목 완료 즉시 `[x]` 표시
 - Auto mode여도 예외 없음. 코드 수정 전 반드시 todo.md 먼저.
 
+## isPolling/로딩 플래그는 defer로 해제할 것
+- early return(guard, if-return 등)이 있는 함수에서 시작 시 플래그를 세우고 끝에 해제하면, early return 시 플래그가 해제되지 않아 무한 스피너가 발생한다.
+- iOS: `isPolling = true` 후 `guard batteryPercentage > 0 else { return }` → `isPolling = false` 미실행.
+- Android: `soc=0` → return → `_currentStatus = null` 유지 → CircularProgressIndicator 무한.
+- 수정: iOS는 `defer { isPolling = false }`, Android는 null 상태일 때 에러 메시지 설정으로 로딩 탈출.
+- **원칙**: 폴링/로딩 플래그는 항상 `defer`로 해제. early return 경로를 모두 점검할 것.
+
 ## 앱 코드와 CI(release.yml)는 항상 함께 업데이트할 것
 - 새 환경변수(BuildConfig 필드, Info.plist 키 등)를 앱에 추가할 때 `.github/workflows/release.yml`에도 해당 secret 주입을 반드시 같은 커밋에 추가해야 한다.
 - 누락되면 CI 빌드 APK에 빈 값이 들어가 조용히 실패함 — 사용자도, 서버도 오류를 인식하지 못함.
