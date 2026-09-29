@@ -120,6 +120,14 @@
       max-width: 560px; margin-bottom: 40px;
     }
     .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+    .btn-ios {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: linear-gradient(135deg, #0071e3, #005bb5);
+      color: #fff; text-decoration: none;
+      padding: 14px 28px; border-radius: 14px;
+      font-size: 16px; font-weight: 700; transition: opacity 0.2s;
+    }
+    .btn-ios:hover { opacity: 0.88; }
     .btn-android {
       display: inline-flex; align-items: center; gap: 8px;
       background: linear-gradient(135deg, #2ecc71, #27ae60);
@@ -375,6 +383,10 @@
     <span class="en">Automatically collect and analyze battery history, charging sessions, driving efficiency, and monthly electricity costs that the official app doesn't show.</span>
   </p>
   <div class="hero-actions">
+    <a href="https://apps.apple.com/kr/app/bydstats/id6801009728" class="btn-ios" target="_blank">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+      <span class="ko">App Store에서 받기</span><span class="en">Download on App Store</span>
+    </a>
     <a id="android-download" href="https://github.com/GeyuongGongPark/BYDstatus/releases/latest" class="btn-android" target="_blank">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.523 15.341 14.87 10.8A3.003 3.003 0 0 0 12 9.25c-1.117 0-2.093.613-2.613 1.52l-2.714 4.571A8.96 8.96 0 0 1 3 9.25C3 4.7 7.026 1 12 1s9 3.7 9 8.25c0 2.37-.93 4.52-2.477 6.091zM12 23l-4.5-7.795h9L12 23z"/></svg>
       <span class="ko">Android APK 다운로드</span><span class="en">Download Android APK</span>
@@ -384,10 +396,6 @@
       GitHub →
     </a>
   </div>
-  <p style="margin-top:16px;font-size:13px;color:var(--muted);">
-    <span class="ko">iOS는 <a href="https://apps.apple.com/kr/app/bydstats/id6801009728" style="color:var(--accent);text-decoration:none;" target="_blank">App Store</a>에서 무료로 받으세요</span>
-    <span class="en">iOS: <a href="https://apps.apple.com/kr/app/bydstats/id6801009728" style="color:var(--accent);text-decoration:none;" target="_blank">Download free on App Store</a></span>
-  </p>
 </section>
 
 <!-- STATS BAR -->
@@ -903,8 +911,8 @@
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:12px;margin-top:24px;">
-        <a href="https://apps.apple.com/kr/app/bydstats/id6801009728" class="btn-primary" target="_blank" style="width:100%;justify-content:center;"><span class="ko">App Store에서 받기 →</span><span class="en">Download on App Store →</span></a>
         <a href="https://testflight.apple.com/join/tT71RszD" class="btn-secondary" target="_blank" style="width:100%;justify-content:center;"><span class="ko">TestFlight 베타 참여 →</span><span class="en">Join Beta on TestFlight →</span></a>
+        <a href="https://apps.apple.com/kr/app/bydstats/id6801009728" class="btn-ios" target="_blank" style="width:100%;justify-content:center;"><span class="ko">App Store에서 받기 →</span><span class="en">Download on App Store →</span></a>
       </div>
     </div>
 
@@ -971,6 +979,10 @@
     <span class="en">Fully open source. Inspect the code, fork it, or modify it to suit your needs.</span>
   </p>
   <div class="hero-actions" style="justify-content:center;">
+    <a href="https://apps.apple.com/kr/app/bydstats/id6801009728" class="btn-ios" target="_blank">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+      <span class="ko">App Store에서 받기</span><span class="en">Download on App Store</span>
+    </a>
     <a id="android-download-cta" href="https://github.com/GeyuongGongPark/BYDstatus/releases/latest" class="btn-android" target="_blank">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.523 15.341 14.87 10.8A3.003 3.003 0 0 0 12 9.25c-1.117 0-2.093.613-2.613 1.52l-2.714 4.571A8.96 8.96 0 0 1 3 9.25C3 4.7 7.026 1 12 1s9 3.7 9 8.25c0 2.37-.93 4.52-2.477 6.091zM12 23l-4.5-7.795h9L12 23z"/></svg>
       <span class="ko">Android APK 다운로드</span><span class="en">Download Android APK</span>
