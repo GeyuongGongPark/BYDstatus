@@ -10,7 +10,7 @@ struct ReportSheetView: View {
 
     @State private var title = ""
     @State private var car = ""
-    @State private var body = ""
+    @State private var bodyText = ""
     @State private var isSubmitting = false
     @State private var submitError: String?
     @State private var didSubmit = false
@@ -36,7 +36,7 @@ struct ReportSheetView: View {
                 }
 
                 Section {
-                    TextEditor(text: $body)
+                    TextEditor(text: $bodyText)
                         .frame(minHeight: 120)
                         .font(.system(size: 13))
                 } header: {
@@ -85,7 +85,7 @@ struct ReportSheetView: View {
         let recentLogs = logManager.entries.suffix(80)
             .map(\.formatted)
             .joined(separator: "\n")
-        body = "앱 버전: \(appVersion)\n플랫폼: iOS\n\n--- 최근 로그 ---\n\(recentLogs)"
+        bodyText = "앱 버전: \(appVersion)\n플랫폼: iOS\n\n--- 최근 로그 ---\n\(recentLogs)"
     }
 
     private func submit() async {
@@ -105,7 +105,7 @@ struct ReportSheetView: View {
             "app":       "BYD Status",
             "platform":  "iOS",
             "car":       car,
-            "body":      body.trimmingCharacters(in: .whitespaces),
+            "body":      bodyText.trimmingCharacters(in: .whitespaces),
             "file_name": fileData != nil ? "bydstats.log" : nil,
             "file_type": fileData != nil ? "text/plain" : nil,
             "file_data": fileData,
@@ -116,8 +116,8 @@ struct ReportSheetView: View {
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        let body = payload.compactMapValues { $0 }
-        guard let httpBody = try? JSONSerialization.data(withJSONObject: body) else { return }
+        let jsonBody = payload.compactMapValues { $0 }
+        guard let httpBody = try? JSONSerialization.data(withJSONObject: jsonBody) else { return }
         req.httpBody = httpBody
 
         do {
