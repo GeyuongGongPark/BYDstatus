@@ -26,7 +26,7 @@ object AppUpdate {
     private const val USER_AGENT = "BYDStats-Android"
 
     fun normalizeVersion(raw: String): String =
-        raw.trim().removePrefix("v").substringBefore("-").substringBefore("+")
+        raw.trim().removePrefix("v").substringBefore("-").substringBefore("_").substringBefore("+")
 
     fun compareVersions(a: String, b: String): Int {
         val pa = normalizeVersion(a).split('.').map { it.toIntOrNull() ?: 0 }
