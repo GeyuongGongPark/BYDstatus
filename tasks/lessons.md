@@ -39,6 +39,11 @@
 - 올바른 순서: (1) tasks/todo.md에 체크리스트 작성 → (2) 계획 검토 → (3) 구현 → (4) 각 항목 완료 즉시 `[x]` 표시
 - Auto mode여도 예외 없음. 코드 수정 전 반드시 todo.md 먼저.
 
+## GitHub 태그 버전 suffix는 파싱 시 모두 제거할 것
+- `v0.6.12_hotfix` 같이 `_` suffix가 붙은 태그를 버전 비교에 사용하면, `_` 이후 문자열이 숫자로 변환되지 않아 0으로 인식 → 이전 버전보다 낮게 판정 → 업데이트 안내 미표시.
+- `normalizeVersion`에서 `-`, `+` 외에 `_`도 제거해야 함: `substringBefore("_")` 추가.
+- 태그 suffix 규칙: 관례상 `-`를 쓰는 것이 안전하나(`v0.6.12-hotfix`), 코드에서 둘 다 처리할 것.
+
 ## isPolling/로딩 플래그는 defer로 해제할 것
 - early return(guard, if-return 등)이 있는 함수에서 시작 시 플래그를 세우고 끝에 해제하면, early return 시 플래그가 해제되지 않아 무한 스피너가 발생한다.
 - iOS: `isPolling = true` 후 `guard batteryPercentage > 0 else { return }` → `isPolling = false` 미실행.

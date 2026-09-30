@@ -9,6 +9,18 @@
 
 ---
 
+# fix(android): 태그 버전 suffix(_hotfix 등) 인식 오류 수정 ✅
+
+## 문제
+`v0.6.12_hotfix` 태그로 배포 시 앱 내 업데이트 안내가 미표시.
+`normalizeVersion`이 `_` 구분자를 처리하지 않아 `12_hotfix` → `toIntOrNull()` = null → 0 으로 인식.
+
+## 체크리스트
+- [x] `AppUpdate.kt`: `substringBefore("_")` 추가
+- [x] 커밋 & 푸시
+
+---
+
 # fix(polling): soc=0 연속 발생 시 에러 메시지 표시 (iOS·Android)
 
 ## 문제
@@ -17,7 +29,7 @@ soc=0이 연속으로 발생하면 조용히 skip되어 사용자가 원인을 �
 ## 체크리스트
 - [x] `AppState.swift`: `socZeroCount` 카운터 추가, 3회 연속 시 `pollError` 설정, 정상 응답 시 리셋
 - [x] `DataCollector.kt`: 동일하게 카운터 추가, 3회 연속 시 `_error` 설정, 정상 응답 시 리셋
-- [ ] 커밋 & 푸시
+- [x] 커밋 & 푸시
 
 ---
 
