@@ -32,8 +32,6 @@ import kotlinx.coroutines.flow.*
 import kotlinx.serialization.json.Json
 
 private object Keys {
-    val USERNAME         = stringPreferencesKey("username")
-    val PASSWORD         = stringPreferencesKey("password")
     val REGION           = stringPreferencesKey("region")
     val VIN              = stringPreferencesKey("vin")
     val USER_ID          = stringPreferencesKey("user_id")
@@ -140,10 +138,12 @@ class PollingService : Service() {
         collectingJob?.cancel()
         collectingJob = scope.launch {
             AppLogger.log("PollingService 시작", "PollingService")
-            // DataStore에서 설정 로드
+            // 설정 로드 (credentials는 SecureStorage, 나머지는 DataStore)
+            val username = SecureStorage.get(applicationContext, SecureStorage.KEY_USERNAME)
+                ?: run { AppLogger.log("username 없음 — 중단", "PollingService"); return@launch }
+            val password = SecureStorage.get(applicationContext, SecureStorage.KEY_PASSWORD)
+                ?: run { AppLogger.log("password 없음 — 중단", "PollingService"); return@launch }
             val prefs = applicationContext.appDataStore.data.first()
-            val username    = prefs[Keys.USERNAME]  ?: run { AppLogger.log("username 없음 — 중단", "PollingService"); return@launch }
-            val password    = prefs[Keys.PASSWORD]  ?: run { AppLogger.log("password 없음 — 중단", "PollingService"); return@launch }
             val vin         = prefs[Keys.VIN]       ?: run { AppLogger.log("VIN 없음 — 중단", "PollingService"); return@launch }
             val region      = prefs[Keys.REGION]    ?: "KR"
             val userId      = prefs[Keys.USER_ID]   ?: ""

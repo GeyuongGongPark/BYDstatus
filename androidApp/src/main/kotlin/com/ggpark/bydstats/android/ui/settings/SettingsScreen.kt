@@ -41,7 +41,6 @@ private val POLLING_OPTIONS = listOf(5, 10, 15)
 fun SettingsScreen(vm: AppViewModel, onNavigateToLog: () -> Unit = {}) {
     val uiState     by vm.uiState.collectAsState()
     val settings    by vm.settings.collectAsState()
-    val updateState by vm.updateState.collectAsState()
 
     // 로그인 폼 상태
     var username by remember { mutableStateOf("") }
@@ -327,34 +326,6 @@ fun SettingsScreen(vm: AppViewModel, onNavigateToLog: () -> Unit = {}) {
                     supportingContent = { Text("폴링 / GPS / 세션 이벤트 로그") },
                     leadingContent = { Icon(Icons.Default.BugReport, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                     trailingContent = { Icon(Icons.Default.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-                    colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
-                )
-            }
-            HorizontalDivider()
-
-            // ─── 업데이트 ───
-            SectionHeader("앱 업데이트")
-            Surface(
-                onClick = { vm.checkForUpdate(force = true) },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !updateState.checking,
-            ) {
-                ListItem(
-                    headlineContent = { Text("업데이트 확인") },
-                    supportingContent = {
-                        when {
-                            updateState.checking    -> Text("확인 중…")
-                            updateState.alreadyLatest -> Text("최신 버전입니다")
-                            updateState.error != null -> Text(updateState.error!!)
-                            else                    -> Text("새 버전을 확인합니다")
-                        }
-                    },
-                    leadingContent = {
-                        if (updateState.checking)
-                            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                        else
-                            Icon(Icons.Default.SystemUpdate, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                    },
                     colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
                 )
             }

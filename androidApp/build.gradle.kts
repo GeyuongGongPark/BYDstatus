@@ -33,12 +33,22 @@ android {
         create("release") {
             val keystoreB64 = System.getenv("KEYSTORE_BASE64")
             if (keystoreB64 != null) {
+                // CI: Base64 → 임시 파일
                 val ksFile = rootProject.file("release.jks")
                 ksFile.writeBytes(Base64.getDecoder().decode(keystoreB64))
                 storeFile = ksFile
                 storePassword = System.getenv("KEYSTORE_PASSWORD")
                 keyAlias = System.getenv("KEY_ALIAS")
                 keyPassword = System.getenv("KEY_PASSWORD")
+            } else {
+                // 로컬: local.properties에서 파일 경로 직접 참조
+                val ksPath = localProps["KEYSTORE_PATH"] as String?
+                if (ksPath != null) {
+                    storeFile = file(ksPath)
+                    storePassword = localProps["KEYSTORE_PASSWORD"] as String?
+                    keyAlias = localProps["KEY_ALIAS"] as String?
+                    keyPassword = localProps["KEY_PASSWORD"] as String?
+                }
             }
         }
     }
@@ -109,6 +119,9 @@ dependencies {
 
     // DataStore
     implementation(libs.datastore.preferences)
+
+    // Encrypted credentials
+    implementation(libs.security.crypto)
 
     // Ktor (Android engine for HttpClient(Android) in AppViewModel)
     implementation(libs.ktor.android)

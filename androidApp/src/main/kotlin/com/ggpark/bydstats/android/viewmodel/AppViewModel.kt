@@ -13,9 +13,8 @@ import com.ggpark.bydstats.android.data.AppDatabase
 import com.ggpark.bydstats.android.data.entity.ChargingSessionEntity
 import com.ggpark.bydstats.android.data.entity.DataPointEntity
 import com.ggpark.bydstats.android.data.entity.DrivingSessionEntity
-import com.ggpark.bydstats.android.service.AppRelease
-import com.ggpark.bydstats.android.service.AppUpdate
 import com.ggpark.bydstats.android.service.PollingService
+import com.ggpark.bydstats.android.service.SecureStorage
 import com.ggpark.bydstats.android.service.PushRegistrar
 import com.google.firebase.messaging.FirebaseMessaging
 import com.ggpark.bydstats.api.BydApiClient
@@ -27,14 +26,11 @@ import io.ktor.client.*
 import io.ktor.client.engine.android.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 
 private object PrefKeys {
-    val USERNAME         = stringPreferencesKey("username")
-    val PASSWORD         = stringPreferencesKey("password")
     val REGION           = stringPreferencesKey("region")
     val VIN              = stringPreferencesKey("vin")
     val ELECTRICITY_RATE = stringPreferencesKey("electricity_rate")
@@ -46,8 +42,6 @@ private object PrefKeys {
     val ENCRY_TOKEN      = stringPreferencesKey("encry_token")
     val RATE_PLAN_ID     = stringPreferencesKey("rate_plan_id")
     val CUSTOM_RATE      = stringPreferencesKey("custom_rate")
-    val LAST_UPDATE_CHECK = stringPreferencesKey("last_update_check")
-    val SKIPPED_UPDATE    = stringPreferencesKey("skipped_update_version")
 }
 
 data class AppSettings(
@@ -72,16 +66,6 @@ data class AppUiState(
     val vehicles: List<VehicleListItem> = emptyList(),
 )
 
-data class UpdateUiState(
-    val release: AppRelease? = null,
-    val showDialog: Boolean = false,
-    val checking: Boolean = false,
-    val downloading: Boolean = false,
-    val progress: Float = 0f,
-    val error: String? = null,
-    val alreadyLatest: Boolean = false,
-)
-
 class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     private val context = application.applicationContext
@@ -98,16 +82,9 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     val chargingSessions: Flow<List<ChargingSessionEntity>> = db.chargingSessionDao().allFlow()
     val drivingSessions: Flow<List<DrivingSessionEntity>> = db.drivingSessionDao().allFlow()
 
-    private val _updateState = MutableStateFlow(UpdateUiState())
-    val updateState: StateFlow<UpdateUiState> = _updateState.asStateFlow()
-    private var downloadJob: Job? = null
-
     init {
         observeServiceStatus()
-        viewModelScope.launch {
-            loadSettings()
-            checkForUpdate(force = false)
-        }
+        viewModelScope.launch { loadSettings() }
     }
 
     // MARK: - 서비스 상태 구독
@@ -127,8 +104,8 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private suspend fun loadSettings() {
         val prefs = context.appDataStore.data.first()
         val s = AppSettings(
-            username           = prefs[PrefKeys.USERNAME] ?: "",
-            password           = prefs[PrefKeys.PASSWORD] ?: "",
+            username           = SecureStorage.get(context, SecureStorage.KEY_USERNAME) ?: "",
+            password           = SecureStorage.get(context, SecureStorage.KEY_PASSWORD) ?: "",
             region             = prefs[PrefKeys.REGION] ?: "KR",
             vin                = prefs[PrefKeys.VIN] ?: "",
             electricityRate    = prefs[PrefKeys.CUSTOM_RATE]?.toDoubleOrNull()
@@ -221,82 +198,6 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // MARK: - App update
-
-    fun checkForUpdate(force: Boolean) {
-        viewModelScope.launch {
-            _updateState.update { it.copy(checking = true, error = null, alreadyLatest = false) }
-            try {
-                val prefs = context.appDataStore.data.first()
-                if (!force) {
-                    val last = prefs[PrefKeys.LAST_UPDATE_CHECK]?.toLongOrNull() ?: 0L
-                    if (System.currentTimeMillis() - last < 6 * 3600_000L) {
-                        _updateState.update { it.copy(checking = false) }
-                        return@launch
-                    }
-                }
-                val latest = AppUpdate.fetchLatest()
-                saveSetting(PrefKeys.LAST_UPDATE_CHECK, System.currentTimeMillis().toString())
-                if (latest == null || !AppUpdate.isNewer(latest.version, BuildConfig.VERSION_NAME)) {
-                    _updateState.update {
-                        it.copy(checking = false, release = null, showDialog = false, alreadyLatest = force)
-                    }
-                    return@launch
-                }
-                val skipped = prefs[PrefKeys.SKIPPED_UPDATE]
-                val show = force || skipped != latest.version
-                _updateState.update {
-                    it.copy(checking = false, release = latest, showDialog = show, alreadyLatest = false)
-                }
-            } catch (e: Exception) {
-                _updateState.update {
-                    it.copy(
-                        checking = false,
-                        error = if (force) "확인 실패: ${e.message}" else null,
-                    )
-                }
-            }
-        }
-    }
-
-    fun startUpdateDownload() {
-        val release = _updateState.value.release ?: return
-        if (!AppUpdate.canInstall(context)) {
-            AppUpdate.requestInstallPermission(context)
-            _updateState.update { it.copy(error = "이 앱의 설치를 허용한 뒤 다시 눌러 주세요.") }
-            return
-        }
-        downloadJob?.cancel()
-        downloadJob = viewModelScope.launch {
-            _updateState.update { it.copy(downloading = true, progress = 0f, error = null) }
-            try {
-                val dest = AppUpdate.apkFile(context)
-                AppUpdate.downloadApk(release.apkUrl, dest) { p ->
-                    _updateState.update { it.copy(progress = p) }
-                }
-                _updateState.update { it.copy(downloading = false, showDialog = false) }
-                AppUpdate.installApk(context, dest)
-            } catch (e: Exception) {
-                _updateState.update {
-                    it.copy(downloading = false, error = e.message ?: "다운로드 실패")
-                }
-            }
-        }
-    }
-
-    fun dismissUpdate() {
-        downloadJob?.cancel()
-        val version = _updateState.value.release?.version
-        _updateState.update { it.copy(showDialog = false, downloading = false) }
-        if (version != null) {
-            viewModelScope.launch { saveSetting(PrefKeys.SKIPPED_UPDATE, version) }
-        }
-    }
-
-    fun clearAlreadyLatest() {
-        _updateState.update { it.copy(alreadyLatest = false, error = null) }
-    }
-
     // MARK: - Settings Update
 
     fun updateRatePlan(planId: String) {
@@ -336,6 +237,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             unregisterFcmToken()
             PollingService.stop(context)
+            SecureStorage.clear(context)
             context.appDataStore.edit { it.clear() }
             _settings.value = AppSettings()
             _uiState.value = AppUiState(isLoading = false, isLoggedIn = false)
@@ -372,10 +274,8 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private suspend fun saveCredentials(s: AppSettings) {
-        context.appDataStore.edit { prefs ->
-            prefs[PrefKeys.USERNAME] = s.username
-            prefs[PrefKeys.PASSWORD] = s.password
-            prefs[PrefKeys.REGION]   = s.region
-        }
+        SecureStorage.put(context, SecureStorage.KEY_USERNAME, s.username)
+        SecureStorage.put(context, SecureStorage.KEY_PASSWORD, s.password)
+        saveSetting(PrefKeys.REGION, s.region)
     }
 }
