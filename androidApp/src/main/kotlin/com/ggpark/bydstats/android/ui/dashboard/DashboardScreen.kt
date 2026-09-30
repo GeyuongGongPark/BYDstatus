@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.Arrangement
 import com.ggpark.bydstats.android.data.entity.ChargingSessionEntity
 import com.ggpark.bydstats.android.data.entity.DrivingSessionEntity
 import com.ggpark.bydstats.android.viewmodel.AppViewModel
@@ -30,19 +31,29 @@ fun DashboardScreen(vm: AppViewModel) {
     val chargingSessions by vm.chargingSessions.collectAsState(emptyList())
     val drivingSessions by vm.drivingSessions.collectAsState(emptyList())
 
-    // 이번 달 통계
-    val now = System.currentTimeMillis()
-    val monthStart = Instant.ofEpochMilli(now).atZone(ZoneId.systemDefault()).let { dt ->
-        dt.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0)
-            .toInstant().toEpochMilli()
+    // 이번 달 통계 (데모 모드 시 가짜 수치)
+    val monthChargingCost: Double
+    val monthChargingKwh: Double
+    val monthDrivingKm: Double
+    val monthDrivingKwh: Double
+    if (uiState.isDemoMode) {
+        monthChargingCost = 32_450.0
+        monthChargingKwh  = 145.6
+        monthDrivingKm    = 1_240.0
+        monthDrivingKwh   = 98.2
+    } else {
+        val now = System.currentTimeMillis()
+        val monthStart = Instant.ofEpochMilli(now).atZone(ZoneId.systemDefault()).let { dt ->
+            dt.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0)
+                .toInstant().toEpochMilli()
+        }
+        val thisMonthCharging = chargingSessions.filter { it.startTime >= monthStart && it.endTime != null }
+        val thisMonthDriving  = drivingSessions.filter  { it.startTime >= monthStart && it.endTime != null }
+        monthChargingCost = thisMonthCharging.sumOf { it.estimatedCostKrw }
+        monthChargingKwh  = thisMonthCharging.sumOf { it.energyKwh }
+        monthDrivingKm    = thisMonthDriving.mapNotNull { it.distanceKm }.sum()
+        monthDrivingKwh   = thisMonthDriving.sumOf { it.energyKwh }
     }
-    val thisMonthCharging = chargingSessions.filter { it.startTime >= monthStart && it.endTime != null }
-    val thisMonthDriving  = drivingSessions.filter  { it.startTime >= monthStart && it.endTime != null }
-
-    val monthChargingCost = thisMonthCharging.sumOf { it.estimatedCostKrw }
-    val monthChargingKwh  = thisMonthCharging.sumOf { it.energyKwh }
-    val monthDrivingKm    = thisMonthDriving.mapNotNull { it.distanceKm }.sum()
-    val monthDrivingKwh   = thisMonthDriving.sumOf { it.energyKwh }
 
     Scaffold(
         topBar = {
@@ -57,15 +68,17 @@ fun DashboardScreen(vm: AppViewModel) {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            // 에러 메시지
-            uiState.pollingError?.let { err ->
-                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
-                    Text(
-                        text = err,
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                        modifier = Modifier.padding(12.dp),
-                        style = MaterialTheme.typography.bodySmall,
-                    )
+            // 에러 메시지 (데모 모드 시 숨김)
+            if (!uiState.isDemoMode) {
+                uiState.pollingError?.let { err ->
+                    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
+                        Text(
+                            text = err,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            modifier = Modifier.padding(12.dp),
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
                 }
             }
 
@@ -73,22 +86,26 @@ fun DashboardScreen(vm: AppViewModel) {
             uiState.status?.let { status ->
                 BatteryCard(status)
             } ?: ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-                Box(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(48.dp),
-                    contentAlignment = Alignment.Center,
+                        .padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        CircularProgressIndicator()
-                        Text(
-                            "차량 데이터 로딩 중",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                    Icon(
+                        Icons.Default.DirectionsCar,
+                        contentDescription = null,
+                        modifier = Modifier.size(48.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        "설정 탭에서 BYD 계정으로 로그인하세요",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    OutlinedButton(onClick = { vm.enterDemoMode() }) {
+                        Text("데모로 보기")
                     }
                 }
             }
@@ -105,6 +122,16 @@ fun DashboardScreen(vm: AppViewModel) {
                 drivingKm    = monthDrivingKm,
                 drivingKwh   = monthDrivingKwh,
             )
+
+            // 데모 모드 시 최근 충전 카드
+            if (uiState.isDemoMode) {
+                Text(
+                    "최근 충전",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                DemoRecentChargingCard()
+            }
         }
     }
 }
@@ -307,6 +334,61 @@ private fun StatCard(
             Spacer(Modifier.height(10.dp))
             Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+private data class DemoChargingRow(
+    val daysAgo: Int,
+    val startSoc: Int,
+    val endSoc: Int,
+    val energyKwh: Double,
+    val costKrw: Int,
+    val durationMin: Int,
+)
+
+private val demoChargingRows = listOf(
+    DemoChargingRow(daysAgo = 1, startSoc = 20, endSoc = 80, energyKwh = 36.4, costKrw = 7_280,  durationMin = 96),
+    DemoChargingRow(daysAgo = 3, startSoc = 35, endSoc = 90, energyKwh = 33.3, costKrw = 6_660,  durationMin = 88),
+    DemoChargingRow(daysAgo = 5, startSoc = 10, endSoc = 100, energyKwh = 54.5, costKrw = 10_900, durationMin = 144),
+)
+
+@Composable
+private fun DemoRecentChargingCard() {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            demoChargingRows.forEachIndexed { idx, row ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column {
+                        Text(
+                            "${row.daysAgo}일 전",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Text(
+                            "${row.startSoc}% → ${row.endSoc}%  |  ${row.durationMin}분",
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            "${"%.1f".format(row.energyKwh)} kWh",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Text(
+                            "₩${"%,d".format(row.costKrw)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                }
+                if (idx < demoChargingRows.size - 1) HorizontalDivider()
+            }
         }
     }
 }

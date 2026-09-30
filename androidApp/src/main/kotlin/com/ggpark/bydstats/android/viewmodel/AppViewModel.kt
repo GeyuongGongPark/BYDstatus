@@ -64,6 +64,7 @@ data class AppUiState(
     val status: VehicleStatus? = null,
     val pollingError: String? = null,
     val vehicles: List<VehicleListItem> = emptyList(),
+    val isDemoMode: Boolean = false,
 )
 
 class AppViewModel(application: Application) : AndroidViewModel(application) {
@@ -78,9 +79,17 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow(AppUiState())
     val uiState: StateFlow<AppUiState> = _uiState.asStateFlow()
 
-    val dataPoints: Flow<List<DataPointEntity>> = db.dataPointDao().allFlow()
-    val chargingSessions: Flow<List<ChargingSessionEntity>> = db.chargingSessionDao().allFlow()
-    val drivingSessions: Flow<List<DrivingSessionEntity>> = db.drivingSessionDao().allFlow()
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val dataPoints: Flow<List<DataPointEntity>> = _uiState
+        .flatMapLatest { if (it.isDemoMode) flowOf(buildDemoDataPoints()) else db.dataPointDao().allFlow() }
+
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val chargingSessions: Flow<List<ChargingSessionEntity>> = _uiState
+        .flatMapLatest { if (it.isDemoMode) flowOf(buildDemoChargingSessions()) else db.chargingSessionDao().allFlow() }
+
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val drivingSessions: Flow<List<DrivingSessionEntity>> = _uiState
+        .flatMapLatest { if (it.isDemoMode) flowOf(buildDemoDrivingSessions()) else db.drivingSessionDao().allFlow() }
 
     init {
         observeServiceStatus()
@@ -198,6 +207,24 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // MARK: - Demo Mode
+
+    fun enterDemoMode() {
+        val demoStatus = VehicleStatus(
+            batteryPercentage = 72,
+            drivingRange      = 350.0,
+            instantPowerW     = 7200.0,  // 7.2 kW 완속 충전 중
+            totalMileage      = 12_480.0,
+            reportedCharging  = true,
+            reportedDriving   = false,
+        )
+        _uiState.update { it.copy(isDemoMode = true, isLoggedIn = true, status = demoStatus, pollingError = null) }
+    }
+
+    fun exitDemoMode() {
+        _uiState.update { it.copy(isDemoMode = false, isLoggedIn = false, status = null) }
+    }
+
     // MARK: - Settings Update
 
     fun updateRatePlan(planId: String) {
@@ -262,6 +289,55 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     suspend fun updateChargingSession(session: ChargingSessionEntity) = db.chargingSessionDao().update(session)
     suspend fun deleteDrivingSession(session: DrivingSessionEntity)   = db.drivingSessionDao().delete(session)
     suspend fun updateDrivingSession(session: DrivingSessionEntity)   = db.drivingSessionDao().update(session)
+
+    // MARK: - Demo Data
+
+    private fun buildDemoChargingSessions(): List<ChargingSessionEntity> {
+        val now = System.currentTimeMillis()
+        val day = 86_400_000L
+        val min = 60_000L
+        return listOf(
+            ChargingSessionEntity(id=1, startTime=now-1*day+8*3600_000L, endTime=now-1*day+8*3600_000L+96*min, startSoc=20, endSoc=80, energyKwh=36.4, durationMinutes=96,  estimatedCostKrw=7_280.0),
+            ChargingSessionEntity(id=2, startTime=now-3*day+9*3600_000L, endTime=now-3*day+9*3600_000L+88*min, startSoc=35, endSoc=90, energyKwh=33.3, durationMinutes=88,  estimatedCostKrw=6_660.0),
+            ChargingSessionEntity(id=3, startTime=now-5*day+7*3600_000L, endTime=now-5*day+7*3600_000L+144*min, startSoc=10, endSoc=100, energyKwh=54.5, durationMinutes=144, estimatedCostKrw=10_900.0),
+            ChargingSessionEntity(id=4, startTime=now-10*day+8*3600_000L, endTime=now-10*day+8*3600_000L+57*min, startSoc=25, endSoc=60, energyKwh=21.4, durationMinutes=57, estimatedCostKrw=7_610.0),
+        )
+    }
+
+    private fun buildDemoDrivingSessions(): List<DrivingSessionEntity> {
+        val now = System.currentTimeMillis()
+        val day = 86_400_000L
+        val min = 60_000L
+        return listOf(
+            DrivingSessionEntity(id=1, startTime=now-2*day+10*3600_000L, endTime=now-2*day+10*3600_000L+50*min,  startSoc=55, endSoc=42, energyKwh=8.0,  distanceKm=100.0, efficiencyKmPerKwh=12.5,  startOdometer=12_380.0, endOdometer=12_480.0),
+            DrivingSessionEntity(id=2, startTime=now-4*day+9*3600_000L,  endTime=now-4*day+9*3600_000L+75*min,   startSoc=70, endSoc=50, energyKwh=12.0, distanceKm=150.0, efficiencyKmPerKwh=12.5,  startOdometer=12_230.0, endOdometer=12_380.0),
+            DrivingSessionEntity(id=3, startTime=now-6*day+8*3600_000L,  endTime=now-6*day+8*3600_000L+96*min,   startSoc=65, endSoc=39, energyKwh=16.0, distanceKm=200.0, efficiencyKmPerKwh=12.5,  startOdometer=12_030.0, endOdometer=12_230.0),
+            DrivingSessionEntity(id=4, startTime=now-9*day+11*3600_000L, endTime=now-9*day+11*3600_000L+86*min,  startSoc=78, endSoc=54, energyKwh=14.4, distanceKm=180.0, efficiencyKmPerKwh=12.5,  startOdometer=11_850.0, endOdometer=12_030.0),
+            DrivingSessionEntity(id=5, startTime=now-12*day+9*3600_000L, endTime=now-12*day+9*3600_000L+75*min,  startSoc=90, endSoc=70, energyKwh=12.0, distanceKm=150.0, efficiencyKmPerKwh=12.5,  startOdometer=11_700.0, endOdometer=11_850.0),
+            DrivingSessionEntity(id=6, startTime=now-17*day+8*3600_000L, endTime=now-17*day+8*3600_000L+100*min, startSoc=72, endSoc=44, energyKwh=16.8, distanceKm=210.0, efficiencyKmPerKwh=12.5,  startOdometer=11_490.0, endOdometer=11_700.0),
+            DrivingSessionEntity(id=7, startTime=now-22*day+10*3600_000L,endTime=now-22*day+10*3600_000L+114*min,startSoc=82, endSoc=51, energyKwh=19.0, distanceKm=250.0, efficiencyKmPerKwh=13.16, startOdometer=11_240.0, endOdometer=11_490.0),
+        )
+    }
+
+    private fun buildDemoDataPoints(): List<DataPointEntity> {
+        val now = System.currentTimeMillis()
+        val h = 3_600_000L
+        return listOf(
+            DataPointEntity(id=1,  timestamp=now-24*h, batteryPercent=60, isCharging=false, isDriving=false, chargingPowerKw=null, hvacOn=false, drivingRangeKm=280.0),
+            DataPointEntity(id=2,  timestamp=now-22*h, batteryPercent=40, isCharging=false, isDriving=true,  chargingPowerKw=null, hvacOn=false, drivingRangeKm=186.0),
+            DataPointEntity(id=3,  timestamp=now-20*h, batteryPercent=32, isCharging=false, isDriving=false, chargingPowerKw=null, hvacOn=false, drivingRangeKm=149.0),
+            DataPointEntity(id=4,  timestamp=now-18*h, batteryPercent=52, isCharging=true,  isDriving=false, chargingPowerKw=7.2,  hvacOn=false, drivingRangeKm=243.0),
+            DataPointEntity(id=5,  timestamp=now-16*h, batteryPercent=68, isCharging=false, isDriving=false, chargingPowerKw=null, hvacOn=false, drivingRangeKm=317.0),
+            DataPointEntity(id=6,  timestamp=now-14*h, batteryPercent=52, isCharging=false, isDriving=true,  chargingPowerKw=null, hvacOn=true,  drivingRangeKm=243.0),
+            DataPointEntity(id=7,  timestamp=now-12*h, batteryPercent=45, isCharging=false, isDriving=false, chargingPowerKw=null, hvacOn=false, drivingRangeKm=210.0),
+            DataPointEntity(id=8,  timestamp=now-10*h, batteryPercent=62, isCharging=true,  isDriving=false, chargingPowerKw=7.2,  hvacOn=false, drivingRangeKm=289.0),
+            DataPointEntity(id=9,  timestamp=now-8*h,  batteryPercent=77, isCharging=false, isDriving=false, chargingPowerKw=null, hvacOn=false, drivingRangeKm=359.0),
+            DataPointEntity(id=10, timestamp=now-6*h,  batteryPercent=65, isCharging=false, isDriving=true,  chargingPowerKw=null, hvacOn=true,  drivingRangeKm=303.0),
+            DataPointEntity(id=11, timestamp=now-4*h,  batteryPercent=55, isCharging=false, isDriving=false, chargingPowerKw=null, hvacOn=false, drivingRangeKm=257.0),
+            DataPointEntity(id=12, timestamp=now-2*h,  batteryPercent=65, isCharging=true,  isDriving=false, chargingPowerKw=7.2,  hvacOn=false, drivingRangeKm=303.0),
+            DataPointEntity(id=13, timestamp=now,      batteryPercent=72, isCharging=true,  isDriving=false, chargingPowerKw=7.2,  hvacOn=false, drivingRangeKm=336.0),
+        )
+    }
 
     // MARK: - Helpers
 

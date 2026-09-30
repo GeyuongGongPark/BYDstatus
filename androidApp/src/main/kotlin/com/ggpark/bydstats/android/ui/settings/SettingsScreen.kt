@@ -79,6 +79,23 @@ fun SettingsScreen(vm: AppViewModel, onNavigateToLog: () -> Unit = {}) {
 
             if (uiState.isLoggedIn) {
                 // 로그인 된 상태
+                if (uiState.isDemoMode) {
+                    ListItem(
+                        headlineContent = { Text("데모 모드") },
+                        supportingContent = { Text("실제 차량 데이터가 아닙니다") },
+                        leadingContent = { Icon(Icons.Default.Info, null, tint = MaterialTheme.colorScheme.primary) },
+                        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
+                    )
+                    HorizontalDivider(modifier = Modifier.padding(start = 56.dp))
+                    ListItem(
+                        headlineContent = { Text("데모 종료", color = MaterialTheme.colorScheme.error) },
+                        leadingContent = { Icon(Icons.AutoMirrored.Filled.Logout, null, tint = MaterialTheme.colorScheme.error) },
+                        modifier = Modifier.fillMaxWidth().clickable { vm.exitDemoMode() },
+                        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
+                        supportingContent = null,
+                    )
+                    HorizontalDivider()
+                } else {
                 PreferenceItem(
                     title = settings.username,
                     subtitle = "로그인됨 · ${settings.region}",
@@ -114,6 +131,7 @@ fun SettingsScreen(vm: AppViewModel, onNavigateToLog: () -> Unit = {}) {
                     supportingContent = null,
                 )
                 HorizontalDivider()
+                } // end else (not demo)
 
             } else {
                 // 로그인 안 된 상태 — iOS처럼 폼을 설정 탭 안에 바로 표시

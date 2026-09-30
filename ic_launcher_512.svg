@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- 배경 -->
+  <rect width="512" height="512" rx="96" ry="96" fill="#2F5FBF"/>
+
+  <!-- 번개 볼트 -->
+  <polygon
+    points="280,80 200,272 248,272 232,432 336,224 280,224"
+    fill="white"
+  />
+
+  <!-- 차트 라인 -->
+  <polyline
+    points="64,390 148,320 210,352 290,280 360,316 448,240"
+    fill="none"
+    stroke="white"
+    stroke-width="22"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    opacity="0.6"
+  />
+</svg>
