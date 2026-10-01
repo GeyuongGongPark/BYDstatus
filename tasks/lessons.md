@@ -11,6 +11,17 @@
 - 수정: `apiIsCharging` 값에 무관하게 SOC 상승 → 충전 시작, 이전 충전 중 + SOC 비하락 → 충전 유지로 통일.
 - API false는 "불확실"로 취급하고 SOC 패턴으로만 판단. API true/gl>0만 확실한 양성 신호.
 
+## recoverOrphanSessions의 force-end 기준은 실제 최대 세션 시간보다 길어야 한다
+- 기존 1시간 기준으로 force-end 하면, BGAppRefreshTask가 15분마다 새 SessionDetector를 생성할 때 1시간 이상 진행 중인 주행/충전 세션을 강제 종료시킨다.
+- 편도 1시간 이상 주행 시: 포그라운드에서 세션 시작 → 앱 kill → BGAppRefreshTask 두 번째 실행(~75분 후) → force-end → 이후 포그라운드 복귀 시 미완료 세션 없음 → 세션 미생성.
+- 수정: 주행 12시간, 충전 24시간으로 기준 상향. iOS·Android 동일하게 적용.
+
+## withDrivingResolved 회생제동 판정은 직전 speed>0 조건이 필수
+- `withDrivingResolved`에서 `previous.isDriving=true + speed=0 + gl>0`만 보면, 정차 중 충전기 연결 초기에도 회생제동으로 오판한다.
+- 실제 시나리오: `powerGear=3 + speed=0 + gl<0` → isDriving=true(D단 대기) → 다음 폴링에서 충전 시작(`gl>0`)되면 previous.isDriving=true이므로 회생제동 판정 → isDriving=true 고정 → 충전 세션 미기록 + 주행 세션 오염.
+- 수정: `(previous?.speed ?: 0.0) > 0.0` 조건 추가. 직전 폴링에서 실제 이동 중이었어야만 회생제동으로 인정.
+- iOS·Android 공통 적용 필요.
+
 ## instantPowerW>0 → isDriving=false는 회생제동 케이스도 잡는다
 - 충전기 연결 판정을 위해 `instantPowerW > 0 → isDriving=false`를 추가하면, 주행 중 감속 시 speed=0이 되는 순간 gl이 양수(회생제동)이어도 isDriving=false → 충전 세션 오기록.
 - 충전기 연결과 회생제동 구분: "이전 폴링에서 주행 중 + speed=0 + gl>0"이면 회생제동.
@@ -50,6 +61,15 @@
 - Android: `soc=0` → return → `_currentStatus = null` 유지 → CircularProgressIndicator 무한.
 - 수정: iOS는 `defer { isPolling = false }`, Android는 null 상태일 때 에러 메시지 설정으로 로딩 탈출.
 - **원칙**: 폴링/로딩 플래그는 항상 `defer`로 해제. early return 경로를 모두 점검할 것.
+
+## Android Manifest 권한은 실제 사용하는 것만 선언할 것
+- `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`를 Manifest에 선언했지만 코드에서 실제로 호출하는 곳이 없음.
+- 사용하지 않는 권한을 선언하면 시스템(특히 삼성 OneUI)이 배터리 관련 앱으로 분류해 경고 다이얼로그를 띄울 수 있음.
+- Play 스토어에서도 해당 권한은 특별 허가(Policy 예외) 대상이므로 미사용이면 반드시 제거.
+
+## Android 14에서 dataSync 포그라운드 서비스는 6시간 제한이 있다
+- `foregroundServiceType="dataSync"` + `FOREGROUND_SERVICE_DATA_SYNC` 권한 조합은 Android 14(API 34)부터 앱당 누적 6시간 실행 후 시스템이 강제 종료함.
+- 장시간 백그라운드 모니터링 앱은 `connectedDevice` 또는 `mediaPlayback` 타입 검토 필요, 또는 6시간 제한을 인지하고 재시작 로직 보완.
 
 ## 앱 코드와 CI(release.yml)는 항상 함께 업데이트할 것
 - 새 환경변수(BuildConfig 필드, Info.plist 키 등)를 앱에 추가할 때 `.github/workflows/release.yml`에도 해당 secret 주입을 반드시 같은 커밋에 추가해야 한다.

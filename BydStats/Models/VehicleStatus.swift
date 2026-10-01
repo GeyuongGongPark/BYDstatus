@@ -32,7 +32,9 @@ struct VehicleStatus {
     // withChargingResolved() 이전에 호출할 것.
     func withDrivingResolved(previous: VehicleStatus?) -> VehicleStatus {
         var copy = self
-        let isRegenerativeBraking = (previous?.isDriving == true) && speed == 0 && instantPowerW > 0
+        // 직전에 실제로 이동 중(speed > 0)이었다가 현재 정차(speed=0) + gl>0인 경우만 회생제동
+        // 직전 speed=0이면 정차 중 충전이므로 회생제동 아님
+        let isRegenerativeBraking = (previous?.isDriving == true) && (previous?.speed ?? 0) > 0 && speed == 0 && instantPowerW > 0
         if isRegenerativeBraking { copy.resolvedDriving = true }
         return copy
     }

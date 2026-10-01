@@ -32,6 +32,13 @@ final class LogManager {
 
     private init() {}
 
+    /// SessionDetector 등 non-MainActor 컨텍스트에서 호출할 때 사용
+    nonisolated static func log(_ message: String, tag: String = "App") {
+        Task { @MainActor in
+            LogManager.shared.add(message, tag: tag)
+        }
+    }
+
     func add(_ message: String, tag: String = "App") {
         let entry = LogEntry(timestamp: Date(), tag: tag, message: message)
         entries.append(entry)

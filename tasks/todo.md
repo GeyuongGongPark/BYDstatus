@@ -1,3 +1,26 @@
+# v0.6.13 — 세션 기록 버그 수정 (iOS·Android) ✅
+
+## 작업 요약
+- fix: withDrivingResolved 회생제동 오판 수정 (iOS·Android)
+- fix: recoverOrphanSessions 강제 종료 기준 상향 — 주행 12h, 충전 24h (iOS·Android)
+- feat: iOS SessionDetector 세션 로깅 추가
+
+## 체크리스트
+- [x] `shared/.../ChargingResolve.kt`: withDrivingResolved에 `previous.speed > 0` 조건 추가
+- [x] `BydStats/Models/VehicleStatus.swift`: 동일 수정
+- [x] `BydStats/Services/SessionDetector.swift`: recoverOrphanSessions 기준 12h/24h로 상향
+- [x] `androidApp/.../SessionDetector.kt`: 동일 수정
+- [x] `BydStats/Services/LogManager.swift`: nonisolated static log 함수 추가
+- [x] `BydStats/Services/SessionDetector.swift`: 세션 이벤트 로그 추가
+- [x] `androidApp/.../SessionDetector.kt`: recover 로그 추가
+- [x] iOS Info.plist: 0.6.12 → 0.6.13, CFBundleVersion 18 → 19
+- [x] Widget Info.plist: 동일
+- [x] `androidApp/build.gradle.kts`: versionName 0.6.13, versionCode 13
+- [x] RELEASE_NOTES.md: v0.6.13 섹션 추가
+- [ ] 커밋 & 푸시
+
+---
+
 # chore: bump version to 0.6.12 (iOS·Android)
 
 ## 체크리스트

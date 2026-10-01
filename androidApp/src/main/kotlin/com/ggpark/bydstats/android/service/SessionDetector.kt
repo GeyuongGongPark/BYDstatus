@@ -18,11 +18,15 @@ class SessionDetector(
 
     suspend fun recover() {
         val now = System.currentTimeMillis()
-        val oneHour = 3_600_000L
+        // 주행은 최대 12시간, 충전은 최대 24시간까지 복원
+        // (1시간 기준은 장거리 주행/완속 충전 세션을 force-end하는 버그를 유발)
+        val maxDrivingMs  = 12 * 3_600_000L
+        val maxChargingMs = 24 * 3_600_000L
 
         db.chargingSessionDao().incomplete().forEach { session ->
-            if (now - session.startTime < oneHour) {
+            if (now - session.startTime < maxChargingMs) {
                 activeCharging = session
+                AppLogger.log("recover: charging session restored startSoc=${session.startSoc} elapsed=${(now - session.startTime) / 60_000}min", TAG)
             } else {
                 val socDelta = maxOf(0, session.endSoc - session.startSoc).toDouble()
                 val energy = socDelta * batteryCapacityKwh / 100.0
@@ -36,14 +40,17 @@ class SessionDetector(
                         estimatedCostKrw = energy * rate,
                     )
                 )
+                AppLogger.log("recover: charging session force-ended startSoc=${session.startSoc} elapsed=${duration}min", TAG)
             }
         }
 
         db.drivingSessionDao().incomplete().forEach { session ->
-            if (now - session.startTime < oneHour) {
+            if (now - session.startTime < maxDrivingMs) {
                 activeDriving = session
+                AppLogger.log("recover: driving session restored startSoc=${session.startSoc} elapsed=${(now - session.startTime) / 60_000}min", TAG)
             } else {
                 db.drivingSessionDao().update(session.copy(endTime = now))
+                AppLogger.log("recover: driving session force-ended startSoc=${session.startSoc} elapsed=${(now - session.startTime) / 60_000}min", TAG)
             }
         }
     }
