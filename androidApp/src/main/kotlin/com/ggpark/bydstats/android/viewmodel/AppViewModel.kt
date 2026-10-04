@@ -10,9 +10,13 @@ import com.ggpark.bydstats.android.BuildConfig
 import com.ggpark.bydstats.android.BydStatsApp
 import com.ggpark.bydstats.android.appDataStore
 import com.ggpark.bydstats.android.data.AppDatabase
+import com.ggpark.bydstats.android.data.DataExporter
+import com.ggpark.bydstats.android.data.ImportResult
 import com.ggpark.bydstats.android.data.entity.ChargingSessionEntity
 import com.ggpark.bydstats.android.data.entity.DataPointEntity
 import com.ggpark.bydstats.android.data.entity.DrivingSessionEntity
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import com.ggpark.bydstats.android.service.AppRelease
 import com.ggpark.bydstats.android.service.AppUpdate
 import com.ggpark.bydstats.android.service.PollingService
@@ -101,6 +105,12 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val _updateState = MutableStateFlow(UpdateUiState())
     val updateState: StateFlow<UpdateUiState> = _updateState.asStateFlow()
     private var downloadJob: Job? = null
+
+    private val _exportReady = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val exportReady = _exportReady.asSharedFlow()
+
+    private val _importResult = MutableSharedFlow<Result<ImportResult>>(extraBufferCapacity = 1)
+    val importResult = _importResult.asSharedFlow()
 
     init {
         observeServiceStatus()
@@ -351,6 +361,30 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     private fun unregisterFcmToken() {
         FirebaseMessaging.getInstance().token.addOnSuccessListener { token ->
             viewModelScope.launch { PushRegistrar.unregister(token) }
+        }
+    }
+
+    // MARK: - Data Export / Import
+
+    fun exportData() {
+        viewModelScope.launch {
+            try {
+                val json = DataExporter.export(db)
+                _exportReady.emit(json)
+            } catch (e: Exception) {
+                _importResult.emit(Result.failure(e))
+            }
+        }
+    }
+
+    fun importData(jsonStr: String) {
+        viewModelScope.launch {
+            try {
+                val result = DataExporter.importData(jsonStr, db)
+                _importResult.emit(Result.success(result))
+            } catch (e: Exception) {
+                _importResult.emit(Result.failure(e))
+            }
         }
     }
 

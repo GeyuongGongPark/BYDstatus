@@ -1,8 +1,10 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct SettingsView: View {
     @Environment(AppState.self) private var appState
     @Environment(LogManager.self) private var logManager
+    @Environment(\.modelContext) private var modelContext
 
     // 로그인 폼 입력
     @State private var username = ""
@@ -16,6 +18,13 @@ struct SettingsView: View {
     @AppStorage("ratePlanId")      private var ratePlanId      = "kepco_low"
     @AppStorage("pollingInterval") private var pollingInterval = 5
     @AppStorage("gpsEnabled")      private var gpsEnabled      = true
+
+    // 데이터 내보내기/가져오기
+    @State private var exportDocument: BydStatsExportDocument? = nil
+    @State private var showExporter = false
+    @State private var showImporter = false
+    @State private var dataAlertMessage: String? = nil
+    @State private var showDataAlert = false
 
     private var allPlans: [ChargingRatePlan] {
         predefinedRatePlans + [.custom(rate: electricityRate)]
@@ -35,11 +44,53 @@ struct SettingsView: View {
                 electricitySection
                 pollingSection
                 locationSection
+                dataSection
                 debugSection
             }
             .navigationTitle("설정")
             .sheet(isPresented: $showLogView) {
                 LogView()
+            }
+            .fileExporter(
+                isPresented: $showExporter,
+                document: exportDocument,
+                contentType: .json,
+                defaultFilename: "bydstats-export.json"
+            ) { result in
+                if case .failure(let err) = result {
+                    dataAlertMessage = "내보내기 실패: \(err.localizedDescription)"
+                    showDataAlert = true
+                }
+            }
+            .fileImporter(
+                isPresented: $showImporter,
+                allowedContentTypes: [.json]
+            ) { result in
+                switch result {
+                case .success(let url):
+                    guard url.startAccessingSecurityScopedResource() else {
+                        dataAlertMessage = "파일 접근 권한 없음"
+                        showDataAlert = true
+                        return
+                    }
+                    defer { url.stopAccessingSecurityScopedResource() }
+                    do {
+                        let data = try Data(contentsOf: url)
+                        let r = try DataExporter.importData(from: data, context: modelContext)
+                        dataAlertMessage = "가져오기 완료\n배터리 기록 \(r.dataPoints)건 · 충전 \(r.chargingSessions)건 · 주행 \(r.drivingSessions)건"
+                    } catch {
+                        dataAlertMessage = "가져오기 실패: \(error.localizedDescription)"
+                    }
+                    showDataAlert = true
+                case .failure(let err):
+                    dataAlertMessage = "파일 선택 실패: \(err.localizedDescription)"
+                    showDataAlert = true
+                }
+            }
+            .alert("데이터", isPresented: $showDataAlert) {
+                Button("확인", role: .cancel) {}
+            } message: {
+                Text(dataAlertMessage ?? "")
             }
         }
     }
@@ -207,6 +258,30 @@ struct SettingsView: View {
     private var locationSection: some View {
         Section("위치") {
             Toggle("GPS 트래킹", isOn: $gpsEnabled)
+        }
+    }
+
+    // MARK: - 데이터 섹션
+
+    private var dataSection: some View {
+        Section("데이터") {
+            Button {
+                do {
+                    let data = try DataExporter.export(context: modelContext)
+                    exportDocument = BydStatsExportDocument(data: data)
+                    showExporter = true
+                } catch {
+                    dataAlertMessage = "내보내기 준비 실패: \(error.localizedDescription)"
+                    showDataAlert = true
+                }
+            } label: {
+                Label("데이터 내보내기", systemImage: "square.and.arrow.up")
+            }
+            Button {
+                showImporter = true
+            } label: {
+                Label("데이터 가져오기", systemImage: "square.and.arrow.down")
+            }
         }
     }
 

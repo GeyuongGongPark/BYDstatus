@@ -1,3 +1,41 @@
+# feat: 데이터 내보내기/가져오기 (iOS·Android) — v0.6.14
+
+## 배경
+- Android 키스토어 교체로 0.6.12→0.6.13 업데이트 불가 → 앱 삭제 재설치 시 데이터 손실 방지용
+- iOS/Android 간 데이터 이식성 확보
+
+## JSON 포맷 (공통)
+```json
+{
+  "version": 1,
+  "exportedAt": <unix ms>,
+  "dataPoints": [...],
+  "chargingSessions": [...],
+  "drivingSessions": [...]
+}
+```
+- 가져오기 중복 방지: `startTime` 기준으로 동일 세션 skip
+
+## 체크리스트
+
+### iOS
+- [x] `BydStats/Services/DataExporter.swift` 신규: Codable 구조체 + export/import 함수
+- [x] `BydStats/Views/SettingsView.swift`: "데이터 내보내기" / "가져오기" 버튼 추가 (fileExporter / fileImporter)
+
+### Android
+- [x] `androidApp/.../data/DataExporter.kt` 신규: @Serializable 구조체 + export/import
+- [x] `AppViewModel.kt`: `exportData()`, `importData()` 함수 추가
+- [x] `SettingsScreen.kt`: 내보내기/가져오기 버튼 + ActivityResultLauncher
+
+### 공통
+- [x] iOS Info.plist: 0.6.13 → 0.6.14, CFBundleVersion 19 → 20
+- [x] Widget Info.plist: 동일
+- [x] `androidApp/build.gradle.kts`: versionCode 13→14, versionName 0.6.13→0.6.14
+- [x] RELEASE_NOTES.md: v0.6.14 섹션 추가
+- [ ] 커밋 & 푸시
+
+---
+
 # v0.6.13 — 세션 기록 버그 수정 (iOS·Android) ✅
 
 ## 작업 요약

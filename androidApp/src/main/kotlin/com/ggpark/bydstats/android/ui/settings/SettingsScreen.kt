@@ -1,5 +1,8 @@
 package com.ggpark.bydstats.android.ui.settings
 
+import android.content.Context
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -12,6 +15,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import com.ggpark.bydstats.android.BuildConfig
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
@@ -23,6 +27,7 @@ import com.ggpark.bydstats.android.data.ChargingRatePlan
 import com.ggpark.bydstats.android.data.PREDEFINED_RATE_PLANS
 import com.ggpark.bydstats.android.data.RateSlot
 import com.ggpark.bydstats.android.viewmodel.AppViewModel
+import kotlinx.coroutines.launch
 
 private val VEHICLE_BATTERY_MAP = linkedMapOf(
     "아토 3"           to 60.48,
@@ -42,6 +47,8 @@ fun SettingsScreen(vm: AppViewModel, onNavigateToLog: () -> Unit = {}) {
     val uiState     by vm.uiState.collectAsState()
     val settings    by vm.settings.collectAsState()
     val updateState by vm.updateState.collectAsState()
+    val context     = LocalContext.current
+    val scope       = rememberCoroutineScope()
 
     // 로그인 폼 상태
     var username by remember { mutableStateOf("") }
@@ -55,6 +62,69 @@ fun SettingsScreen(vm: AppViewModel, onNavigateToLog: () -> Unit = {}) {
     var vehicleMenuExpanded by remember { mutableStateOf(false) }
     var regionMenuExpanded  by remember { mutableStateOf(false) }
     var ratePlanExpanded    by remember { mutableStateOf(false) }
+
+    // 데이터 내보내기/가져오기
+    var pendingExportJson   by remember { mutableStateOf("") }
+    var dataAlertMessage    by remember { mutableStateOf<String?>(null) }
+
+    val createDocLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        uri?.let {
+            scope.launch {
+                try {
+                    context.contentResolver.openOutputStream(it)?.use { os ->
+                        os.write(pendingExportJson.toByteArray(Charsets.UTF_8))
+                    }
+                } catch (e: Exception) {
+                    dataAlertMessage = "저장 실패: ${e.message}"
+                }
+            }
+        }
+    }
+
+    val openDocLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        uri?.let {
+            scope.launch {
+                try {
+                    val json = context.contentResolver.openInputStream(it)
+                        ?.bufferedReader()?.readText() ?: ""
+                    vm.importData(json)
+                } catch (e: Exception) {
+                    dataAlertMessage = "읽기 실패: ${e.message}"
+                }
+            }
+        }
+    }
+
+    // export JSON 준비 완료 → 파일 저장 다이얼로그 열기
+    LaunchedEffect(Unit) {
+        vm.exportReady.collect { json ->
+            pendingExportJson = json
+            createDocLauncher.launch("bydstats-export.json")
+        }
+    }
+
+    // import 결과 수신
+    LaunchedEffect(Unit) {
+        vm.importResult.collect { result ->
+            dataAlertMessage = result.fold(
+                onSuccess = { r -> "가져오기 완료\n배터리 기록 ${r.dataPoints}건 · 충전 ${r.chargingSessions}건 · 주행 ${r.drivingSessions}건" },
+                onFailure = { e -> "가져오기 실패: ${e.message}" },
+            )
+        }
+    }
+
+    dataAlertMessage?.let { msg ->
+        AlertDialog(
+            onDismissRequest = { dataAlertMessage = null },
+            title = { Text("데이터") },
+            text  = { Text(msg) },
+            confirmButton = { TextButton(onClick = { dataAlertMessage = null }) { Text("확인") } },
+        )
+    }
 
     val currentVehicleName = settings.vehicleModel.ifEmpty { "직접 선택" }
     val currentRegionLabel = REGIONS.firstOrNull { it.first == settings.region }?.second ?: settings.region
@@ -317,6 +387,27 @@ fun SettingsScreen(vm: AppViewModel, onNavigateToLog: () -> Unit = {}) {
                 },
                 colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
             )
+            HorizontalDivider()
+
+            // ─── 데이터 섹션 ───
+            SectionHeader("데이터")
+            Surface(onClick = { vm.exportData() }, modifier = Modifier.fillMaxWidth()) {
+                ListItem(
+                    headlineContent = { Text("데이터 내보내기") },
+                    supportingContent = { Text("배터리 기록·충전·주행 세션 JSON 저장") },
+                    leadingContent = { Icon(Icons.Default.Upload, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                    colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
+                )
+            }
+            HorizontalDivider(modifier = Modifier.padding(start = 56.dp))
+            Surface(onClick = { openDocLauncher.launch(arrayOf("application/json")) }, modifier = Modifier.fillMaxWidth()) {
+                ListItem(
+                    headlineContent = { Text("데이터 가져오기") },
+                    supportingContent = { Text("기존 기기의 내보내기 파일에서 복원") },
+                    leadingContent = { Icon(Icons.Default.Download, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                    colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
+                )
+            }
             HorizontalDivider()
 
             // ─── 진단 섹션 ───
