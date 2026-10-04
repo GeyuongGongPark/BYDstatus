@@ -10,6 +10,13 @@
 - **가져오기**: 기존 기기에서 내보낸 파일을 불러와 데이터 복원 (중복 자동 제외)
 - iOS ↔ Android 간 호환 포맷 — 기기 교체 또는 앱 재설치 시 데이터 이전 가능
 
+### 버그 수정
+
+#### 주행 세션 종료 시간이 실제보다 훨씬 길게 기록되는 버그 수정
+- **증상**: 짧은 주행(7~30분)이 수백 분짜리 세션으로 기록됨
+- **원인**: 앱 suspended 상태에서 주행이 끝나면 BGAppRefresh 실행 시점까지 세션이 열린 채로 유지됨. BGAppRefresh가 세션을 복원(`recover`)한 뒤 현재 시점의 `isDriving=false`로 종료하면서 `endTime = BGAppRefresh 실행 시간`으로 기록됨
+- **수정**: 세션 종료 시 BGAppRefresh 실행 시점이 아닌, 마지막 `isDriving=true` DataPoint의 timestamp와 SOC를 endTime·endSoc으로 사용
+
 ---
 
 # v0.6.13 릴리즈 노트

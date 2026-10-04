@@ -55,6 +55,14 @@
 - `normalizeVersion`에서 `-`, `+` 외에 `_`도 제거해야 함: `substringBefore("_")` 추가.
 - 태그 suffix 규칙: 관례상 `-`를 쓰는 것이 안전하나(`v0.6.12-hotfix`), 코드에서 둘 다 처리할 것.
 
+## recover 후 세션 종료 시 endTime은 마지막 DataPoint 시간으로 설정해야 한다
+- recover() 후 process(isDriving=false)가 호출되면 endTime = 현재 시간(BGAppRefresh 실행 시점)으로 기록됨.
+- 실제 주행이 17:22에 끝났어도 BGAppRefresh가 01:44에야 실행되면 508분 주행으로 기록됨.
+- 수정: 세션 종료 시 DB에서 해당 세션 기간 중 마지막 isDriving=true DataPoint를 조회 → 그 timestamp·batteryPercent를 endTime·endSoc으로 사용.
+- iOS: `FetchDescriptor<DataPoint>(predicate: isDriving && timestamp >= session.startTime, sortBy: .reverse, limit: 1)`
+- Android: DAO에 `lastDrivingPointAfter(startTime: Long)` 쿼리 추가.
+- endSoc도 같은 DataPoint에서 가져와야 충전 후 SOC가 높아진 경우 energyKwh가 음수가 되는 문제를 방지할 수 있음.
+
 ## isPolling/로딩 플래그는 defer로 해제할 것
 - early return(guard, if-return 등)이 있는 함수에서 시작 시 플래그를 세우고 끝에 해제하면, early return 시 플래그가 해제되지 않아 무한 스피너가 발생한다.
 - iOS: `isPolling = true` 후 `guard batteryPercentage > 0 else { return }` → `isPolling = false` 미실행.

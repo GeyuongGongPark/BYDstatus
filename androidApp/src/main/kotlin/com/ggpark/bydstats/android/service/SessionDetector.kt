@@ -140,8 +140,14 @@ class SessionDetector(
             }
         } else {
             activeDriving?.let { session ->
-                val duration = timestamp - session.startTime
-                val endMsg = "driving ended: durationMs=$duration gpsKm=$gpsDistanceKm odo=${status.totalMileage}"
+                // BGAppRefresh 시점이 아닌 마지막 실제 isDriving=true DataPoint의 시간/SOC로 종료
+                // (앱 suspended 중 주행이 끝나면 recover 후 현재 시간으로 잘못 기록되는 버그 방지)
+                val lastDrivingDp = db.dataPointDao().lastDrivingPointAfter(session.startTime)
+                val actualEndTime = lastDrivingDp?.timestamp ?: timestamp
+                val actualEndSoc  = lastDrivingDp?.batteryPercent ?: status.batteryPercentage
+
+                val duration = actualEndTime - session.startTime
+                val endMsg = "driving ended: durationMs=$duration gpsKm=$gpsDistanceKm odo=${status.totalMileage} actualEnd=$actualEndTime"
                 Log.d(TAG, endMsg)
                 AppLogger.log(endMsg, TAG)
                 if (duration < 120_000) {
@@ -153,7 +159,7 @@ class SessionDetector(
                     return
                 }
 
-                val finalSoc = status.batteryPercentage
+                val finalSoc = actualEndSoc
                 val socDelta = maxOf(0, session.startSoc - finalSoc).toDouble()
                 val energy = socDelta * batteryCapacityKwh / 100.0
 
@@ -172,7 +178,7 @@ class SessionDetector(
 
                 // 소비 에너지는 기록만, 비용 계산은 충전 세션에서 수행
                 val updated = session.copy(
-                    endTime = timestamp,
+                    endTime = actualEndTime,
                     endSoc = finalSoc,
                     energyKwh = energy,
                     distanceKm = distKm,

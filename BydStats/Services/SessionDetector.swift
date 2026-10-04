@@ -111,11 +111,18 @@ final class SessionDetector {
             }
             activeDrivingSession?.endSoc = status.batteryPercentage
         } else if let session = activeDrivingSession {
-            let duration = timestamp.timeIntervalSince(session.startTime)
-            // 2분 미만이면 의미 없는 세션으로 간주하고 삭제
             let gpsDistanceKm = locationTracker?.stopTracking() ?? 0
-            LogManager.log("driving ended: durationMs=\(Int(duration * 1000)) gpsKm=\(String(format: "%.2f", gpsDistanceKm)) odo=\(status.totalMileage)", tag: "SessionDetector")
 
+            // BGAppRefresh 시점이 아닌 마지막 실제 isDriving=true DataPoint의 시간/SOC로 종료
+            // (앱 suspended 중 주행이 끝나면 recover 후 현재 시간으로 잘못 기록되는 버그 방지)
+            let lastDrivingDp = lastDrivingPoint(after: session.startTime)
+            let actualEndTime = lastDrivingDp?.timestamp ?? timestamp
+            let actualEndSoc  = lastDrivingDp?.batteryPercent ?? status.batteryPercentage
+
+            let duration = actualEndTime.timeIntervalSince(session.startTime)
+            LogManager.log("driving ended: durationMs=\(Int(duration * 1000)) gpsKm=\(String(format: "%.2f", gpsDistanceKm)) odo=\(status.totalMileage) actualEnd=\(actualEndTime)", tag: "SessionDetector")
+
+            // 2분 미만이면 의미 없는 세션으로 간주하고 삭제
             guard duration >= 120 else {
                 LogManager.log("driving session discarded: too short (\(Int(duration * 1000))ms < 120s)", tag: "SessionDetector")
                 modelContext.delete(session)
@@ -123,7 +130,8 @@ final class SessionDetector {
                 return
             }
 
-            session.endTime = timestamp
+            session.endTime = actualEndTime
+            session.endSoc  = actualEndSoc
 
             // SOC 기반 소비 계산
             let socDelta = Double(max(0, session.startSoc - session.endSoc))
@@ -148,5 +156,15 @@ final class SessionDetector {
             LogManager.log("driving session ended: startSoc=\(session.startSoc) endSoc=\(session.endSoc) energy=\(String(format: "%.2f", session.energyKwh))kWh dist=\(session.distanceKm.map { String(format: "%.1f", $0) } ?? "nil")km", tag: "SessionDetector")
             activeDrivingSession = nil
         }
+    }
+
+    /// 세션 시작 이후의 마지막 isDriving=true DataPoint를 조회 (endTime 보정용)
+    private func lastDrivingPoint(after startTime: Date) -> DataPoint? {
+        var descriptor = FetchDescriptor<DataPoint>(
+            predicate: #Predicate { $0.isDriving && $0.timestamp >= startTime },
+            sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+        )
+        descriptor.fetchLimit = 1
+        return (try? modelContext.fetch(descriptor))?.first
     }
 }
