@@ -101,17 +101,12 @@ class PollingService : Service() {
         when (intent?.action ?: ACTION_START) {
             ACTION_START -> {
                 startForeground(NOTIF_ID, buildNotification(null, null))
-                // 이미 실행 중이면 중복 시작 방지 (앱 재시작·시스템 재시작 시 재호출 대응)
                 if (collectingJob?.isActive == true) return START_STICKY
-                dataCollector?.stop()
-                dataCollector = null
                 startCollecting()
             }
             ACTION_RESTART -> {
-                // 설정 변경 등 의도적 재시작 — guard 없이 무조건 재시작
+                // 설정 변경 등 의도적 재시작 — startCollecting() 내에서 순차 재시작
                 startForeground(NOTIF_ID, buildNotification(null, null))
-                dataCollector?.stop()
-                dataCollector = null
                 startCollecting()
             }
             ACTION_STOP -> {
@@ -137,8 +132,12 @@ class PollingService : Service() {
     // MARK: - 폴링 시작
 
     private fun startCollecting() {
-        collectingJob?.cancel()
+        val prevJob = collectingJob
         collectingJob = scope.launch {
+            // 이전 job이 완전히 종료될 때까지 대기 — 동시 다중 DataCollector 방지
+            prevJob?.cancelAndJoin()
+            dataCollector?.stop()
+            dataCollector = null
             AppLogger.log("PollingService 시작", "PollingService")
             // DataStore에서 설정 로드
             val prefs = applicationContext.appDataStore.data.first()

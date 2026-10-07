@@ -28,11 +28,12 @@
 - 수정: `withDrivingResolved(previous)` 함수로 isDriving을 withChargingResolved 이전에 보정.
 - withDrivingResolved는 withChargingResolved 반드시 이전에 호출해야 한다. 순서가 바뀌면 효과 없음.
 
-## 충전 중 powerGear=3이어도 isDriving=true로 판정하지 말 것
-- BYD 차량은 완속·급속충전 중에도 powerGear=3을 유지한다.
-- `isDriving = powerGear == 3 || speed > 0`이면 충전기에 꽂혀 있어도 isDriving=true → 충전 세션 생성 불가.
-- 올바른 우선순위: speed>0 → 주행, instantPowerW>0 → 충전(isDriving=false), 나머지 → powerGear==3 판단.
-- 이 패턴은 iOS·Android 공통 적용 필요.
+## powerGear=3은 isDriving 판정의 최종 기준이 아니다 — speed>0이 필수
+- BYD 차량은 시동만 켜도(speed=0, 정차) powerGear=3을 유지한다.
+- `isDriving = powerGear == 3`이면 시동 켜고 출발 안 해도 주행 세션이 시작됨.
+- 올바른 기본 판정: `speed > 0` → 주행, `instantPowerW > 0` → 충전, else → **false** (speed=0이면 주행 아님).
+- 신호대기·회생제동은 `withDrivingResolved`에서 처리: 이전 isDriving=true && 현재 speed=0 && powerGear=3 → isDriving=true 유지.
+- 이 패턴으로 시동만 켠 정차(이전 isDriving=false)와 주행 중 정차(이전 isDriving=true)를 구분.
 
 ## 폴링 중복 실행은 세션을 쪼개거나 삭제한다 (iOS · Android 공통)
 - iOS: SwiftUI `.task(id:)` modifier가 포그라운드 복귀 시마다 재실행 → `startPolling` 중복 호출 → 새 `SessionDetector` → 세션 분리
@@ -40,6 +41,12 @@
 - iOS 방어: `startPolling`에서 `pollingTask != nil`이면 skip. `SessionDetector` 재사용.
 - Android 방어: `ACTION_START`에서 `collectingJob.isActive`이면 skip. 설정 변경은 `ACTION_RESTART`로 분리.
 - 로그 진단: iOS에서 `vehicleRealTimeRequest`가 쌍으로 나오면 복수 Task 실행 중. Android에서 "PollingService 시작"이 연속 여러 번이면 중복.
+
+## Android `startCollecting()`은 `cancelAndJoin()`으로 이전 job 완전 종료 후 시작해야 한다
+- `collectingJob?.cancel()` 후 바로 새 코루틴을 launch하면, 이전 job이 `dataStore.first()` 같은 suspend point를 통과하기 전에 취소 예외를 받지 못해 두 DataCollector가 동시에 실행될 수 있다.
+- 설정 변경 시 `PollingService.restart()`가 연속 5회 호출되면 DataCollector 5개가 동시에 폴링 → 로그에서 1초 내 "poll ok" 6회 동시 발생.
+- 수정: `val prevJob = collectingJob; collectingJob = scope.launch { prevJob?.cancelAndJoin(); ... }` 패턴 사용.
+- 이렇게 하면 연속 restart가 와도 각 job이 이전 job 종료를 기다리므로 단일 DataCollector 보장.
 
 ## AOS 충전 목록은 진행 중 세션을 숨기지 말 것
 - `endTime == null` 필터는 “기록이 없다”와 구분되지 않는다. iOS는 미완료를 보여 준다.
@@ -56,11 +63,12 @@
 - 태그 suffix 규칙: 관례상 `-`를 쓰는 것이 안전하나(`v0.6.12-hotfix`), 코드에서 둘 다 처리할 것.
 
 ## recover 후 세션 종료 시 endTime은 마지막 DataPoint 시간으로 설정해야 한다
-- recover() 후 process(isDriving=false)가 호출되면 endTime = 현재 시간(BGAppRefresh 실행 시점)으로 기록됨.
+- recover() 후 process(isDriving=false 또는 isCharging=false)가 호출되면 endTime = 현재 시간(BGAppRefresh 실행 시점)으로 기록됨.
 - 실제 주행이 17:22에 끝났어도 BGAppRefresh가 01:44에야 실행되면 508분 주행으로 기록됨.
-- 수정: 세션 종료 시 DB에서 해당 세션 기간 중 마지막 isDriving=true DataPoint를 조회 → 그 timestamp·batteryPercent를 endTime·endSoc으로 사용.
-- iOS: `FetchDescriptor<DataPoint>(predicate: isDriving && timestamp >= session.startTime, sortBy: .reverse, limit: 1)`
-- Android: DAO에 `lastDrivingPointAfter(startTime: Long)` 쿼리 추가.
+- 주행·충전 세션 모두 동일하게 적용해야 함. 주행만 고치면 충전은 여전히 오기록됨.
+- 수정: 세션 종료 시 DB에서 해당 세션 기간 중 마지막 isDriving=true (또는 isCharging=true) DataPoint를 조회 → 그 timestamp·batteryPercent를 endTime·endSoc으로 사용.
+- iOS: `lastDrivingPoint(after:)` + `lastChargingPoint(after:)` 두 메서드 모두 필요.
+- Android: DAO에 `lastDrivingPointAfter()` + `lastChargingPointAfter()` 두 쿼리 모두 필요.
 - endSoc도 같은 DataPoint에서 가져와야 충전 후 SOC가 높아진 경우 energyKwh가 음수가 되는 문제를 방지할 수 있음.
 
 ## isPolling/로딩 플래그는 defer로 해제할 것

@@ -86,14 +86,20 @@ final class SessionDetector {
             }
             activeChargingSession?.endSoc = status.batteryPercentage
         } else if let session = activeChargingSession {
-            session.endTime = timestamp
-            session.endSoc = status.batteryPercentage
+            // BGAppRefresh 시점이 아닌 마지막 실제 isCharging=true DataPoint의 시간/SOC로 종료
+            // (앱 suspended 중 충전이 끝나면 recover 후 현재 시간으로 잘못 기록되는 버그 방지)
+            let lastChargingDp = lastChargingPoint(after: session.startTime)
+            let actualEndTime = lastChargingDp?.timestamp ?? timestamp
+            let actualEndSoc  = lastChargingDp?.batteryPercent ?? status.batteryPercentage
+
+            session.endTime = actualEndTime
+            session.endSoc = actualEndSoc
             let socDelta = Double(max(0, session.endSoc - session.startSoc))
             session.energyKwh = socDelta * batteryCapacityKwh / 100.0
-            session.durationMinutes = Int(timestamp.timeIntervalSince(session.startTime) / 60)
+            session.durationMinutes = Int(actualEndTime.timeIntervalSince(session.startTime) / 60)
             // 충전 시작 시간 기준 시간대 요금 적용
             session.estimatedCostKrw = session.energyKwh * getRateAt(session.startTime)
-            LogManager.log("charging session ended: startSoc=\(session.startSoc) endSoc=\(session.endSoc) energy=\(String(format: "%.2f", session.energyKwh))kWh duration=\(session.durationMinutes)min", tag: "SessionDetector")
+            LogManager.log("charging session ended: startSoc=\(session.startSoc) endSoc=\(session.endSoc) energy=\(String(format: "%.2f", session.energyKwh))kWh duration=\(session.durationMinutes)min actualEnd=\(actualEndTime)", tag: "SessionDetector")
             activeChargingSession = nil
         }
     }
@@ -162,6 +168,16 @@ final class SessionDetector {
     private func lastDrivingPoint(after startTime: Date) -> DataPoint? {
         var descriptor = FetchDescriptor<DataPoint>(
             predicate: #Predicate { $0.isDriving && $0.timestamp >= startTime },
+            sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+        )
+        descriptor.fetchLimit = 1
+        return (try? modelContext.fetch(descriptor))?.first
+    }
+
+    /// 세션 시작 이후의 마지막 isCharging=true DataPoint를 조회 (endTime 보정용)
+    private func lastChargingPoint(after startTime: Date) -> DataPoint? {
+        var descriptor = FetchDescriptor<DataPoint>(
+            predicate: #Predicate { $0.isCharging && $0.timestamp >= startTime },
             sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
         )
         descriptor.fetchLimit = 1

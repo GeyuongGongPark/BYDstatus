@@ -26,6 +26,9 @@ interface DataPointDao {
 
     @Query("SELECT * FROM data_points WHERE isDriving=1 AND timestamp >= :startTime ORDER BY timestamp DESC LIMIT 1")
     suspend fun lastDrivingPointAfter(startTime: Long): DataPointEntity?
+
+    @Query("SELECT * FROM data_points WHERE isCharging=1 AND timestamp >= :startTime ORDER BY timestamp DESC LIMIT 1")
+    suspend fun lastChargingPointAfter(startTime: Long): DataPointEntity?
 }
 
 @Dao

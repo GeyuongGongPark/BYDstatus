@@ -19,23 +19,24 @@ struct VehicleStatus {
     var isDriving: Bool {
         if let resolved = resolvedDriving { return resolved }
         if speed > 0 { return true }          // 이동 중
-        if instantPowerW > 0 { return false } // 정차 + 충전기 연결 (powerGear=3이어도 충전 중)
-        return powerGear == 3                  // D단 신호 대기 등
+        if instantPowerW > 0 { return false } // 정차 + 충전기 연결
+        return false                          // speed=0이면 주행 아님 (시동만 켠 정차 상태 포함)
+        // ※ powerGear=3+speed=0 유지(신호대기/회생제동)는 withDrivingResolved가 처리
     }
     /// gl > 0이거나 chargingState API/SOC 상승으로 보정된 충전 상태
     var isCharging: Bool { resolvedCharging ?? (instantPowerW > 0 && !isDriving) }
     var instantPowerKw: Double { instantPowerW / 1000.0 }
 
-    // MARK: - 주행 상태 보정 (회생제동)
+    // MARK: - 주행 상태 보정 (신호대기/회생제동)
     //
-    // 이전 폴링에서 주행 중이었고 현재 speed=0 + gl>0이면 회생제동으로 판단 → isDriving=true 유지.
+    // 이전 폴링에서 주행 중이었고 현재 D단(powerGear=3)+speed=0이면 isDriving=true 유지.
+    // 시동만 켠 정차는 previous.isDriving=false이므로 해당 없음.
     // withChargingResolved() 이전에 호출할 것.
     func withDrivingResolved(previous: VehicleStatus?) -> VehicleStatus {
         var copy = self
-        // 직전에 실제로 이동 중(speed > 0)이었다가 현재 정차(speed=0) + gl>0인 경우만 회생제동
-        // 직전 speed=0이면 정차 중 충전이므로 회생제동 아님
-        let isRegenerativeBraking = (previous?.isDriving == true) && (previous?.speed ?? 0) > 0 && speed == 0 && instantPowerW > 0
-        if isRegenerativeBraking { copy.resolvedDriving = true }
+        // 주행 중 정차: 이전에 주행 중이었고 현재 D단에서 speed=0 (신호대기 + 회생제동 모두 커버)
+        let isStopWhileDriving = (previous?.isDriving == true) && speed == 0 && powerGear == 3
+        if isStopWhileDriving { copy.resolvedDriving = true }
         return copy
     }
 

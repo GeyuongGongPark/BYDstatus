@@ -11,7 +11,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import android.util.Base64
 import com.ggpark.bydstats.android.service.AppLogger
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
@@ -124,11 +126,13 @@ fun ReportSheet(
                     scope.launch {
                         isSubmitting = true
                         submitError = null
-                        val ok = submitReport(
-                            title = title.trim(),
-                            car = car,
-                            body = body.trim().ifEmpty { "-" },
-                        )
+                        val ok = withContext(Dispatchers.IO) {
+                            submitReport(
+                                title = title.trim(),
+                                car = car,
+                                body = body.trim().ifEmpty { "-" },
+                            )
+                        }
                         isSubmitting = false
                         if (ok) didSubmit = true
                         else submitError = "제출에 실패했습니다. 잠시 후 다시 시도해주세요."

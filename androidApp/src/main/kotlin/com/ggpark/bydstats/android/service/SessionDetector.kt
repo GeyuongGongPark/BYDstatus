@@ -93,21 +93,26 @@ class SessionDetector(
             }
         } else {
             activeCharging?.let { session ->
-                val finalSoc = status.batteryPercentage
-                val socDelta = maxOf(0, finalSoc - session.startSoc).toDouble()
+                // BGAppRefresh 시점이 아닌 마지막 실제 isCharging=true DataPoint의 시간/SOC로 종료
+                // (앱 suspended 중 충전이 끝나면 recover 후 현재 시간으로 잘못 기록되는 버그 방지)
+                val lastChargingDp = db.dataPointDao().lastChargingPointAfter(session.startTime)
+                val actualEndTime = lastChargingDp?.timestamp ?: timestamp
+                val actualEndSoc  = lastChargingDp?.batteryPercent ?: status.batteryPercentage
+
+                val socDelta = maxOf(0, actualEndSoc - session.startSoc).toDouble()
                 val energy = socDelta * batteryCapacityKwh / 100.0
-                val duration = ((timestamp - session.startTime) / 60_000).toInt()
+                val duration = ((actualEndTime - session.startTime) / 60_000).toInt()
                 // 충전 시작 시간 기준 시간대 요금 적용
                 val rate = getElectricityRateAt(session.startTime)
                 val updated = session.copy(
-                    endTime = timestamp,
-                    endSoc = finalSoc,
+                    endTime = actualEndTime,
+                    endSoc = actualEndSoc,
                     energyKwh = energy,
                     durationMinutes = duration,
                     estimatedCostKrw = energy * rate,
                 )
                 db.chargingSessionDao().update(updated)
-                AppLogger.log("charging session ended: startSoc=${session.startSoc} endSoc=$finalSoc energy=${"%.2f".format(energy)}kWh duration=${duration}min", TAG)
+                AppLogger.log("charging session ended: startSoc=${session.startSoc} endSoc=$actualEndSoc energy=${"%.2f".format(energy)}kWh duration=${duration}min actualEnd=$actualEndTime", TAG)
                 activeCharging = null
             }
         }
