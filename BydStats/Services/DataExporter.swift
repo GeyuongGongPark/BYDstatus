@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import SwiftUI
 import UniformTypeIdentifiers
 
 // MARK: - 공통 JSON 스키마 (Android 호환)

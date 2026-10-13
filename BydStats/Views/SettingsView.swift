@@ -20,7 +20,7 @@ struct SettingsView: View {
     @AppStorage("gpsEnabled")      private var gpsEnabled      = true
 
     // 데이터 내보내기/가져오기
-    @State private var exportDocument: BydStatsExportDocument? = nil
+    @State private var exportDocument: BydStatsExportDocument = BydStatsExportDocument(data: Data())
     @State private var showExporter = false
     @State private var showImporter = false
     @State private var dataAlertMessage: String? = nil
