@@ -12,6 +12,7 @@
 		16447B36012F710AB286B64E /* LogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B6DC82184B73DB89850581 /* LogView.swift */; };
 		208F4E2D120B873C14543110 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1990F1E772C2BBD6CF01F33C /* Assets.xcassets */; };
 		3616E564342AA6231D532E88 /* SessionDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCC034E754C027617E4576C9 /* SessionDetector.swift */; };
+		718BACFD7FDD4D59AF8C7192 /* DataExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F6B8A9D2AAC49C19C00107C /* DataExporter.swift */; };
 		3C652F7733AC00389C9337A3 /* CryptoUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48AE185E2151EDE05B586C51 /* CryptoUtils.swift */; };
 		3D77981F6B6F7728562F8B86 /* VehicleStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D5EDF879787470F3D9CC43C /* VehicleStatus.swift */; };
 		451D3F1F7662F6941E2AD22F /* DataPoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20EA78FF1C786628B2798904 /* DataPoint.swift */; };
@@ -78,6 +79,7 @@
 		26054D2FBC8FCC5F9F74267F /* ChargingSessionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChargingSessionsView.swift; sourceTree = "<group>"; };
 		36251AF800585C0A27374429 /* WidgetDataStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetDataStore.swift; sourceTree = "<group>"; };
 		3F35B4C9FE85831AFCEFF81A /* LogManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogManager.swift; sourceTree = "<group>"; };
+		0F6B8A9D2AAC49C19C00107C /* DataExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataExporter.swift; sourceTree = "<group>"; };
 		48AE185E2151EDE05B586C51 /* CryptoUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CryptoUtils.swift; sourceTree = "<group>"; };
 		5230D93792F5A73C41BE5132 /* BydStatsWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BydStatsWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		585EE410D55F691D52EE00AD /* BydStats.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BydStats.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -170,6 +172,7 @@
 				CEC1E56A6C4032632BC08F3C /* BydConfig.swift */,
 				7CBA5591971F2800B9092FCC /* BydVehicleService.swift */,
 				48AE185E2151EDE05B586C51 /* CryptoUtils.swift */,
+				0F6B8A9D2AAC49C19C00107C /* DataExporter.swift */,
 				7DCFA75EA19A394902CCE405 /* KeychainHelper.swift */,
 				02413885B19CE905A59512AA /* LocationTracker.swift */,
 				3F35B4C9FE85831AFCEFF81A /* LogManager.swift */,
@@ -355,6 +358,7 @@
 				F4E2B316D810DD29234622AD /* DrivingSessionsView.swift in Sources */,
 				BDB868C6014604F546C61A88 /* KeychainHelper.swift in Sources */,
 				EC1ACA703ADD5B166EFEBB6A /* LocationTracker.swift in Sources */,
+				718BACFD7FDD4D59AF8C7192 /* DataExporter.swift in Sources */,
 				660E602DDCDBA34697C0F31D /* LogManager.swift in Sources */,
 				16447B36012F710AB286B64E /* LogView.swift in Sources */,
 				F287901D15F29FF081D65415 /* PushRegistrar.swift in Sources */,

@@ -1,4 +1,20 @@
-# feat: 데이터 내보내기/가져오기 + 세션 종료 시간 오기록 수정 (iOS·Android) — v0.6.14
+# v0.6.15 — 세션 오기록 다수 수정 (iOS·Android) ✅
+
+## 체크리스트
+- [x] 시동만 켜도 주행 세션 기록 버그 수정 (isDriving 판정 개선)
+- [x] 충전 세션 endTime 보정 (lastChargingPoint 조회)
+- [x] Android DataCollector 중복 실행 방지 (cancelAndJoin)
+- [x] Android 제보하기 NetworkOnMainThreadException 수정
+- [x] iOS `DataExporter.swift` pbxproj 등록 누락 수정
+- [x] iOS Info.plist: 0.6.14 → 0.6.15, CFBundleVersion 20 → 21
+- [x] Widget Info.plist: 동일
+- [x] `androidApp/build.gradle.kts`: versionCode 14→15, versionName 0.6.14→0.6.15
+- [x] RELEASE_NOTES.md: v0.6.15 섹션 추가
+- [x] 커밋 & 푸시
+
+---
+
+# feat: 데이터 내보내기/가져오기 + 세션 종료 시간 오기록 수정 (iOS·Android) — v0.6.14 ✅
 
 ## 배경
 - Android 키스토어 교체로 0.6.12→0.6.13 업데이트 불가 → 앱 삭제 재설치 시 데이터 손실 방지용

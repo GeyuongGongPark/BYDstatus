@@ -51,6 +51,12 @@
 ## AOS 충전 목록은 진행 중 세션을 숨기지 말 것
 - `endTime == null` 필터는 “기록이 없다”와 구분되지 않는다. iOS는 미완료를 보여 준다.
 
+## 새 Swift 파일은 project.pbxproj에 수동 등록이 필요하다
+- Xcode 프로젝트에 파일을 직접 생성(Write 도구 등)하면 pbxproj에 자동으로 등록되지 않아 빌드 시 "Cannot find type in scope" 오류 발생.
+- 등록 위치 3군데: PBXBuildFile, PBXFileReference, PBXGroup(해당 폴더), PBXSourcesBuildPhase.
+- UUID는 24자리 hex: `python3 -c "import uuid; print(uuid.uuid4().hex[:24].upper())"` 로 생성.
+- 또는 xcodegen 사용: `project.yml`의 `sources: path: BydStats`가 폴더 전체를 포함하므로 `xcodegen generate`로 재생성하면 자동 등록됨 (단, Info.plist 버전 값이 project.yml 기준으로 초기화될 수 있으므로 주의).
+
 ## todo.md는 구현 전에 작성하고, 완료 시 즉시 표시할 것
 - CLAUDE.md 규칙: 계획 먼저 → 검토 → 구현 → 완료 표시 순서
 - 반복적으로 어기는 패턴: 구현을 먼저 시작하고 todo.md를 나중에(또는 사용자 지적 후) 업데이트
