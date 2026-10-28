@@ -1,6 +1,17 @@
 import SwiftUI
 import SwiftData
 
+private extension View {
+    @ViewBuilder
+    func sidebarAdaptableIfAvailable() -> some View {
+        if #available(iOS 18, *) {
+            self.tabViewStyle(.sidebarAdaptable)
+        } else {
+            self
+        }
+    }
+}
+
 @main
 struct BydStatsApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
@@ -37,6 +48,7 @@ struct BydStatsApp: App {
                 SettingsView()
                     .tabItem { Label("설정", systemImage: "gearshape.fill") }
             }
+            .sidebarAdaptableIfAvailable()
             .environment(appState)
             .environment(LogManager.shared)
         }

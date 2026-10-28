@@ -1,3 +1,24 @@
+# v0.6.16 — Android 폴링 안정화 + GPS 버그 수정 + 아이폰 듀오 대응 ✅
+
+## 체크리스트
+
+### Android
+- [x] `DataCollector.kt`: 에러 발생 시 다음 폴링 interval 30초로 단축 (기존: 충전 2분 그대로)
+- [x] `AndroidManifest.xml`: `FOREGROUND_SERVICE_LOCATION` 권한 추가
+- [x] `AndroidManifest.xml`: `foregroundServiceType="dataSync|location"` (위치 접근 허용)
+- [x] `LocationTracker.kt`: 정확도 기준 50m → 100m (초기 GPS 잠금 전 버림 방지)
+
+### iOS
+- [x] `BydStatsApp.swift`: `sidebarAdaptableIfAvailable()` extension + `TabView` 적용 (iOS 18+)
+- [x] `DashboardView.swift`: `horizontalSizeClass == .regular`(내부 디스플레이)일 때 2컬럼 `LazyVGrid`
+- [x] `DashboardView.swift`: 에러 배너 `errorBanner(_:)` 함수로 추출
+- [x] iOS `Info.plist`: 0.6.15 → 0.6.16, CFBundleVersion 21 → 22
+- [x] Widget `Info.plist`: 동일
+- [x] `RELEASE_NOTES.md`: v0.6.16 섹션 추가
+- [ ] 커밋 & 푸시
+
+---
+
 # v0.6.15 — 세션 오기록 다수 수정 (iOS·Android) ✅
 
 ## 체크리스트
@@ -6,6 +27,8 @@
 - [x] Android DataCollector 중복 실행 방지 (cancelAndJoin)
 - [x] Android 제보하기 NetworkOnMainThreadException 수정
 - [x] iOS `DataExporter.swift` pbxproj 등록 누락 수정
+- [x] iOS `DataExporter.swift` import SwiftUI 누락 수정
+- [x] iOS `SettingsView.swift` exportDocument Optional → non-optional 수정
 - [x] iOS Info.plist: 0.6.14 → 0.6.15, CFBundleVersion 20 → 21
 - [x] Widget Info.plist: 동일
 - [x] `androidApp/build.gradle.kts`: versionCode 14→15, versionName 0.6.14→0.6.15

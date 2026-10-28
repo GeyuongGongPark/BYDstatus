@@ -1,3 +1,27 @@
+# v0.6.16 릴리즈 노트
+
+## iOS
+
+### 새 기능
+
+#### 아이폰 듀오 대응
+- 내부 디스플레이(펼침) 환경에서 대시보드가 2컬럼 그리드 레이아웃으로 표시됩니다
+- iOS 18 이상에서 탭이 화면 크기에 따라 하단 탭바 또는 사이드바로 자동 전환됩니다
+
+## Android
+
+### 버그 수정
+
+#### GPS 주행 거리 항상 0km로 기록되는 버그 수정
+- **원인**: `foregroundServiceType`에 `location`이 누락되어 백그라운드에서 FusedLocationProvider 위치 업데이트가 차단됨
+- **수정**: `FOREGROUND_SERVICE_LOCATION` 권한 추가 및 `foregroundServiceType="dataSync|location"` 선언
+- 위치 정확도 허용 기준을 50m → 100m로 완화하여 GPS 초기 잠금 전 위치가 버려지는 문제 개선
+
+#### Doze 모드 네트워크 오류 후 복구 속도 개선
+- 절전 모드에서 소켓이 끊겨 `IOException` 발생 시 기존에는 다음 폴링까지 2분을 기다렸으나, 이제 30초 후 자동 재시도합니다
+
+---
+
 # v0.6.15 릴리즈 노트
 
 ## iOS · Android

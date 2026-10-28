@@ -59,11 +59,16 @@ class DataCollector(
         pollingJob?.cancel()
         pollingJob = scope.launch {
             doPoll()
-            val status = _currentStatus.value
-            val interval = when {
-                status?.isDriving == true  -> 60_000L
-                status?.isCharging == true -> 120_000L
-                else                        -> getParkingIntervalMs()
+            val interval = if (_error.value != null) {
+                // 네트워크 에러(Doze 등) 시 30초 후 재시도
+                30_000L
+            } else {
+                val status = _currentStatus.value
+                when {
+                    status?.isDriving == true  -> 60_000L
+                    status?.isCharging == true -> 120_000L
+                    else                        -> getParkingIntervalMs()
+                }
             }
             delay(interval)
             if (isActive) scheduleNextPoll()

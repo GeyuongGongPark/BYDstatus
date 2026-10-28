@@ -93,6 +93,30 @@
 - `foregroundServiceType="dataSync"` + `FOREGROUND_SERVICE_DATA_SYNC` 권한 조합은 Android 14(API 34)부터 앱당 누적 6시간 실행 후 시스템이 강제 종료함.
 - 장시간 백그라운드 모니터링 앱은 `connectedDevice` 또는 `mediaPlayback` 타입 검토 필요, 또는 6시간 제한을 인지하고 재시작 로직 보완.
 
+## Android 포그라운드 서비스에서 위치 접근 시 foregroundServiceType에 location 필수
+- `foregroundServiceType="dataSync"`만 선언하면 Android 10+에서 앱이 백그라운드일 때 FusedLocationProvider가 위치 업데이트를 주지 않는다.
+- GPS 트래킹이 시작(`requestLocationUpdates`)은 되지만 콜백이 오지 않아 `accumulatedDistanceKm`이 항상 0으로 남는다.
+- 수정: `FOREGROUND_SERVICE_LOCATION` 권한 추가(Android 14+) + `foregroundServiceType="dataSync|location"`.
+- LocationTracker 정확도 기준 `accuracy > 50f`는 GPS 초기 잠금 전 업데이트를 모두 버릴 수 있음 → `100f`로 완화.
+
+## Android Doze 모드 IOException은 재시도 interval 단축으로 대응한다
+- 화면 꺼짐 후 Doze 모드에서 Keep-alive 소켓이 끊기면 `IOException: unexpected end of stream` 발생.
+- 기존 코드는 에러 후에도 정상 interval(충전 중 2분)을 그대로 기다려 한 사이클 데이터 누락.
+- 수정: `scheduleNextPoll()`에서 `_error.value != null`이면 30초 후 재시도.
+- ServerError 1008(차량 절전)은 이미 5분 간격으로 계속 시도 중이므로 interval 단축 효과 없음 — 차량 자체 문제.
+
+## 새 iOS API는 반드시 최소 배포 타겟을 확인한 뒤 적용할 것
+- `Tab()` 구문과 `.tabViewStyle(.sidebarAdaptable)`은 iOS 18+ 전용.
+- 프로젝트 최소 타겟(iOS 17)과 맞지 않아 빌드 에러 18개 발생.
+- 대응: `if #available(iOS 18, *)` 분기 또는 `@ViewBuilder` extension으로 조건부 적용.
+- 규칙: 새 SwiftUI API 적용 전 `project.yml`의 `deploymentTarget` 먼저 확인.
+
+## 아이폰 듀오 내부 디스플레이는 horizontalSizeClass == .regular
+- 내부(펼침, 626pt): `.regular` / 외부(접힘, 466pt): `.compact` — 기존 `horizontalSizeClass` API 그대로 사용.
+- iOS 27 SDK 빌드 시 추가 API 없이 `horizontalSizeClass`로 분기 가능.
+- iOS 27.1 SDK에서 힌지 API, vertical tab bar 등 추가 폴더블 전용 API 제공.
+- `List`, `GeometryReader`, `frame(maxWidth: .infinity)` 기반 뷰는 별도 수정 없이 자동 대응됨.
+
 ## 앱 코드와 CI(release.yml)는 항상 함께 업데이트할 것
 - 새 환경변수(BuildConfig 필드, Info.plist 키 등)를 앱에 추가할 때 `.github/workflows/release.yml`에도 해당 secret 주입을 반드시 같은 커밋에 추가해야 한다.
 - 누락되면 CI 빌드 APK에 빈 값이 들어가 조용히 실패함 — 사용자도, 서버도 오류를 인식하지 못함.

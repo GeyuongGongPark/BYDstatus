@@ -37,7 +37,7 @@ class LocationTracker(private val context: Context) {
         callback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
                 val new = result.lastLocation ?: return
-                if (new.accuracy > 50f) return          // 정확도 낮으면 무시
+                if (new.accuracy > 100f) return         // 정확도 낮으면 무시 (초기 GPS 잠금 전 100m 허용)
 
                 lastLocation?.let { last ->
                     val delta = new.distanceTo(last) / 1000.0

@@ -14,6 +14,8 @@ struct DashboardView: View {
     @AppStorage("pollingInterval") private var pollingInterval  = 5
     @AppStorage("gpsEnabled")      private var gpsEnabled       = true
 
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
     private var vehicleModel: VehicleModel { VehicleModel(rawValue: vehicleModelRaw) ?? .atto3 }
     private var currentRatePlan: ChargingRatePlan { ratePlan(id: ratePlanId, customRate: electricityRate) }
 
@@ -115,33 +117,57 @@ struct DashboardView: View {
 
     private var dashboardContent: some View {
         ScrollView {
-            VStack(spacing: 16) {
-                if let err = appState.pollError {
-                    HStack(spacing: 8) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.orange)
-                        Text(err)
-                            .font(.caption)
-                            .foregroundStyle(.primary)
-                        Spacer()
+            if horizontalSizeClass == .regular {
+                // 아이폰 듀오 내부 디스플레이(626pt): 2컬럼 그리드
+                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                    if let err = appState.pollError {
+                        errorBanner(err).gridCellColumns(2)
                     }
-                    .padding(12)
-                    .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
+                    batteryCard.gridCellColumns(2)
+                    todaySummaryCard
+                    monthlyCard
+                    if appState.isDemoMode {
+                        demoRecentChargingCard.gridCellColumns(2)
+                    } else if !recentCharging.isEmpty {
+                        recentChargingCard.gridCellColumns(2)
+                    }
                 }
-                batteryCard
-                todaySummaryCard
-                monthlyCard
-                if appState.isDemoMode {
-                    demoRecentChargingCard
-                } else if !recentCharging.isEmpty {
-                    recentChargingCard
+                .padding()
+            } else {
+                // 외부 디스플레이 / 일반 iPhone: 단일 컬럼
+                VStack(spacing: 16) {
+                    if let err = appState.pollError {
+                        errorBanner(err)
+                    }
+                    batteryCard
+                    todaySummaryCard
+                    monthlyCard
+                    if appState.isDemoMode {
+                        demoRecentChargingCard
+                    } else if !recentCharging.isEmpty {
+                        recentChargingCard
+                    }
                 }
+                .padding()
             }
-            .padding()
         }
         .refreshable {
             await appState.pollNow(modelContext: modelContext)
         }
+    }
+
+    @ViewBuilder
+    private func errorBanner(_ err: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.orange)
+            Text(err)
+                .font(.caption)
+                .foregroundStyle(.primary)
+            Spacer()
+        }
+        .padding(12)
+        .background(.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
     }
 
     // MARK: - 배터리 카드
