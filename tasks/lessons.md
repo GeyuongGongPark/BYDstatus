@@ -117,6 +117,12 @@
 - iOS 27.1 SDK에서 힌지 API, vertical tab bar 등 추가 폴더블 전용 API 제공.
 - `List`, `GeometryReader`, `frame(maxWidth: .infinity)` 기반 뷰는 별도 수정 없이 자동 대응됨.
 
+## doPoll 재진입 방지는 함수 진입부에서 isPolling guard로 처리할 것
+- `pollNow()`와 폴링 루프가 동시에 `doPoll`을 호출하면 두 코루틴이 각각 `activeDriving=nil`을 보고 driving session started를 중복 생성한다.
+- 로그 증거: `vehicleRealTimeRequest`가 10ms 간격으로 두 번 나타남 (serial이 서로 다름).
+- 수정: `doPoll()` 첫 줄에 `guard !isPolling else { return }` 추가 — `isPolling = true` **이전**에 위치해야 한다.
+- `isPolling`이 @Observable 프로퍼티이므로 MainActor에서 안전하게 체크 가능.
+
 ## 앱 코드와 CI(release.yml)는 항상 함께 업데이트할 것
 - 새 환경변수(BuildConfig 필드, Info.plist 키 등)를 앱에 추가할 때 `.github/workflows/release.yml`에도 해당 secret 주입을 반드시 같은 커밋에 추가해야 한다.
 - 누락되면 CI 빌드 APK에 빈 값이 들어가 조용히 실패함 — 사용자도, 서버도 오류를 인식하지 못함.

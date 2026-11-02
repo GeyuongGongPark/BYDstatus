@@ -213,6 +213,7 @@ final class AppState {
     }
 
     private func doPoll(service: BydVehicleService, vin: String, modelContext: ModelContext) async {
+        guard !isPolling else { return }  // 재진입 방지 — 동시 doPoll로 인한 세션 중복 생성 방어
         isPolling = true
         defer { isPolling = false }
         do {

@@ -1,3 +1,28 @@
+# fix(android): REQUEST_INSTALL_PACKAGES 권한 제거 (Play Protect 경고 원인)
+
+## 원인
+`REQUEST_INSTALL_PACKAGES` 권한이 Manifest에 선언되어 있지만 코드에서 사용하지 않음.
+Google Play Protect가 앱 설치 가능 권한을 malware dropper 패턴으로 분류 → 유해 앱 경고.
+
+## 체크리스트
+- [x] `AndroidManifest.xml`: `REQUEST_INSTALL_PACKAGES` 권한 제거
+- [ ] 커밋 & 푸시
+
+---
+
+# fix(session): iOS 주행 세션 중복 기록 방지 (doPoll 재진입 방지)
+
+## 원인
+`pollNow()`와 폴링 루프가 동시에 `doPoll()`을 호출할 때, 두 코루틴이 각각 `activeDriving=nil`을 보고 `driving session started`를 중복 생성.
+로그 증거: `vehicleRealTimeRequest`가 10ms 간격으로 serial 다르게 두 번 발생.
+
+## 체크리스트
+- [x] `AppState.swift`: `doPoll()` 진입부에 `guard !isPolling else { return }` 추가
+- [x] `tasks/lessons.md`: 교훈 기록
+- [ ] 커밋 & 푸시
+
+---
+
 # v0.6.16 — Android 폴링 안정화 + GPS 버그 수정 + 아이폰 듀오 대응 ✅
 
 ## 체크리스트
