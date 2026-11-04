@@ -125,7 +125,9 @@ final class SessionDetector {
             let actualEndTime = lastDrivingDp?.timestamp ?? timestamp
             let actualEndSoc  = lastDrivingDp?.batteryPercent ?? status.batteryPercentage
 
-            let duration = actualEndTime.timeIntervalSince(session.startTime)
+            // duration은 현재 폴링 시각 기준으로 계산 — actualEndTime 기준으로 하면
+            // lastDrivingPoint가 startTime과 동일할 때 duration=0이 되어 세션이 삭제됨
+            let duration = timestamp.timeIntervalSince(session.startTime)
             LogManager.log("driving ended: durationMs=\(Int(duration * 1000)) gpsKm=\(String(format: "%.2f", gpsDistanceKm)) odo=\(status.totalMileage) actualEnd=\(actualEndTime)", tag: "SessionDetector")
 
             // 2분 미만이면 의미 없는 세션으로 간주하고 삭제

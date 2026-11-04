@@ -117,6 +117,13 @@
 - iOS 27.1 SDK에서 힌지 API, vertical tab bar 등 추가 폴더블 전용 API 제공.
 - `List`, `GeometryReader`, `frame(maxWidth: .infinity)` 기반 뷰는 별도 수정 없이 자동 대응됨.
 
+## 세션 duration 계산은 반드시 현재 폴링 timestamp 기준으로 해야 한다
+- `lastDrivingPoint(after: startTime)`의 predicate가 `timestamp >= startTime`이므로 세션 시작 DataPoint 자체도 포함됨.
+- 중간 폴링 없이 (앱 background→suspended) 주행이 끝나면 lastDrivingPoint = startTime과 동일 timestamp → `duration = 0` → 2분 미만 → 세션 삭제.
+- 1시간 주행도 "폴링이 한 번만 성공"했으면 duration=0으로 계산되어 사라진다.
+- 수정: `duration = timestamp.timeIntervalSince(session.startTime)` (현재 폴링 시각 기준), `endTime`은 별도로 `actualEndTime` 사용.
+- 충전 세션은 `guard duration >= 120` 필터가 없으므로 해당 없음 — 주행 세션만 적용.
+
 ## doPoll 재진입 방지는 함수 진입부에서 isPolling guard로 처리할 것
 - `pollNow()`와 폴링 루프가 동시에 `doPoll`을 호출하면 두 코루틴이 각각 `activeDriving=nil`을 보고 driving session started를 중복 생성한다.
 - 로그 증거: `vehicleRealTimeRequest`가 10ms 간격으로 두 번 나타남 (serial이 서로 다름).

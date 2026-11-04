@@ -1,3 +1,17 @@
+# fix(session): iOS 주행 세션 종료 직후 삭제 버그 수정
+
+## 원인
+`lastDrivingPoint(after: session.startTime)`의 predicate가 `timestamp >= startTime`이라
+세션 시작 DataPoint 자신도 포함됨.
+주행 중 isDriving=true 폴링이 1회뿐이면 `actualEndTime == startTime` → `duration = 0` → 2분 미만 → 삭제.
+
+## 체크리스트
+- [x] `SessionDetector.swift`: `duration` 계산을 `timestamp - session.startTime`으로 분리
+- [x] `tasks/lessons.md`: 교훈 기록
+- [ ] 커밋 & 푸시
+
+---
+
 # fix(android): REQUEST_INSTALL_PACKAGES 권한 제거 (Play Protect 경고 원인)
 
 ## 원인
