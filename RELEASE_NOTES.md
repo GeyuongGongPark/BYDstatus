@@ -17,6 +17,11 @@
 - **원인**: 백그라운드에서 폴링 sleep이 suspend되면 충전 중 2분 간격임에도 실제 경과 시간이 7분+가 되어 BGAppRefreshTask의 중복 실행 방지 기준(5분)을 초과 → 포그라운드 폴링과 동시에 API 호출 → timeout
 - **수정**: 중복 방지 기준을 5분 → 10분으로 완화
 
+#### 주행 세션이 종료 후 사라지는 버그 수정 (Android)
+- **증상**: 백그라운드 주행 후 앱 복귀 시 주행 세션이 기록되지 않음
+- **원인**: iOS와 동일 — `lastDrivingPointAfter` 쿼리가 `>= startTime`이라 세션 시작 DataPoint 자체가 반환되어 duration=0 → 2분 미만 필터에 걸려 삭제
+- **수정**: duration 계산을 현재 폴링 timestamp 기준으로 변경
+
 #### Google Play Protect 유해 앱 경고 수정 (Android)
 - **원인**: `REQUEST_INSTALL_PACKAGES` 권한이 Manifest에 선언되어 있었으나 코드에서 미사용 — Play Protect가 malware dropper 패턴으로 분류
 - **수정**: 해당 권한 제거
