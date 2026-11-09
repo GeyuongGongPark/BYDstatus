@@ -27,11 +27,8 @@ jobs:
         with:
           gradle-version: '9.7.0'
 
-      - name: Make gradlew executable
-        run: chmod +x gradlew
-
       - name: Build APK
-        run: ./gradlew :androidApp:assembleRelease
+        run: gradle :androidApp:assembleRelease
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
