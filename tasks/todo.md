@@ -1,3 +1,14 @@
+# v0.6.17 — 세션 버그 수정 + Play Protect 대응 (iOS·Android)
+
+## 체크리스트
+- [x] iOS `Info.plist`: 0.6.16 → 0.6.17, CFBundleVersion 22 → 23
+- [x] Widget `Info.plist`: 동일
+- [x] `androidApp/build.gradle.kts`: versionCode 15→16, versionName 0.6.15→0.6.17
+- [x] `RELEASE_NOTES.md`: v0.6.17 섹션 추가
+- [ ] 커밋 & 푸시
+
+---
+
 # fix(bgrefresh): BGAppRefreshTask skipSession 기준 5분 → 10분 (timeout 원인)
 
 ## 원인
