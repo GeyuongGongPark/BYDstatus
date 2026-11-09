@@ -1,28 +1,21 @@
 # v0.6.17 릴리즈 노트
 
-## iOS · Android
-
 ### 버그 수정
 
-#### 주행 세션이 종료 후 사라지는 버그 수정 (iOS)
-- **증상**: 앱이 백그라운드에 있는 동안 주행하고 foreground 복귀 시 주행 세션이 기록되지 않음
+#### [공통] 주행 세션이 종료 후 사라지는 버그 수정
+- **증상**: 백그라운드 주행 후 앱 복귀 시 주행 세션이 기록되지 않음
 - **원인**: 세션 duration을 `lastDrivingPoint.timestamp - startTime`으로 계산했는데, 중간 폴링 없이 주행이 끝나면 `lastDrivingPoint = startTime`이 되어 duration=0 → 2분 미만 필터에 걸려 세션 삭제
 - **수정**: duration 계산을 현재 폴링 timestamp 기준으로 변경, endTime 기록만 lastDrivingPoint 사용
 
-#### 주행/충전 세션 중복 생성 버그 수정 (iOS)
+#### [iOS] 주행/충전 세션 중복 생성 버그 수정
 - **원인**: 수동 새로고침(`pollNow`)과 폴링 루프가 거의 동시에 `doPoll()`을 호출할 때 각각이 세션을 생성
 - **수정**: `doPoll()` 진입부에 재진입 방지 guard 추가
 
-#### BGAppRefreshTask 중복 API 호출로 인한 timeout 개선 (iOS)
-- **원인**: 백그라운드에서 폴링 sleep이 suspend되면 충전 중 2분 간격임에도 실제 경과 시간이 7분+가 되어 BGAppRefreshTask의 중복 실행 방지 기준(5분)을 초과 → 포그라운드 폴링과 동시에 API 호출 → timeout
+#### [iOS] BGAppRefreshTask 중복 API 호출로 인한 timeout 개선
+- **원인**: 백그라운드에서 폴링 sleep이 suspend되면 충전 중 2분 간격임에도 실제 경과 시간이 7분+가 되어 BGAppRefreshTask 중복 실행 방지 기준(5분)을 초과 → 포그라운드 폴링과 동시에 API 호출 → timeout
 - **수정**: 중복 방지 기준을 5분 → 10분으로 완화
 
-#### 주행 세션이 종료 후 사라지는 버그 수정 (Android)
-- **증상**: 백그라운드 주행 후 앱 복귀 시 주행 세션이 기록되지 않음
-- **원인**: iOS와 동일 — `lastDrivingPointAfter` 쿼리가 `>= startTime`이라 세션 시작 DataPoint 자체가 반환되어 duration=0 → 2분 미만 필터에 걸려 삭제
-- **수정**: duration 계산을 현재 폴링 timestamp 기준으로 변경
-
-#### Google Play Protect 유해 앱 경고 수정 (Android)
+#### [AOS] Google Play Protect 유해 앱 경고 수정
 - **원인**: `REQUEST_INSTALL_PACKAGES` 권한이 Manifest에 선언되어 있었으나 코드에서 미사용 — Play Protect가 malware dropper 패턴으로 분류
 - **수정**: 해당 권한 제거
 
