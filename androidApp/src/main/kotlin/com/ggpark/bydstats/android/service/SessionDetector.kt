@@ -151,7 +151,9 @@ class SessionDetector(
                 val actualEndTime = lastDrivingDp?.timestamp ?: timestamp
                 val actualEndSoc  = lastDrivingDp?.batteryPercent ?: status.batteryPercentage
 
-                val duration = actualEndTime - session.startTime
+                // duration은 현재 폴링 timestamp 기준으로 계산 — actualEndTime 기준으로 하면
+                // lastDrivingPoint가 startTime과 동일할 때 duration=0이 되어 세션이 삭제됨 (iOS와 동일)
+                val duration = timestamp - session.startTime
                 val endMsg = "driving ended: durationMs=$duration gpsKm=$gpsDistanceKm odo=${status.totalMileage} actualEnd=$actualEndTime"
                 Log.d(TAG, endMsg)
                 AppLogger.log(endMsg, TAG)

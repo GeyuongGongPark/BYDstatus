@@ -1,3 +1,15 @@
+# fix(session): Android 주행 세션 종료 직후 삭제 버그 수정 (iOS와 동일)
+
+## 원인
+`lastDrivingPointAfter(startTime)` 쿼리가 `timestamp >= startTime`이라 세션 시작 DataPoint 자체도 포함.
+중간 폴링 없이 주행이 끝나면 `actualEndTime == startTime` → `duration=0` → 삭제.
+
+## 체크리스트
+- [x] `SessionDetector.kt`: `duration` 계산을 `timestamp - session.startTime`으로 분리
+- [ ] 커밋 & 푸시
+
+---
+
 # v0.6.17 — 세션 버그 수정 + Play Protect 대응 (iOS·Android)
 
 ## 체크리스트
