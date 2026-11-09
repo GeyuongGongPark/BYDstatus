@@ -1,3 +1,16 @@
+# fix(bgrefresh): BGAppRefreshTask skipSession 기준 5분 → 10분 (timeout 원인)
+
+## 원인
+iOS background에서 pollingTask sleep이 suspend되면 충전 중 2분 간격임에도
+실제로는 7분+ 경과 → skipSession=false → BGAppRefreshTask가 별도 SessionDetector 생성
+→ 포그라운드 폴링과 중복 API 호출 → rate limiting / timeout 발생.
+
+## 체크리스트
+- [x] `BackgroundTaskManager.swift`: skipSession 기준 `5 * 60` → `10 * 60`
+- [ ] 커밋 & 푸시
+
+---
+
 # fix(session): iOS 주행 세션 종료 직후 삭제 버그 수정
 
 ## 원인

@@ -66,7 +66,10 @@ enum BackgroundTaskManager {
         // 포그라운드 폴링이 최근 5분 이내에 실행됐으면 세션 처리 skip
         // (두 SessionDetector 인스턴스가 동시에 세션을 기록하는 중복 방지)
         let lastFg = UserDefaults.standard.object(forKey: "lastForegroundPollDate") as? Date
-        let skipSession = lastFg.map { Date().timeIntervalSince($0) < 5 * 60 } ?? false
+        // 10분으로 완화: iOS background에서 pollingTask sleep이 suspend되면
+        // 충전 중 2분 간격임에도 실제 경과 시간이 7분+이 될 수 있음.
+        // 5분 기준이면 BGAppRefreshTask가 중복 실행돼 API 이중 호출 → timeout.
+        let skipSession = lastFg.map { Date().timeIntervalSince($0) < 10 * 60 } ?? false
 
         if !skipSession {
             let detector = SessionDetector(
