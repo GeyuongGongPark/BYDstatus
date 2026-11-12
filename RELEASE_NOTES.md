@@ -1,3 +1,13 @@
+# v0.6.18 릴리즈 노트
+
+### 버그 수정
+
+#### [AOS] 주행 세션이 생성되지 않는 버그 수정
+- **원인**: `DataCollector.doPoll()`에 재진입 방지 로직이 없어 이중 poll이 동시 실행 → `SessionDetector`의 activeDriving 상태가 race condition으로 불일치 → 주행 세션 생성 직후 duration < 2분으로 판정되어 삭제
+- **수정**: `AtomicBoolean isPolling` guard 추가 (iOS의 `guard !isPolling` 패턴과 동일)
+
+---
+
 # v0.6.17 릴리즈 노트
 
 ### 버그 수정

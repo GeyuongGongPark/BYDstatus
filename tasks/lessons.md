@@ -22,6 +22,12 @@
 - 수정: `(previous?.speed ?: 0.0) > 0.0` 조건 추가. 직전 폴링에서 실제 이동 중이었어야만 회생제동으로 인정.
 - iOS·Android 공통 적용 필요.
 
+## iOS/Android 폴링 함수에는 반드시 재진입 방지(isPolling guard)를 넣어야 한다
+- 이중 poll race condition: 로그에서 7ms 차이로 doPoll이 동시 실행되는 케이스가 50+ 발생.
+- SessionDetector의 activeDriving(var)이 thread-safe하지 않아, 세션 생성 직후 다른 coroutine이 종료 처리 → duration < 2분 → 세션 삭제.
+- iOS: `guard !isPolling else { return }` / Android: `AtomicBoolean.compareAndSet(false, true)` + `finally { set(false) }`.
+- pollOnce() 같은 외부 트리거가 있으면 반드시 같은 guard를 공유해야 한다.
+
 ## instantPowerW>0 → isDriving=false는 회생제동 케이스도 잡는다
 - 충전기 연결 판정을 위해 `instantPowerW > 0 → isDriving=false`를 추가하면, 주행 중 감속 시 speed=0이 되는 순간 gl이 양수(회생제동)이어도 isDriving=false → 충전 세션 오기록.
 - 충전기 연결과 회생제동 구분: "이전 폴링에서 주행 중 + speed=0 + gl>0"이면 회생제동.

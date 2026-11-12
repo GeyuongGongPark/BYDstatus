@@ -1,3 +1,18 @@
+# fix(android): DataCollector 이중 poll 재진입 방지 → v0.6.18
+
+## 원인
+DataCollector.doPoll()에 재진입 방지 없어 이중 poll이 동시 실행 (로그 50+ 케이스 확인).
+SessionDetector.activeDriving이 race condition으로 불일치 → 주행 세션 생성 직후 duration<2min → 삭제.
+
+## 체크리스트
+- [x] `DataCollector.kt`: `AtomicBoolean isPolling` + `compareAndSet` guard + `finally` 해제
+- [x] `androidApp/build.gradle.kts`: versionCode 16→17, versionName 0.6.17→0.6.18
+- [x] `RELEASE_NOTES.md`: v0.6.18 섹션 추가
+- [x] `tasks/lessons.md`: 교훈 기록
+- [x] 커밋 & 태그 & 푸시
+
+---
+
 # fix(session): Android 주행 세션 종료 직후 삭제 버그 수정 (iOS와 동일)
 
 ## 원인
