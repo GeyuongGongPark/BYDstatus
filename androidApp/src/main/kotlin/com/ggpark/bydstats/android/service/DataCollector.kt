@@ -12,6 +12,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.net.UnknownHostException
+import java.util.concurrent.atomic.AtomicBoolean
 
 private const val TAG = "DataCollector"
 
@@ -34,6 +35,7 @@ class DataCollector(
     val error: StateFlow<String?> = _error
 
     private var socZeroCount = 0
+    private val isPolling = AtomicBoolean(false)
 
     private var vin: String? = null
 
@@ -76,7 +78,8 @@ class DataCollector(
     }
 
     private suspend fun doPoll() {
-        val v = vin ?: return
+        if (!isPolling.compareAndSet(false, true)) return
+        val v = vin ?: run { isPolling.set(false); return }
         try {
             var status = apiClient.fetchVehicleStatus(v)
 
@@ -162,6 +165,8 @@ class DataCollector(
             Log.e(TAG, "폴링 실패: ${e.message}")
             AppLogger.log("poll error: ${e::class.simpleName} ${e.message}", TAG)
             _error.value = "오류: ${e.message ?: "알 수 없는 오류"}"
+        } finally {
+            isPolling.set(false)
         }
     }
 }
