@@ -15,7 +15,7 @@
 - [x] `androidApp/build.gradle.kts`: versionCode 17→18, versionName 0.6.18→0.6.19
 - [x] `RELEASE_NOTES.md`: v0.6.19 섹션 추가
 - [x] `tasks/lessons.md`: 교훈 기록
-- [ ] 커밋 & 태그 & 푸시
+- [x] 커밋 & 태그 & 푸시 (8e4d115, v0.6.19)
 
 ---
 

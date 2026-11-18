@@ -55,13 +55,14 @@ final class AppState {
     // MARK: - Keychain 키
 
     private enum Keys {
-        static let userId    = "byd.userId"
-        static let signToken = "byd.signToken"
-        static let encryToken = "byd.encryToken"
-        static let username  = "byd.username"
-        static let password  = "byd.password"
-        static let vin       = "byd.vin"
-        static let region    = "byd.region"
+        static let userId       = "byd.userId"
+        static let signToken    = "byd.signToken"
+        static let encryToken   = "byd.encryToken"
+        static let username     = "byd.username"
+        static let password     = "byd.password"
+        static let vin          = "byd.vin"
+        static let region       = "byd.region"
+        static let isGuestAccount = "byd.isGuestAccount"
     }
 
     // MARK: - Init
@@ -85,8 +86,10 @@ final class AppState {
         let username = KeychainHelper.load(forKey: Keys.username) ?? ""
         let password = KeychainHelper.load(forKey: Keys.password) ?? ""
 
+        let wasGuest = UserDefaults.standard.bool(forKey: Keys.isGuestAccount)
         Task {
-            await svc.restoreSession(userId: uid, signToken: sign, encryToken: encry)
+            await svc.restoreSession(userId: uid, signToken: sign, encryToken: encry,
+                                     isGuestAccount: wasGuest)
             await svc.setCredentials(username: username, password: password)
         }
 
@@ -121,8 +124,10 @@ final class AppState {
             service = svc
             isLoggedIn = true
 
-            // 차량 목록 조회
+            // 차량 목록 조회 (isGuestAccount 자동 감지)
             vehicles = try await svc.fetchVehicleList()
+            // 게스트 계정 여부 저장 — 앱 재시작 시 복원에 사용
+            UserDefaults.standard.set(await svc.isGuestAccount, forKey: Keys.isGuestAccount)
 
             // 차량이 1대면 자동 선택
             if selectedVin == nil, let first = vehicles.first {
@@ -162,6 +167,7 @@ final class AppState {
         KeychainHelper.delete(forKey: Keys.username)
         KeychainHelper.delete(forKey: Keys.password)
         KeychainHelper.delete(forKey: Keys.vin)
+        UserDefaults.standard.removeObject(forKey: Keys.isGuestAccount)
     }
 
     // MARK: - 폴링

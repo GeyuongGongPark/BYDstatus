@@ -62,10 +62,11 @@ actor BydVehicleService {
         }
     }
 
-    func restoreSession(userId: String, signToken: String, encryToken: String) {
+    func restoreSession(userId: String, signToken: String, encryToken: String, isGuestAccount: Bool = false) {
         self.userId = userId
         self.signToken = signToken
         self.encryToken = encryToken
+        self.isGuestAccount = isGuestAccount
     }
 
     // MARK: - JSON Helpers
