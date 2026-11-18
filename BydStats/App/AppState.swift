@@ -86,16 +86,23 @@ final class AppState {
         let username = KeychainHelper.load(forKey: Keys.username) ?? ""
         let password = KeychainHelper.load(forKey: Keys.password) ?? ""
 
+        service = svc
+        selectedVin = KeychainHelper.load(forKey: Keys.vin)
+
+        // fetchVehicleList 완료 후 isGuestAccount 확정 → 그 다음 isLoggedIn = true
+        // (이전 방식: isLoggedIn 먼저 → 폴링 시작 시 isGuestAccount=false → 1001)
         let wasGuest = UserDefaults.standard.bool(forKey: Keys.isGuestAccount)
         Task {
             await svc.restoreSession(userId: uid, signToken: sign, encryToken: encry,
                                      isGuestAccount: wasGuest)
             await svc.setCredentials(username: username, password: password)
+            // 차량 목록 조회로 isGuestAccount 확정 (실패해도 wasGuest fallback으로 진행)
+            if let vList = try? await svc.fetchVehicleList() {
+                vehicles = vList
+                UserDefaults.standard.set(await svc.isGuestAccount, forKey: Keys.isGuestAccount)
+            }
+            isLoggedIn = true
         }
-
-        service = svc
-        selectedVin = KeychainHelper.load(forKey: Keys.vin)
-        isLoggedIn = true
     }
 
     // MARK: - 로그인

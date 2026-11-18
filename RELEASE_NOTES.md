@@ -1,10 +1,18 @@
+# v0.6.21 릴리즈 노트
+
+### 버그 수정
+
+#### [iOS] 앱 재시작 후 서비스 오류 1001 반복 발생 수정 (완전 수정)
+- **원인**: 세션 복원(`restoreSession`) 후 `isGuestAccount = false` 상태로 폴링이 먼저 시작되어 `userType` 없이 API 호출 → `code=1001`
+- **수정**: 세션 복원 시 `fetchVehicleList()`를 먼저 완료하여 `isGuestAccount`를 확정한 후 폴링 시작. UserDefaults fallback도 함께 유지
+
 # v0.6.20 릴리즈 노트
 
 ### 버그 수정
 
 #### [iOS] 앱 재시작 후 서비스 오류 1001 반복 발생 수정
 - **원인**: 가족/공유 계정 여부(`isGuestAccount`)가 메모리에만 저장되어, 앱 재시작 후 세션 복원 시 초기값 `false`로 리셋됨 → `userType` 파라미터 없이 차량 API 호출 → `code=1001`
-- **수정**: `isGuestAccount` 값을 UserDefaults에 저장/복원. 앱 재시작 후에도 공유 계정 상태가 유지되어 `userType`이 올바르게 포함됨
+- **수정**: `isGuestAccount` 값을 UserDefaults에 저장/복원 (불완전 수정 — v0.6.21에서 완전 수정)
 
 ---
 
