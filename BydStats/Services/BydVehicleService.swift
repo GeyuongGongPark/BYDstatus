@@ -259,7 +259,7 @@ actor BydVehicleService {
 
         var signFields = [String: String]()
         for (k, v) in innerMap { signFields[k] = "\(v ?? "null")" }
-        signFields["appName"]        = "pyBYD+0.1.dev2+ge0a1f5e27"
+        signFields["appName"]        = ""
         signFields["countryCode"]    = config.countryCode
         signFields["functionType"]   = "pwdLogin"
         signFields["identifier"]     = username
@@ -271,7 +271,7 @@ actor BydVehicleService {
         )
 
         var outerMap: [(key: String, value: Any?)] = [
-            ("appName",        "pyBYD+0.1.dev2+ge0a1f5e27"),
+            ("appName",        ""),
             ("countryCode",    config.countryCode),
             ("encryData",      encryData),
             ("functionType",   "pwdLogin"),

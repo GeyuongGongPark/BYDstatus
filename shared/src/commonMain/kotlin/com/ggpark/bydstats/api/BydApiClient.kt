@@ -326,7 +326,7 @@ class BydApiClient(
 
         val signFields = mutableMapOf<String, String>()
         innerMap.forEach { (k, v) -> signFields[k] = "${v ?: "null"}" }
-        signFields["appName"]        = "pyBYD+0.1.dev2+ge0a1f5e27"
+        signFields["appName"]        = ""
         signFields["countryCode"]    = config.countryCode
         signFields["functionType"]   = "pwdLogin"
         signFields["identifier"]     = username
@@ -338,7 +338,7 @@ class BydApiClient(
         )
 
         val outerList = mutableListOf(
-            "appName"        to "pyBYD+0.1.dev2+ge0a1f5e27",
+            "appName"        to "",
             "countryCode"    to config.countryCode,
             "encryData"      to encryData,
             "functionType"   to "pwdLogin",
