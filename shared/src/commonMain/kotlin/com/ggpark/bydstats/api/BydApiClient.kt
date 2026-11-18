@@ -109,6 +109,8 @@ class BydApiClient(
     private var storedUsername: String? = null
     private var storedPassword: String? = null
     private var isRelogging = false
+    // 가족/공유(게스트) 계정 여부 — fetchVehicleList에서 자동 감지
+    var isGuestAccount: Boolean = false
 
     var onSessionUpdated: ((String, String, String) -> Unit)? = null
     var onSessionExpired: (() -> Unit)? = null
@@ -172,6 +174,12 @@ class BydApiClient(
         val innerJson = toSortedJson(innerMap)
         val encryData = CryptoUtils.aesEncryptHex(innerJson, CryptoUtils.md5Hex(encTok))
 
+        // 게스트 계정이고 차량 엔드포인트이면 userType="1" 필요 (2026-11-12 BYD 서버 변경)
+        // 제외: /control/smartCharge/, /app/account/ → 보내면 8002
+        val needsUserType = isGuestAccount
+            && !endpoint.startsWith("/control/smartCharge/")
+            && !endpoint.startsWith("/app/account/")
+
         val signFields = mutableMapOf<String, String>()
         innerMap.forEach { (k, v) -> signFields[k] = "${v ?: "null"}" }
         signFields["countryCode"]  = config.countryCode
@@ -179,6 +187,7 @@ class BydApiClient(
         signFields["imeiMD5"]      = accountImeiMD5
         signFields["language"]     = config.language
         signFields["reqTimestamp"] = reqTimestamp
+        if (needsUserType) signFields["userType"] = "1"
         val sign = CryptoUtils.sha1Mixed(
             CryptoUtils.buildSignString(signFields, CryptoUtils.md5Hex(signTok))
         )
@@ -199,6 +208,7 @@ class BydApiClient(
             "mod"          to deviceProfile["mod"],
             "serviceTime"  to reqTimestamp,
         )
+        if (needsUserType) outerList.add("userType" to "1")
         val outerJsonNoCheck = toSortedJson(outerList)
         outerList.add("checkcode" to CryptoUtils.computeCheckcode(outerJsonNoCheck))
         val finalOuterJson = toSortedJson(outerList)
@@ -409,6 +419,12 @@ class BydApiClient(
                 ?: obj["model"]?.jsonPrimitive?.content
                 ?: obj["seriesName"]?.jsonPrimitive?.content
                 ?: "차량"
+            // 게스트 계정 자동 감지: empowerId가 있거나 empowerType < 0이면 공유 차량
+            val empowerId = obj["empowerId"]?.jsonPrimitive?.content
+            val empowerType = obj["empowerType"]?.jsonPrimitive?.intOrNull
+            if (!empowerId.isNullOrEmpty() || (empowerType != null && empowerType < 0)) {
+                isGuestAccount = true
+            }
             VehicleListItem(vin = vin, modelName = model)
         } ?: emptyList()
     }

@@ -22,6 +22,12 @@
 - 수정: `(previous?.speed ?: 0.0) > 0.0` 조건 추가. 직전 폴링에서 실제 이동 중이었어야만 회생제동으로 인정.
 - iOS·Android 공통 적용 필요.
 
+## BYD API는 서버 측 변경으로 갑자기 필수 파라미터가 추가될 수 있다
+- 2026-11-12: 차량 데이터 엔드포인트에 `userType` 파라미터가 갑자기 필수화 → 공유 계정에서 code=1001.
+- 파라미터가 outer envelope에만 있으면 1007 (서명 불일치). signFields와 outerList 양쪽에 추가해야 한다.
+- 엔드포인트별 차이 주의: `/control/smartCharge/`, `/app/account/`에는 보내면 안 됨 (8002).
+- pyBYD 오픈소스 레포 https://github.com/jkaberg/pyBYD 를 참고하면 서버 변경 대응이 빠름.
+
 ## iOS/Android 폴링 함수에는 반드시 재진입 방지(isPolling guard)를 넣어야 한다
 - 이중 poll race condition: 로그에서 7ms 차이로 doPoll이 동시 실행되는 케이스가 50+ 발생.
 - SessionDetector의 activeDriving(var)이 thread-safe하지 않아, 세션 생성 직후 다른 coroutine이 종료 처리 → duration < 2분 → 세션 삭제.

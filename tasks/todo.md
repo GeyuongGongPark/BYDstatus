@@ -1,3 +1,24 @@
+# fix(api): BYD 서버 1001 오류 수정 — 게스트 계정 userType 파라미터 추가 → v0.6.19
+
+## 원인
+2026-11-12부터 BYD 서버가 차량 데이터 엔드포인트에 `userType` 파라미터를 요구.
+게스트(공유) 계정은 `userType: "1"` + 서명에 포함 필수. 없으면 code=1001.
+소유자 계정: 파라미터 없음. 보내면 8003.
+제외 엔드포인트: `/control/smartCharge/`, `/app/account/` → 보내면 8002.
+
+## 체크리스트
+- [x] `BydApiClient.kt`: `isGuestAccount: Boolean` 필드 추가
+- [x] `BydApiClient.kt`: `fetchVehicleList()`에서 empowerId/empowerType으로 게스트 자동 감지
+- [x] `BydApiClient.kt`: `postTokenSecure()`에서 게스트+대상 엔드포인트일 때 signFields + outerList에 userType 추가
+- [x] `BydVehicleService.swift`: 동일 수정 (iOS)
+- [x] iOS `Info.plist` / `BydStatsWidget/Info.plist`: 0.6.17(23) → 0.6.19(24)
+- [x] `androidApp/build.gradle.kts`: versionCode 17→18, versionName 0.6.18→0.6.19
+- [x] `RELEASE_NOTES.md`: v0.6.19 섹션 추가
+- [x] `tasks/lessons.md`: 교훈 기록
+- [ ] 커밋 & 태그 & 푸시
+
+---
+
 # fix(android): DataCollector 이중 poll 재진입 방지 → v0.6.18
 
 ## 원인

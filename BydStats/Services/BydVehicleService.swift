@@ -18,6 +18,8 @@ actor BydVehicleService {
     private var storedUsername: String?
     private var storedPassword: String?
     private var isRelogging = false
+    // 가족/공유(게스트) 계정 여부 — fetchVehicleList에서 자동 감지
+    private(set) var isGuestAccount: Bool = false
 
     private let deviceProfile: [String: String] = [
         "ostype": "and",
@@ -112,6 +114,12 @@ actor BydVehicleService {
         let innerJson = toSortedJSON(innerMap)
         let encryData = try CryptoUtils.aesEncryptHex(innerJson, keyHex: CryptoUtils.md5Hex(encTok))
 
+        // 게스트 계정이고 차량 엔드포인트이면 userType="1" 필요 (2026-11-12 BYD 서버 변경)
+        // 제외: /control/smartCharge/, /app/account/ → 보내면 8002
+        let needsUserType = isGuestAccount
+            && !endpoint.hasPrefix("/control/smartCharge/")
+            && !endpoint.hasPrefix("/app/account/")
+
         var signFields = [String: String]()
         for (k, v) in innerMap { signFields[k] = "\(v ?? "null")" }
         signFields["countryCode"]  = config.countryCode
@@ -119,6 +127,7 @@ actor BydVehicleService {
         signFields["imeiMD5"]      = accountImeiMD5
         signFields["language"]     = config.language
         signFields["reqTimestamp"] = reqTimestamp
+        if needsUserType { signFields["userType"] = "1" }
         let sign = CryptoUtils.sha1Mixed(
             CryptoUtils.buildSignString(signFields, password: CryptoUtils.md5Hex(signTok))
         )
@@ -139,6 +148,7 @@ actor BydVehicleService {
             ("mod",          deviceProfile["mod"]),
             ("serviceTime",  reqTimestamp)
         ]
+        if needsUserType { outerMap.append(("userType", "1")) }
         let outerJsonNoCheck = toSortedJSON(outerMap)
         let checkcode = CryptoUtils.computeCheckcode(outerJsonNoCheck)
         outerMap.append(("checkcode", checkcode))
@@ -348,6 +358,12 @@ actor BydVehicleService {
                        ?? item["model"] as? String
                        ?? item["seriesName"] as? String
                        ?? "차량"
+            // 게스트 계정 자동 감지: empowerId가 있거나 empowerType < 0이면 공유 차량
+            let empowerId = item["empowerId"] as? String
+            let empowerType = item["empowerType"] as? Int
+            if !(empowerId ?? "").isEmpty || (empowerType.map { $0 < 0 } ?? false) {
+                isGuestAccount = true
+            }
             return VehicleListItem(id: vin, vin: vin, modelName: model)
         }
     }
