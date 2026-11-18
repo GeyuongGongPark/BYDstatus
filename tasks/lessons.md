@@ -28,6 +28,11 @@
 - 엔드포인트별 차이 주의: `/control/smartCharge/`, `/app/account/`에는 보내면 안 됨 (8002).
 - pyBYD 오픈소스 레포 https://github.com/jkaberg/pyBYD 를 참고하면 서버 변경 대응이 빠름.
 
+## 메모리 상태(isGuestAccount 등)는 앱 재시작 후 초기화된다 — 반드시 영속 저장해야 한다
+- Keychain/UserDefaults에 없는 상태는 앱 재시작 → restoreSession 복원 시 기본값으로 돌아간다.
+- 증상: 로그인 직후는 OK → 앱 재시작 후 동일 오류 반복 발생 (재현이 어려워 처음엔 놓치기 쉬움).
+- 대응: 세션 복원에 필요한 모든 플래그는 UserDefaults 또는 Keychain에 저장/복원.
+
 ## iOS/Android 폴링 함수에는 반드시 재진입 방지(isPolling guard)를 넣어야 한다
 - 이중 poll race condition: 로그에서 7ms 차이로 doPoll이 동시 실행되는 케이스가 50+ 발생.
 - SessionDetector의 activeDriving(var)이 thread-safe하지 않아, 세션 생성 직후 다른 coroutine이 종료 처리 → duration < 2분 → 세션 삭제.
