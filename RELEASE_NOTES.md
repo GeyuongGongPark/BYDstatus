@@ -1,3 +1,13 @@
+# v0.6.23 릴리즈 노트
+
+### 버그 수정
+
+#### [iOS] 앱 재시작 후 자동 폴링이 시작되지 않는 버그 수정
+- **원인**: v0.6.21에서 `isLoggedIn = true`를 `fetchVehicleList()` 완료 후로 늦췄는데, 뷰의 `.task(id: selectedVin)`이 `selectedVin` 변경 시 즉시 실행되면서 `isLoggedIn`이 아직 `false`라 guard에 걸려 `startPolling()`이 영원히 호출되지 않는 문제
+- **수정**: `restoreSession()`을 원래 순서(isLoggedIn=true 먼저)로 복원. `isGuestAccount` 보장은 `startPolling()` 내부 첫 폴링 직전에 `fetchVehicleList()` 호출로 처리
+
+---
+
 # v0.6.22 릴리즈 노트
 
 ### 버그 수정
