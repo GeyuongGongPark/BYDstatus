@@ -25,7 +25,9 @@ enum BackgroundTaskManager {
               let password   = KeychainHelper.load(forKey: "byd.password") else { return }
 
         guard let svc = try? BydVehicleService(config: BydConfig.fromRegion(region)) else { return }
-        await svc.restoreSession(userId: userId, signToken: signToken, encryToken: encryToken)
+        let wasGuest = UserDefaults.standard.bool(forKey: "byd.isGuestAccount")
+        await svc.restoreSession(userId: userId, signToken: signToken, encryToken: encryToken,
+                                 isGuestAccount: wasGuest)
         await svc.setCredentials(username: username, password: password)
 
         // UserDefaults에서 설정 읽기

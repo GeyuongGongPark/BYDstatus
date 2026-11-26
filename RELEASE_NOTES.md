@@ -1,3 +1,13 @@
+# v0.6.24 릴리즈 노트
+
+### 버그 수정
+
+#### [iOS] 백그라운드 폴링 완전 불가 — 주행·충전 세션 미기록 수정
+- **원인**: `BackgroundTaskManager.handleRefresh()`에서 `restoreSession()` 호출 시 `isGuestAccount`를 전달하지 않아 항상 `false` → BGAppRefreshTask에서 `userType` 없이 `vehicleRealTimeRequest` 호출 → `code=1001` → 조용히 실패 → 백그라운드 폴링 전무
+- **수정**: `UserDefaults`에서 `byd.isGuestAccount` 값을 읽어 `restoreSession()`에 전달. 이제 BGAppRefreshTask에서도 `userType`이 올바르게 포함됨
+
+---
+
 # v0.6.23 릴리즈 노트
 
 ### 버그 수정
