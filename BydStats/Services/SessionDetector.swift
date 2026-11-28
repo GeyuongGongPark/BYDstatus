@@ -89,8 +89,11 @@ final class SessionDetector {
             // BGAppRefresh 시점이 아닌 마지막 실제 isCharging=true DataPoint의 시간/SOC로 종료
             // (앱 suspended 중 충전이 끝나면 recover 후 현재 시간으로 잘못 기록되는 버그 방지)
             let lastChargingDp = lastChargingPoint(after: session.startTime)
-            let actualEndTime = lastChargingDp?.timestamp ?? timestamp
-            let actualEndSoc  = lastChargingDp?.batteryPercent ?? status.batteryPercentage
+            let hasIntermediateChargePoints = lastChargingDp.map {
+                $0.timestamp.timeIntervalSince(session.startTime) > 60
+            } ?? false
+            let actualEndTime = hasIntermediateChargePoints ? lastChargingDp!.timestamp : timestamp
+            let actualEndSoc  = hasIntermediateChargePoints ? lastChargingDp!.batteryPercent : status.batteryPercentage
 
             session.endTime = actualEndTime
             session.endSoc = actualEndSoc
@@ -122,8 +125,13 @@ final class SessionDetector {
             // BGAppRefresh 시점이 아닌 마지막 실제 isDriving=true DataPoint의 시간/SOC로 종료
             // (앱 suspended 중 주행이 끝나면 recover 후 현재 시간으로 잘못 기록되는 버그 방지)
             let lastDrivingDp = lastDrivingPoint(after: session.startTime)
-            let actualEndTime = lastDrivingDp?.timestamp ?? timestamp
-            let actualEndSoc  = lastDrivingDp?.batteryPercent ?? status.batteryPercentage
+            // 중간 DataPoint가 없는 경우(BGAppRefreshTask 미실행 등) lastDrivingDp가
+            // 세션 시작 DataPoint 하나뿐 → endSoc=startSoc 오류 방지
+            let hasIntermediatePoints = lastDrivingDp.map {
+                $0.timestamp.timeIntervalSince(session.startTime) > 60
+            } ?? false
+            let actualEndTime = hasIntermediatePoints ? lastDrivingDp!.timestamp : timestamp
+            let actualEndSoc  = hasIntermediatePoints ? lastDrivingDp!.batteryPercent : status.batteryPercentage
 
             // duration은 현재 폴링 시각 기준으로 계산 — actualEndTime 기준으로 하면
             // lastDrivingPoint가 startTime과 동일할 때 duration=0이 되어 세션이 삭제됨

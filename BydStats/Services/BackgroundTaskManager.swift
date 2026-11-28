@@ -80,8 +80,13 @@ enum BackgroundTaskManager {
                 batteryCapacityKwh: capacity,
                 gpsEnabled: false   // 백그라운드에서 GPS 비활성화
             )
-            detector.process(status: status, at: Date())
-            try? context.save()
+            // fetchVehicleStatus 대기 중 FG 복귀 후 doPoll이 완료됐을 수 있으므로 재확인
+            let lastFg2 = UserDefaults.standard.object(forKey: "lastForegroundPollDate") as? Date
+            let skipNow = lastFg2.map { Date().timeIntervalSince($0) < 10 * 60 } ?? false
+            if !skipNow {
+                detector.process(status: status, at: Date())
+                try? context.save()
+            }
         }
 
         // 주행/충전이 끝난 경우 Live Activity 종료

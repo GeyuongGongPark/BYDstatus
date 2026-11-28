@@ -28,6 +28,10 @@
 - 엔드포인트별 차이 주의: `/control/smartCharge/`, `/app/account/`에는 보내면 안 됨 (8002).
 - pyBYD 오픈소스 레포 https://github.com/jkaberg/pyBYD 를 참고하면 서버 변경 대응이 빠름.
 
+## 태그·푸시·릴리즈는 명시적 허락 후에만 실행할 것
+- 커밋은 자율적으로 해도 되지만, `git tag` / `git push` / 릴리즈 생성은 외부(CI, 배포)에 영향을 준다.
+- 반드시 사용자에게 "태그 & 푸시할까요?" 확인 후 진행. 허락 없이 선행 금지.
+
 ## 메모리 상태(isGuestAccount 등)는 앱 재시작 후 초기화된다 — 반드시 영속 저장해야 한다
 - Keychain/UserDefaults에 없는 상태는 앱 재시작 → restoreSession 복원 시 기본값으로 돌아간다.
 - 증상: 로그인 직후는 OK → 앱 재시작 후 동일 오류 반복 발생 (재현이 어려워 처음엔 놓치기 쉬움).
